@@ -2,7 +2,7 @@ import { keywordCategorySnapshot } from "@/lib/keyword-registry";
 import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
-export const saveState = "SpiritualSolace 0.2c — Corrected landing hero and dove brand direction";
+export const saveState = "SpiritualSolace 0.2e — True layer hero without hero cards";
 export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 
 export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/daily-brief"];

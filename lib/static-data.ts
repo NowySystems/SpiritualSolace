@@ -2,11 +2,9 @@ import { keywordCategorySnapshot } from "@/lib/keyword-registry";
 import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
- codex/finish-landing-page-demo-using-hero-asset-mw81vr
+
 export const saveState = "SpiritualSolace 0.2e — True layer hero without hero cards";
-=======
-export const saveState = "SpiritualSolace 0.2d — Hero asset landing demo and Nowy Systems marker";
- main
+
 export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 
 export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/daily-brief"];

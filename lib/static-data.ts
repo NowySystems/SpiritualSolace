@@ -2,7 +2,7 @@ import { keywordCategorySnapshot } from "@/lib/keyword-registry";
 import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
-export const saveState = "SpiritualSolace 0.1 — Demo-only consent-first workflow shell";
+export const saveState = "SpiritualSolace 0.1b — Full demo shell and page render pass";
 export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 
 export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/daily-brief"];
@@ -17,7 +17,7 @@ export const navigationItems = [
   { label: "Facility Rules", href: "/governance" },
   { label: "Patient View", href: "/proposal-scanner" },
   { label: "Audit Log", href: "/reports" },
-  { label: "Guardrails", href: "/governance" },
+  { label: "Guardrails", href: "/guardrails" },
 ];
 
 

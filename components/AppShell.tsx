@@ -9,12 +9,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex h-full flex-col gap-6 p-6">
           <div>
             <div className="flex items-center gap-3">
-              <svg viewBox="0 0 64 64" className="h-10 w-10" aria-hidden="true">
-                <circle cx="32" cy="32" r="30" fill="#E0F2FE" />
-                <path d="M14 38c6-10 30-10 36 0" stroke="#0EA5E9" strokeWidth="4" fill="none" strokeLinecap="round" />
-                <circle cx="32" cy="23" r="6" fill="#0284C7" />
-                <path d="M24 26c4 4 12 4 16 0" stroke="#BAE6FD" strokeWidth="2" fill="none" strokeLinecap="round" />
-              </svg>
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-slate-100 text-xs font-semibold tracking-[0.16em] text-slate-600">SS</span>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.25em] text-crcf-blue">Demo Prototype</p>
                 <h1 className="text-2xl font-bold leading-tight text-crcf-navy">SpiritualSolace</h1>
@@ -55,9 +50,10 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-h-screen flex-1 flex-col lg:pl-72">
         <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-6 py-4 backdrop-blur">
-          <p className="text-sm text-slate-600">
-            SpiritualSolace demo shell · visual prototype only · no external actions · no real patient data
-          </p>
+          <div className="flex flex-col gap-1 text-sm text-slate-600 md:flex-row md:items-center md:justify-between">
+            <p>SpiritualSolace demo shell · visual prototype only · no external actions · no real patient data</p>
+            <p className="text-xs font-medium text-slate-500">Built by Nowy Systems · Demo Prototype</p>
+          </div>
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">{children}</main>
       </div>

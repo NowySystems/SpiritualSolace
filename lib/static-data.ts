@@ -2,8 +2,8 @@ import { keywordCategorySnapshot } from "@/lib/keyword-registry";
 import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
-export const saveState = "CRCF 3.4a — Public-Quality App Chrome + Non-Workflow Clutter Cleanup";
-export const compatibilityBaseline = "CRCF 3.2.1 — Grants.gov Forecast / Non-Actionable Opportunity Handling";
+export const saveState = "SpiritualSolace 0.1 — Demo-only consent-first workflow shell";
+export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 
 export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/daily-brief"];
 
@@ -11,11 +11,13 @@ export const learningLoopValidationNote = "Future memory layer will improve reco
 
 export const navigationItems = [
   { label: "Dashboard", href: "/" },
-  { label: "Opportunities", href: "/funding-search" },
-  { label: "Sources", href: "/source-database" },
-  { label: "Proposal Scanner", href: "/proposal-scanner" },
-  { label: "Review Queue", href: "/review-queue" },
-  { label: "Reports", href: "/reports" },
+  { label: "Support Requests", href: "/funding-search" },
+  { label: "Approved Responders", href: "/source-database" },
+  { label: "Message Review", href: "/review-queue" },
+  { label: "Facility Rules", href: "/governance" },
+  { label: "Patient View", href: "/proposal-scanner" },
+  { label: "Audit Log", href: "/reports" },
+  { label: "Guardrails", href: "/governance" },
 ];
 
 

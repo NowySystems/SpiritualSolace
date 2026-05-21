@@ -2,7 +2,7 @@ import { keywordCategorySnapshot } from "@/lib/keyword-registry";
 import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
-export const saveState = "SpiritualSolace 0.1c — Visual QA and premium polish pass";
+export const saveState = "SpiritualSolace 0.2a — Premium landing page and app route separation";
 export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 
 export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/daily-brief"];
@@ -10,14 +10,14 @@ export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/da
 export const learningLoopValidationNote = "Future memory layer will improve recommendations using staff feedback, source quality, outcomes, and daily source changes.";
 
 export const navigationItems = [
-  { label: "Dashboard", href: "/" },
-  { label: "Support Requests", href: "/funding-search" },
-  { label: "Approved Responders", href: "/source-database" },
-  { label: "Message Review", href: "/review-queue" },
-  { label: "Facility Rules", href: "/governance" },
-  { label: "Patient View", href: "/proposal-scanner" },
-  { label: "Audit Log", href: "/reports" },
-  { label: "Guardrails", href: "/guardrails" },
+  { label: "Dashboard", href: "/app" },
+  { label: "Support Requests", href: "/app/support-requests" },
+  { label: "Approved Responders", href: "/app/approved-responders" },
+  { label: "Message Review", href: "/app/message-review" },
+  { label: "Facility Rules", href: "/app/facility-rules" },
+  { label: "Patient View", href: "/app/patient-view" },
+  { label: "Audit Log", href: "/app/audit-log" },
+  { label: "Guardrails", href: "/app/guardrails" },
 ];
 
 

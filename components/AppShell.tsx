@@ -3,8 +3,8 @@ import Link from "next/link";
 import { navigationItems, saveState } from "@/lib/static-data";
 
 const accountMenuItems = [
-  { label: "Settings", href: "/reports" },
-  { label: "Help / Rules", href: "/governance" },
+  { label: "Prototype Status", href: "/governance" },
+  { label: "Guardrails", href: "/governance" },
   { label: "Privacy", href: "/governance" },
   { label: "Legal", href: "/governance" },
   { label: "Security", href: "/governance" },
@@ -17,9 +17,9 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="border-b border-slate-200 bg-white lg:fixed lg:inset-y-0 lg:w-72 lg:border-b-0 lg:border-r">
         <div className="flex h-full flex-col gap-8 p-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-crcf-blue">Internal Use</p>
-            <h1 className="mt-3 text-2xl font-bold leading-tight text-crcf-navy">CRCF Funding Command Center</h1>
-            <p className="mt-3 text-sm text-slate-600">Source-backed funding workflows for staff review.</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-crcf-blue">Demo Prototype</p>
+            <h1 className="mt-3 text-2xl font-bold leading-tight text-crcf-navy">SpiritualSolace</h1>
+            <p className="mt-3 text-sm text-slate-600">Consent-first, one-way spiritual support request workflow.</p>
           </div>
 
           <nav className="space-y-2 text-sm">
@@ -56,21 +56,21 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 px-6 py-4 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-crcf-blue">Cookeville Regional Charitable Foundation</p>
-              <p className="text-sm text-slate-600">Public sources only · human-reviewed · external actions disabled</p>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-crcf-blue">SpiritualSolace Prototype</p>
+              <p className="text-sm text-slate-600">Demo only · no real patient data · human review required</p>
             </div>
-            <span className="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">Internal</span>
+            <span className="rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">Prototype</span>
           </div>
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-6 py-8">{children}</main>
         <footer className="border-t border-slate-200 bg-white px-6 py-4">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
-            <p>Internal Use · Human review required before external action.</p>
+            <p>Demo only · temporary messaging concept · no external actions.</p>
             <div className="flex flex-wrap items-center gap-3">
               <Link href="/governance" className="hover:text-crcf-navy">Privacy</Link>
               <Link href="/governance" className="hover:text-crcf-navy">Legal</Link>
               <Link href="/governance" className="hover:text-crcf-navy">Security</Link>
-              <Link href="/governance" className="hover:text-crcf-navy">Help / Rules</Link>
+              <Link href="/governance" className="hover:text-crcf-navy">Guardrails</Link>
             </div>
           </div>
         </footer>

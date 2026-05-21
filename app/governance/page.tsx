@@ -2,16 +2,18 @@ import { PageHeader } from "@/components/PageHeader";
 
 const safetyRules = [
   "No PHI, patient names, SSNs, or private medical details.",
-  "No private donor records in AI prompts.",
+  "No diagnosis fields, treatment fields, or medical advice.",
   "No API keys or credentials committed to this repository.",
-  "No automatic outreach or automated grant submissions.",
-  "No QuickBooks writes, DonorPerfect writes, or source-system writes.",
+  "No open chat, reply threads, or public responder directory.",
+  "No unapproved responder access or external contact sharing.",
   "Human review is required before any external action.",
 ];
 
 const productPosture = [
-  "Public sources only",
-  "Human-reviewed",
+  "Demo only",
+  "Facility-controlled",
+  "Consent-first",
+  "Temporary one-way messaging",
   "External actions disabled",
 ];
 
@@ -19,9 +21,9 @@ export default function GovernancePage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Help / Rules"
+        eyebrow="Guardrails"
         title="Safety and operating rules"
-        description="Use this page as the reference for system limits, data rules, and human-review requirements."
+        description="Use this page as the reference for prototype limits, data safety rules, and human-review requirements."
       />
 
       <section className="rounded-3xl bg-white p-6 shadow-panel ring-1 ring-slate-200">

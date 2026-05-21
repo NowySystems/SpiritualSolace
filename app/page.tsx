@@ -54,15 +54,15 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <div className="rounded-2xl border border-sky-100/80 bg-white/90 p-2.5 shadow-[0_8px_30px_rgba(11,42,77,0.09)]">
               <svg viewBox="0 0 88 88" className="h-9 w-9" aria-hidden="true">
-                <circle cx="44" cy="44" r="42" fill="#E8F5FF" />
-                <path d="M18 49c10-2 18-10 24-19 8 12 17 18 30 20-9 5-19 8-30 8-10 0-17-2-24-9Z" fill="#0F4C81" />
-                <path d="M48 55c11 0 20 5 25 14" stroke="#4A9074" strokeWidth="4" strokeLinecap="round" />
-                <path d="M68 68c3-1 6-2 8-5" stroke="#7EAA61" strokeWidth="3" strokeLinecap="round" />
+                <circle cx="44" cy="44" r="42" fill="#EAF4FF" />
+                <path d="M20 50c9-2 15-7 22-16 7 10 14 15 24 17-7 5-17 8-28 8-8 0-14-2-18-9Z" fill="#123E70" />
+                <path d="M48 54c10 0 17 4 23 11" stroke="#4C8F77" strokeWidth="4" strokeLinecap="round" />
+                <path d="M66 65c4-1 7-3 9-6M58 62c3-1 6-3 8-5" stroke="#85A95F" strokeWidth="3" strokeLinecap="round" />
               </svg>
             </div>
             <div>
               <p className="text-xl font-semibold tracking-tight text-slate-900">SpiritualSolace</p>
-              <p className="text-xs tracking-[0.16em] text-slate-500">CONSENT-FIRST SUPPORT</p>
+              <p className="text-xs tracking-[0.08em] text-slate-500">One-way support. Lasting comfort.</p>
             </div>
           </div>
 
@@ -101,23 +101,33 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="relative rounded-3xl border border-white/75 bg-white/55 p-4 shadow-[0_20px_60px_rgba(22,53,93,0.16)] backdrop-blur-sm md:p-5">
-            <div className="absolute -inset-x-2 -top-3 h-28 rounded-[2rem] bg-gradient-to-r from-cyan-200/45 via-sky-200/50 to-indigo-200/45 blur-2xl" aria-hidden="true" />
-            <div className="relative overflow-hidden rounded-[1.35rem] border border-sky-100/75 bg-[linear-gradient(180deg,#dff1ff_0%,#edf6ff_37%,#f8f5ff_68%,#fdfcf8_100%)] p-5">
-              <svg viewBox="0 0 520 340" className="h-full w-full" role="img" aria-label="Dove and olive branch motif over a calm horizon">
-                <defs>
-                  <linearGradient id="wing" x1="0" x2="1" y1="0" y2="1">
-                    <stop offset="0%" stopColor="#0A3E75" />
-                    <stop offset="100%" stopColor="#1D659A" />
-                  </linearGradient>
-                </defs>
-                <ellipse cx="262" cy="282" rx="220" ry="34" fill="#dbeafe" opacity="0.9" />
-                <path d="M0 286Q102 220 196 255T390 250T520 266V340H0Z" fill="#bfd9ef" />
-                <path d="M0 304Q120 252 258 286T520 294V340H0Z" fill="#9fc0dc" opacity="0.72" />
-                <path d="M176 154c42-9 76-39 103-78 30 44 67 68 118 73-31 18-70 29-118 29-42 0-75-7-103-24Z" fill="url(#wing)" />
-                <path d="M306 195c31 0 56 15 70 39" stroke="#4A9074" strokeWidth="8" strokeLinecap="round" />
-                <path d="M378 236c7-4 13-9 18-17M351 224c6-3 11-7 16-13M327 214c5-3 9-6 13-11" stroke="#7EAA61" strokeWidth="5" strokeLinecap="round" />
-              </svg>
+          <div className="relative rounded-3xl border border-white/80 bg-white/70 p-4 shadow-[0_20px_60px_rgba(22,53,93,0.14)] backdrop-blur-sm md:p-5">
+            <div className="absolute -inset-x-2 -top-3 h-28 rounded-[2rem] bg-gradient-to-r from-sky-200/45 via-teal-100/45 to-indigo-100/40 blur-2xl" aria-hidden="true" />
+            <div className="relative overflow-hidden rounded-[1.35rem] border border-sky-100/75 bg-[linear-gradient(180deg,#e8f4ff_0%,#f2f8ff_35%,#f8fbff_68%,#fdfcf8_100%)] p-5">
+              <div className="absolute inset-x-0 bottom-0 h-24 bg-[radial-gradient(ellipse_at_center,#d3e7f8_0%,#dceefb_45%,transparent_75%)]" aria-hidden="true" />
+              <div className="absolute -right-8 top-6 h-24 w-24 rounded-full bg-teal-100/40 blur-2xl" aria-hidden="true" />
+              <div className="relative space-y-4">
+                <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Support request lifecycle</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {['Requested', 'Policy review', 'Approved responder', 'Delivered'].map((status) => (
+                      <span key={status} className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[11px] font-medium text-sky-800">
+                        {status}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-sm">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">One-way message preview</p>
+                  <p className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                    “Wishing you peace today. We are holding your family in gentle prayer.”
+                  </p>
+                  <div className="mt-3 flex items-center justify-between text-xs text-slate-600">
+                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 font-medium text-emerald-700">Approved responder</span>
+                    <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 font-medium text-teal-700">Review complete</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -183,6 +193,9 @@ export default function LandingPage() {
             Explore the demo workflow
           </Link>
         </section>
+              <p className="pb-2 text-center text-xs tracking-wide text-slate-500">
+          Private Preview · SpiritualSolace 0.2c · Demo Prototype
+        </p>
       </main>
     </div>
   );

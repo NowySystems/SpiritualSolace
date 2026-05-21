@@ -2,7 +2,7 @@ import { keywordCategorySnapshot } from "@/lib/keyword-registry";
 import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
-export const saveState = "SpiritualSolace 0.1b — Full demo shell and page render pass";
+export const saveState = "SpiritualSolace 0.1c — Visual QA and premium polish pass";
 export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 
 export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/daily-brief"];

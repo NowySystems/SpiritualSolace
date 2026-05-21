@@ -1,2 +1,29 @@
-const rules=[["Anonymous allowed","Enabled"],["First name only allowed","Enabled"],["Full name","Off by default"],["Room/unit visibility","Hidden by default"],["Video allowed","Yes"],["Max video length","60 seconds"],["Review before delivery","Required"],["Retention","7 days"],["Approved responders required","Yes"]];
-export default function FacilityRulesPage(){return <div className="space-y-6"><section className="rounded-3xl border border-slate-200 bg-white p-6"><p className="text-xs uppercase tracking-[0.2em] text-crcf-blue font-semibold">Facility Rules</p><h2 className="mt-2 text-2xl font-bold text-crcf-navy">Demo Configuration Surface</h2><p className="mt-2 text-sm text-slate-600">Visual settings only. No production policy enforcement.</p></section><section className="rounded-3xl border border-slate-200 bg-white p-6"><div className="grid gap-3 md:grid-cols-2">{rules.map(([k,v])=><div key={k} className="rounded-2xl border border-slate-200 bg-slate-50 p-4"><p className="text-xs uppercase tracking-[0.12em] text-slate-500">{k}</p><p className="font-semibold text-crcf-navy mt-1">{v}</p></div>)}</div></section><section className="rounded-3xl border border-slate-200 bg-white p-6"><h3 className="font-bold text-crcf-navy">Sections</h3><p className="text-sm text-slate-600 mt-2">Identity display · Message type settings · Review/moderation · Retention/expiration · Responder approval · Urgent routing language · Consent language.</p></section></div>}
+const ruleSections = [
+  ["Identity display", "Anonymous and first-name modes visible in demo controls"],
+  ["Message type settings", "Prayer, text, audio, and video shown with static toggles"],
+  ["Review and moderation", "Review before delivery remains required"],
+  ["Retention and expiration", "Temporary messages expire after configured demo windows"],
+  ["Responder approval", "Only approved responders can receive assigned requests"],
+  ["Urgent routing", "Priority requests route to internal review queue first"],
+  ["Consent language", "Clear one-way temporary messaging consent copy is displayed"]
+];
+
+export default function FacilityRulesPage() {
+  return (
+    <div className="space-y-6">
+      <section className="rounded-3xl border border-slate-200 bg-white p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-crcf-blue">Facility Rules</p>
+        <h2 className="mt-2 text-2xl font-bold text-crcf-navy">Demo configuration surface</h2>
+        <p className="mt-2 text-sm text-slate-600">Visual settings only. This prototype does not apply live policy enforcement.</p>
+      </section>
+      <section className="grid gap-3 md:grid-cols-2">
+        {ruleSections.map(([section, detail]) => (
+          <article key={section} className="rounded-2xl border border-slate-200 bg-white p-5">
+            <p className="text-xs uppercase tracking-[0.12em] text-slate-500">{section}</p>
+            <p className="mt-2 text-sm font-medium text-slate-700">{detail}</p>
+          </article>
+        ))}
+      </section>
+    </div>
+  );
+}

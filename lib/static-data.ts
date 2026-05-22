@@ -3,7 +3,7 @@ import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
 
-export const saveState = "SpiritualSolace 0.2e — True layer hero without hero cards";
+export const saveState = "SpiritualSolace 0.3b — Patient view experience polish";
 
 export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 

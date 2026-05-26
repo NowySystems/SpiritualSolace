@@ -3,7 +3,11 @@ import { opportunityDatabaseSnapshot } from "@/lib/opportunity-database";
 import { sourceDatabaseSnapshot } from "@/lib/source-database";
 
 
+ codex/refine-/app-visual-alignment-with-landing-page-q0t4yy
 export const saveState = "SpiritualSolace 0.3b — Patient view experience polish";
+=======
+export const saveState = "SpiritualSolace 0.3a — Dashboard and app shell alignment";
+ main
 
 export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
 

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navigationItems, saveState } from "@/lib/static-data";
+import { navigationItems, saveState } from "@/lib/app-shell-config";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();

@@ -99,7 +99,7 @@ export const solaceRequests: SolaceRequest[] = [
     tonePreference: "Gentle and reassuring",
     language: "English",
     consentConfirmed: true,
-    status: "Intake Review",
+    status: "Delivered",
     priority: "Soon",
     submittedAt: "Today · 8:42 AM",
     assignedResponderId: "RESP-001",

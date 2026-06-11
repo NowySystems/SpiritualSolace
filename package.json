@@ -10,4 +10,4 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "foundation:check": "node agents/scripts/foundation-check.mjs",
-    "check:public-quality
+    "check:public-quality": "node agents

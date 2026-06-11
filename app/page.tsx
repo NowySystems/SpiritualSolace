@@ -98,6 +98,15 @@ const facilityFeatures = [
   }
 ];
 
+const governanceItems = [
+  ["Human Review", "Required"],
+  ["Patient Accounts", "Disabled"],
+  ["Public Request Feed", "Disabled"],
+  ["Direct Messaging", "Disabled"],
+  ["Approved Responders", "Required"],
+  ["Audit Visibility", "Enabled"]
+];
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#f7f3ea] text-[#102b3a]">
@@ -280,6 +289,37 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section className="px-6 py-8">
+          <div className="mx-auto max-w-7xl overflow-hidden rounded-2xl border border-[#d8d1c3] bg-[#fbf8f0] shadow-[0_14px_38px_rgba(16,43,58,0.06)]">
+            <div className="grid lg:grid-cols-[0.9fr_1.35fr]">
+              <div className="bg-[#0d2b3b] p-8 text-white lg:p-10">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9fb36b]">Governance model</p>
+                <h2 className="mt-4 font-serif text-4xl font-semibold leading-tight">Why facilities can trust the workflow.</h2>
+                <p className="mt-5 text-base leading-7 text-[#dce8e6]">
+                  SpiritualSolace is not a social network, public messaging platform, or patient chat system.
+                </p>
+                <p className="mt-4 text-sm leading-6 text-[#c4d2cf]">
+                  It is a facility-controlled workflow designed to deliver reviewed comfort messages with dignity, privacy, and oversight.
+                </p>
+              </div>
+
+              <div className="p-8 lg:p-10">
+                <div className="divide-y divide-[#ddd4c5] border-y border-[#ddd4c5]">
+                  {governanceItems.map(([label, status]) => (
+                    <div key={label} className="grid grid-cols-[1fr_auto] items-center gap-6 py-4">
+                      <span className="font-semibold text-[#102b3a]">{label}</span>
+                      <span className="rounded-full bg-[#e6eddc] px-4 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-[#5f7b46]">{status}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-6 text-sm leading-6 text-[#5d6f67]">
+                  The goal is not more communication. The goal is safe, reviewed, temporary comfort when a person asks for solace.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="about" className="px-6 py-8">
           <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.1fr_1.1fr_1.1fr_0.9fr]">
             <article className="rounded-xl bg-[#0d2b3b] p-8 text-white shadow-[0_12px_30px_rgba(16,43,58,0.18)]">
@@ -309,15 +349,18 @@ export default function LandingPage() {
       </main>
 
       <footer id="resources" className="mt-8 bg-[#0d2b3b] px-6 py-10 text-white">
-        <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
-          <div className="flex items-center gap-3">
-            <span className="text-4xl">🕊</span>
-            <span className="text-2xl font-semibold">Spiritual<span className="text-[#9fb36b]">Solace</span></span>
+        <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.35fr_1fr_1fr_1fr_1.15fr]">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="text-4xl">🕊</span>
+              <span className="text-2xl font-semibold">Spiritual<span className="text-[#9fb36b]">Solace</span></span>
+            </div>
+            <p className="mt-4 max-w-xs text-sm leading-6 text-[#c4d2cf]">Built by NowySystems for governed, human-centered care workflows.</p>
           </div>
           <div><h4 className="text-xs font-bold uppercase tracking-widest text-[#9fb36b]">Product</h4><p className="mt-3 text-sm text-[#dce8e6]">How It Works<br />Features<br />Security</p></div>
           <div><h4 className="text-xs font-bold uppercase tracking-widest text-[#9fb36b]">Resources</h4><p className="mt-3 text-sm text-[#dce8e6]">Blog<br />Help Center<br />Privacy Policy</p></div>
           <div><h4 className="text-xs font-bold uppercase tracking-widest text-[#9fb36b]">Company</h4><p className="mt-3 text-sm text-[#dce8e6]">About Us<br />Contact<br />Careers</p></div>
-          <div><p className="text-sm text-[#dce8e6]">© 2026 SpiritualSolace. Demo prototype.</p></div>
+          <div><p className="text-sm leading-6 text-[#dce8e6]">© 2026 SpiritualSolace. Demo prototype.<br />A NowySystems project.</p></div>
         </div>
       </footer>
     </div>

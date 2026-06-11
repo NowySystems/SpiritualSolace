@@ -1,261 +1,214 @@
 import Link from "next/link";
 import {
   approvedResponders,
+  auditEvents,
   facilityRules,
   getResponderName,
   solaceMessages,
   solaceRequests
 } from "@/lib/spiritual-solace-data";
 
-const workflowSteps = [
-  "Request received",
-  "Intake reviewed",
-  "Responder routed",
-  "Message reviewed",
-  "One-way delivery",
-  "Temporary expiration"
+const currentRequest =
+  solaceRequests.find((request) => request.priority === "Time Sensitive") ?? solaceRequests[0];
+
+const currentMessage = solaceMessages.find((message) => message.requestId === currentRequest.id) ?? solaceMessages[0];
+
+const requestLanes = [
+  {
+    label: "Waiting for intake",
+    value: solaceRequests.filter((request) => request.status === "New" || request.status === "Intake Review").length,
+    note: "Confirm consent, preference, tone, and route."
+  },
+  {
+    label: "Message needs review",
+    value: solaceMessages.filter((message) => message.status === "Needs Review").length,
+    note: "Check safety boundaries before delivery."
+  },
+  {
+    label: "Ready or delivered",
+    value: solaceRequests.filter((request) => request.status === "Delivered" || request.status === "Routed").length,
+    note: "Requests with a responder path in motion."
+  }
 ];
 
-const quickActions = [
-  ["Review requests", "/app/support-requests", "Intake queue"],
-  ["Check messages", "/app/message-review", "Safety gate"],
-  ["Responder coverage", "/app/approved-responders", "Routing layer"],
-  ["Audit trail", "/app/audit-log", "Traceability"]
+const governanceLines = [
+  ["Human review", "Required"],
+  ["Direct messaging", "Disabled"],
+  ["Patient login", "Disabled"],
+  ["Audit trail", "Enabled"]
 ];
 
-function getDashboardMetrics() {
-  const needsIntake = solaceRequests.filter((request) => request.status === "Intake Review" || request.status === "New").length;
-  const needsMessageReview = solaceMessages.filter((message) => message.status === "Needs Review").length;
-  const activeResponders = approvedResponders.filter((responder) => responder.status === "Active").length;
-  const limitedResponders = approvedResponders.filter((responder) => responder.status === "Limited" || responder.status === "Renewal Needed").length;
-  const approvedMessages = solaceMessages.filter((message) => message.status === "Approved").length;
-  const enabledRules = facilityRules.filter((rule) => rule.status === "Enabled").length;
-
-  return {
-    needsIntake,
-    needsMessageReview,
-    activeResponders,
-    limitedResponders,
-    approvedMessages,
-    enabledRules,
-    totalNeedsAttention: needsIntake + needsMessageReview + limitedResponders
-  };
+function statusTone(status: string) {
+  if (status.includes("Review") || status === "New") return "bg-[#f7e8d5] text-[#8a5521] border-[#ebceb0]";
+  if (status === "Delivered" || status === "Approved") return "bg-[#e4eddf] text-[#587244] border-[#cbdcbe]";
+  return "bg-[#e8edf1] text-[#516476] border-[#d1dbe0]";
 }
 
-const coverageHealth = [
-  { label: "Christian coverage", status: "Covered", detail: "Prayer and encouragement responder active" },
-  { label: "Interfaith coverage", status: "Covered", detail: "Calming words and affirmation responder active" },
-  { label: "No-specific-tradition", status: "Covered", detail: "Volunteer encouragement desk available" },
-  { label: "Spanish language", status: "Limited", detail: "Available through interfaith support only" }
-];
-
 export default function DashboardPage() {
-  const metrics = getDashboardMetrics();
-  const attentionItems = [
-    {
-      title: "Requests waiting for intake review",
-      count: metrics.needsIntake,
-      href: "/app/support-requests",
-      note: "Confirm consent, tone, and routing preference before assignment."
-    },
-    {
-      title: "Messages waiting for review",
-      count: metrics.needsMessageReview,
-      href: "/app/message-review",
-      note: "Check content boundaries before recipient delivery."
-    },
-    {
-      title: "Responder coverage limitations",
-      count: metrics.limitedResponders,
-      href: "/app/approved-responders",
-      note: "Limited or renewal-needed responders should be reviewed."
-    }
-  ];
-
-  const liveFlow = solaceRequests.map((request) => ({
-    id: request.id,
-    title: `${request.patientAlias} · ${request.requestType}`,
-    status: request.status,
-    responder: getResponderName(request.assignedResponderId),
-    note: request.note
-  }));
+  const activeResponderCount = approvedResponders.filter((responder) => responder.status === "Active").length;
+  const enabledRuleCount = facilityRules.filter((rule) => rule.status === "Enabled").length;
 
   return (
-    <div className="space-y-7 lg:space-y-8">
-      <section className="rounded-[2rem] border border-[#d7d2c8] bg-gradient-to-br from-[#fffdf9] via-[#f8f3e9] to-[#edf4f0] p-7 shadow-[0_12px_34px_rgba(77,94,86,0.08)] lg:p-8">
-        <div className="grid gap-6 xl:grid-cols-[1.25fr_0.75fr]">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#5f746d]">1:30 PM Pass 2 · Operations Board</p>
-            <h2 className="mt-3 text-3xl font-semibold leading-tight text-[#1f3442]">What needs attention right now?</h2>
-            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#4f6058]">
-              Spiritual Solace is a workflow tool first. This board prioritizes review queues, responder coverage, delivery readiness,
-              and the rules that keep one-way support safe and accountable.
-            </p>
-          </div>
-          <article className="rounded-3xl border border-[#dfd8cb] bg-white/80 p-5 shadow-sm">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#6a7b74]">Needs attention</p>
-            <p className="mt-2 text-5xl font-semibold tracking-tight text-[#223746]">{metrics.totalNeedsAttention}</p>
-            <p className="mt-2 text-sm leading-relaxed text-[#5f7069]">
-              Items currently requiring intake review, message review, or responder coverage follow-up.
-            </p>
-          </article>
-        </div>
+    <div className="relative overflow-hidden rounded-[2.2rem] border border-[#d8d1c6] bg-[#fdf9f1] shadow-[0_24px_70px_rgba(53,72,65,0.12)]">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_12%,rgba(140,164,119,0.16),transparent_26%),radial-gradient(circle_at_82%_0%,rgba(13,43,59,0.10),transparent_28%)]" />
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <article className="rounded-2xl border border-[#dfd8cb] bg-white/85 p-4 shadow-[0_6px_16px_rgba(77,94,86,0.06)]">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#6a7b74]">Requests today</p>
-            <p className="mt-2 text-2xl font-semibold text-[#223746]">{solaceRequests.length}</p>
-            <p className="mt-1 text-xs text-[#5f7069]">Demo request records</p>
-          </article>
-          <article className="rounded-2xl border border-[#dfd8cb] bg-white/85 p-4 shadow-[0_6px_16px_rgba(77,94,86,0.06)]">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#6a7b74]">Messages approved</p>
-            <p className="mt-2 text-2xl font-semibold text-[#223746]">{metrics.approvedMessages}</p>
-            <p className="mt-1 text-xs text-[#5f7069]">Ready for recipient view</p>
-          </article>
-          <article className="rounded-2xl border border-[#dfd8cb] bg-white/85 p-4 shadow-[0_6px_16px_rgba(77,94,86,0.06)]">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#6a7b74]">Active responders</p>
-            <p className="mt-2 text-2xl font-semibold text-[#223746]">{metrics.activeResponders}</p>
-            <p className="mt-1 text-xs text-[#5f7069]">Available routing groups</p>
-          </article>
-          <article className="rounded-2xl border border-[#dfd8cb] bg-white/85 p-4 shadow-[0_6px_16px_rgba(77,94,86,0.06)]">
-            <p className="text-xs font-medium uppercase tracking-[0.08em] text-[#6a7b74]">Enabled rules</p>
-            <p className="mt-2 text-2xl font-semibold text-[#223746]">{metrics.enabledRules}</p>
-            <p className="mt-1 text-xs text-[#5f7069]">Facility controls active</p>
-          </article>
-        </div>
-      </section>
-
-      <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <article className="rounded-3xl border border-[#dfd8cb] bg-white/85 p-6 shadow-[0_8px_24px_rgba(77,94,86,0.06)]">
-          <div className="flex items-center justify-between gap-3">
+      <div className="relative grid min-h-[760px] xl:grid-cols-[0.82fr_1.35fr_0.78fr]">
+        <aside className="border-b border-[#e1d9cb] bg-[#0d2b3b] p-6 text-white xl:border-b-0 xl:border-r xl:border-white/10">
+          <div className="flex h-full flex-col">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f746d]">Priority queue</p>
-              <h3 className="mt-1 text-xl font-semibold text-[#223746]">Needs attention</h3>
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#9fb36b]">Care desk</p>
+              <h2 className="mt-4 font-serif text-4xl font-semibold leading-tight">Good afternoon.</h2>
+              <p className="mt-4 text-sm leading-7 text-[#dce8e6]">
+                Today’s work is organized around people waiting for reviewed comfort, not metrics.
+              </p>
             </div>
-            <span className="rounded-full border border-[#d7d9cf] bg-[#f3f6f0] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.09em] text-[#556a62]">
-              Staff decision points
+
+            <div className="mt-9 space-y-5">
+              <div className="border-y border-white/12 py-6">
+                <p className="text-6xl font-semibold tracking-[-0.06em] text-white">{requestLanes.reduce((sum, lane) => sum + lane.value, 0)}</p>
+                <p className="mt-2 text-sm font-semibold text-[#d7e7b7]">items need staff awareness</p>
+              </div>
+
+              <div className="space-y-4">
+                {requestLanes.map((lane) => (
+                  <div key={lane.label} className="grid grid-cols-[auto_1fr] gap-4 border-b border-white/10 pb-4 last:border-b-0">
+                    <span className="font-serif text-3xl text-[#d7e7b7]">{lane.value}</span>
+                    <span>
+                      <span className="block text-sm font-semibold text-white">{lane.label}</span>
+                      <span className="mt-1 block text-xs leading-5 text-[#b8cac9]">{lane.note}</span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-auto pt-8">
+              <Link href="/app/support-requests" className="inline-flex w-full justify-center rounded-full bg-[#9fb36b] px-5 py-3 text-sm font-bold text-[#0d2b3b] shadow-lg hover:bg-[#b4c67f]">
+                Begin next review →
+              </Link>
+              <p className="mt-4 text-xs leading-5 text-[#b8cac9]">No outreach, no public messaging, and no external action happens from this demo.</p>
+            </div>
+          </div>
+        </aside>
+
+        <main className="p-6 lg:p-8">
+          <div className="flex flex-col gap-3 border-b border-[#ddd4c8] pb-6 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#6e7f67]">Active request file</p>
+              <h1 className="mt-2 font-serif text-4xl font-semibold tracking-[-0.035em] text-[#102b3a]">
+                {currentRequest.requestType} for {currentRequest.location}
+              </h1>
+            </div>
+            <span className={`w-fit rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] ${statusTone(currentRequest.status)}`}>
+              {currentRequest.status}
             </span>
           </div>
 
-          <div className="mt-5 space-y-3">
-            {attentionItems.map((item) => (
-              <Link key={item.title} href={item.href} className="block rounded-2xl border border-[#e4ddd1] bg-[#faf6ee] p-4 transition hover:bg-[#f4efe6]">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-[#223746]">{item.title}</p>
-                    <p className="mt-1 text-xs leading-relaxed text-[#5f7069]">{item.note}</p>
+          <section className="grid gap-6 border-b border-[#ddd4c8] py-7 lg:grid-cols-[1fr_0.9fr]">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6e7f67]">Patient request</p>
+              <blockquote className="mt-4 font-serif text-3xl italic leading-tight text-[#263f4b]">
+                “{currentRequest.note}”
+              </blockquote>
+              <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="font-semibold text-[#102b3a]">Preference</dt>
+                  <dd className="mt-1 text-[#5f7069]">{currentRequest.traditionPreference} · {currentRequest.tonePreference}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-[#102b3a]">Language</dt>
+                  <dd className="mt-1 text-[#5f7069]">{currentRequest.language}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-[#102b3a]">Submitted</dt>
+                  <dd className="mt-1 text-[#5f7069]">{currentRequest.submittedAt}</dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-[#102b3a]">Responder</dt>
+                  <dd className="mt-1 text-[#5f7069]">{getResponderName(currentRequest.assignedResponderId)}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="rounded-[1.7rem] border border-[#ded6ca] bg-[#f5efe5] p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6e7f67]">Prepared message</p>
+              <p className="mt-4 font-serif text-2xl italic leading-9 text-[#263f4b]">
+                “{currentMessage?.body ?? "A comfort message will appear here once a responder submits it."}”
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {(currentMessage?.safetyNotes ?? ["Awaiting responder message"]).map((note) => (
+                  <span key={note} className="rounded-full border border-[#d7ccbd] bg-white/70 px-3 py-1 text-xs font-semibold text-[#5f7069]">✓ {note}</span>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-6 py-7 lg:grid-cols-[0.9fr_1.1fr]">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6e7f67]">Review decision</p>
+              <h2 className="mt-2 font-serif text-3xl font-semibold text-[#102b3a]">What should staff do next?</h2>
+              <p className="mt-3 text-sm leading-7 text-[#5f7069]">
+                This desk is designed around the next safe human decision, not around a dashboard of totals.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <Link href="/app/message-review" className="rounded-full bg-[#0d2b3b] px-5 py-3 text-sm font-bold text-white shadow-md hover:bg-[#173f53]">
+                  Review message
+                </Link>
+                <Link href="/app/approved-responders" className="rounded-full border border-[#cfc6b8] bg-white/70 px-5 py-3 text-sm font-bold text-[#102b3a] hover:bg-white">
+                  Check responder
+                </Link>
+                <Link href="/app/facility-rules" className="rounded-full border border-[#cfc6b8] bg-white/70 px-5 py-3 text-sm font-bold text-[#102b3a] hover:bg-white">
+                  View rules
+                </Link>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {solaceRequests.map((request) => (
+                <Link key={request.id} href="/app/support-requests" className="grid gap-3 border-b border-[#ded6ca] py-4 transition hover:bg-[#fbf6ee] sm:grid-cols-[1fr_auto]">
+                  <span>
+                    <span className="block font-semibold text-[#102b3a]">{request.patientAlias} · {request.requestType}</span>
+                    <span className="mt-1 block text-sm leading-6 text-[#5f7069]">{request.location} · {request.note}</span>
+                  </span>
+                  <span className={`h-fit rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-[0.1em] ${statusTone(request.status)}`}>{request.priority}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        </main>
+
+        <aside className="border-t border-[#e1d9cb] bg-[#f5efe5] p-6 xl:border-l xl:border-t-0">
+          <div className="sticky top-24 space-y-8">
+            <section>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6e7f67]">Governance status</p>
+              <div className="mt-4 divide-y divide-[#ded6ca] border-y border-[#ded6ca]">
+                {governanceLines.map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-4 py-3 text-sm">
+                    <span className="font-semibold text-[#102b3a]">{label}</span>
+                    <span className="text-[#5f7069]">{value}</span>
                   </div>
-                  <span className="inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-[#516476] px-3 text-lg font-semibold text-white">
-                    {item.count}
-                  </span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </article>
+                ))}
+              </div>
+            </section>
 
-        <article className="rounded-3xl border border-[#dfd8cb] bg-white/85 p-6 shadow-[0_8px_24px_rgba(77,94,86,0.06)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f746d]">Today’s flow</p>
-              <h3 className="mt-1 text-xl font-semibold text-[#223746]">Requests moving through the system</h3>
-            </div>
-            <span className="text-xs font-medium uppercase tracking-[0.09em] text-[#6a7b74]">Live demo data</span>
-          </div>
+            <section>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6e7f67]">Facility readiness</p>
+              <div className="mt-4 space-y-4 text-sm text-[#5f7069]">
+                <p><span className="font-semibold text-[#102b3a]">{activeResponderCount}</span> active responder groups available.</p>
+                <p><span className="font-semibold text-[#102b3a]">{enabledRuleCount}</span> facility rules enabled.</p>
+                <p><span className="font-semibold text-[#102b3a]">{auditEvents.length}</span> audit events recorded today.</p>
+              </div>
+            </section>
 
-          <div className="space-y-3">
-            {liveFlow.map((flow) => (
-              <article key={flow.id} className="rounded-2xl border border-[#e4ddd1] bg-[#faf7f0] p-4">
-                <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <p className="font-semibold text-[#223746]">{flow.id} · {flow.title}</p>
-                    <p className="mt-1 text-sm leading-relaxed text-[#5f7069]">{flow.note}</p>
-                  </div>
-                  <span className="rounded-full border border-[#d8d3c7] bg-white/80 px-3 py-1 text-xs font-semibold text-[#61706a]">
-                    {flow.status}
-                  </span>
-                </div>
-                <p className="mt-3 text-xs font-medium text-[#60716a]">Responder: {flow.responder}</p>
-              </article>
-            ))}
+            <section className="rounded-[1.5rem] bg-[#0d2b3b] p-5 text-white">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#9fb36b]">NowySystems note</p>
+              <p className="mt-3 text-sm leading-6 text-[#dce8e6]">
+                This screen explores a care-desk pattern: one active file, visible safeguards, and a clear next human decision.
+              </p>
+            </section>
           </div>
-        </article>
-      </section>
-
-      <section className="grid gap-5 xl:grid-cols-[1fr_1fr]">
-        <article className="rounded-3xl border border-[#dfd8cb] bg-white/85 p-6 shadow-[0_8px_24px_rgba(77,94,86,0.06)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f746d]">Coverage health</p>
-              <h3 className="mt-1 text-xl font-semibold text-[#223746]">Can requests be routed?</h3>
-            </div>
-            <Link href="/app/approved-responders" className="text-xs font-semibold text-[#516476] underline underline-offset-4">
-              Open responders
-            </Link>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {coverageHealth.map((item) => (
-              <article key={item.label} className="rounded-2xl border border-[#e4ddd1] bg-[#faf6ee] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-[#223746]">{item.label}</p>
-                  <span className="rounded-full border border-[#d8d3c7] bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-[#61706a]">
-                    {item.status}
-                  </span>
-                </div>
-                <p className="mt-2 text-xs leading-relaxed text-[#5f7069]">{item.detail}</p>
-              </article>
-            ))}
-          </div>
-        </article>
-
-        <article className="rounded-3xl border border-[#dfd8cb] bg-gradient-to-b from-[#f8f3e9] to-[#f3f6f0] p-6 shadow-[0_8px_24px_rgba(77,94,86,0.06)]">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#5f746d]">Workflow map</p>
-              <h3 className="mt-1 text-xl font-semibold text-[#223746]">How a request becomes comfort</h3>
-            </div>
-            <Link href="/app/facility-rules" className="text-xs font-semibold text-[#516476] underline underline-offset-4">
-              Open rules
-            </Link>
-          </div>
-          <ol className="grid gap-3 sm:grid-cols-2">
-            {workflowSteps.map((step, index) => (
-              <li key={step} className="flex gap-3 rounded-2xl border border-[#e4ddd1] bg-white/75 p-4">
-                <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#516476] text-xs font-bold text-white">{index + 1}</span>
-                <p className="text-sm font-medium text-[#243847]">{step}</p>
-              </li>
-            ))}
-          </ol>
-        </article>
-      </section>
-
-      <section className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-        <article className="rounded-3xl border border-[#dfd8cb] bg-white/85 p-6 shadow-[0_8px_24px_rgba(77,94,86,0.06)]">
-          <h3 className="text-lg font-semibold text-[#223746]">Open a workflow module</h3>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {quickActions.map(([label, href, note]) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-2xl border border-[#dfd8cb] bg-[#f9f5ed] p-4 text-sm font-semibold text-[#253948] transition hover:bg-[#f2ece1]"
-              >
-                <span>{label}</span>
-                <span className="mt-1 block text-xs font-medium text-[#6a7b74]">{note}</span>
-              </Link>
-            ))}
-          </div>
-        </article>
-
-        <article className="rounded-3xl border border-[#d8d3c7] bg-[#f6f1e7] p-6 shadow-[0_8px_20px_rgba(77,94,86,0.05)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5f746d]">Demo readiness</p>
-          <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[#4f6058]">
-            <li>• Core workflow modules are connected to canonical demo data.</li>
-            <li>• No live messages, uploads, notifications, or external actions.</li>
-            <li>• Review gates, audit trail, and facility rules are visible.</li>
-            <li>• Next sweep should focus on visual style and module-specific polish.</li>
-          </ul>
-        </article>
-      </section>
+        </aside>
+      </div>
     </div>
   );
 }

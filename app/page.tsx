@@ -1,169 +1,325 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const journey = [
-  ["Request", "A patient or family asks for prayer, affirmation, guidance, encouragement, or calming words."],
-  ["Review", "Preferences and facility rules shape the request before any responder sees it."],
-  ["Match", "An approved local responder is selected for tradition, tone, language, and coverage."],
-  ["Approve", "The comfort message is checked before it appears to the recipient."],
-  ["Deliver", "One reviewed message arrives quietly, with no pressure to reply."]
+const trustStrip = [
+  { label: "Consent First", icon: "♢" },
+  { label: "Human Reviewed", icon: "👥" },
+  { label: "Facility Controlled", icon: "▦" },
+  { label: "Temporary by Design", icon: "◷" },
+  { label: "Secure & Private", icon: "▣" }
 ];
 
-const moments = [
-  ["Before a procedure", "A short message can steady someone before a difficult moment.", "lg:col-span-7 lg:min-h-[340px]"],
-  ["Families waiting", "Gentle words when time feels slow and uncertain.", "lg:col-span-5 lg:min-h-[270px]"],
-  ["During recovery", "Encouragement without an open conversation to manage.", "lg:col-span-5 lg:min-h-[270px]"],
-  ["Difficult stays", "A calm way to honor preference, dignity, and boundaries.", "lg:col-span-7 lg:min-h-[340px]"]
+const timeline = [
+  {
+    time: "8:42 AM",
+    title: "Request",
+    body: "A patient requests prayer before surgery.",
+    icon: "✎"
+  },
+  {
+    time: "8:45 AM",
+    title: "Review",
+    body: "The facility reviews the request and applies its rules.",
+    icon: "☑"
+  },
+  {
+    time: "8:48 AM",
+    title: "Responder",
+    body: "A trusted responder is selected.",
+    icon: "○"
+  },
+  {
+    time: "8:58 AM",
+    title: "Safety",
+    body: "A message is reviewed for safety and appropriateness.",
+    icon: "◇"
+  },
+  {
+    time: "9:02 AM",
+    title: "Delivered",
+    body: "Comfort is delivered.",
+    icon: "➤"
+  }
 ];
 
-const controls = ["Reviewed", "One-way", "Approved responders", "Facility controlled", "No public feed", "No open chat"];
+const helpCards = [
+  {
+    title: "Before Surgery",
+    body: "Patients often feel anxious before surgery. A few kind words can help.",
+    icon: "☤"
+  },
+  {
+    title: "During Recovery",
+    body: "Encouragement and prayer can support healing and emotional well-being.",
+    icon: "♥"
+  },
+  {
+    title: "For Families Waiting",
+    body: "Loved ones can request comfort while they wait during difficult moments.",
+    icon: "👥"
+  },
+  {
+    title: "End-of-Life Care",
+    body: "Spiritual support delivered with compassion, respect, and dignity.",
+    icon: "🕊"
+  }
+];
+
+const facilityFeatures = [
+  {
+    title: "Human Review",
+    body: "Every message is reviewed by trained staff before delivery.",
+    icon: "☑"
+  },
+  {
+    title: "Approved Responders",
+    body: "Messages come from trusted, pre-approved community responders.",
+    icon: "👥"
+  },
+  {
+    title: "One-Way Delivery",
+    body: "Messages are delivered one-way. No replies. No conversations.",
+    icon: "↜"
+  },
+  {
+    title: "Facility Rules",
+    body: "You control who can send, what is allowed, and how messages are delivered.",
+    icon: "▦"
+  },
+  {
+    title: "Audit & Visibility",
+    body: "Track activity, reviews, and deliveries with complete transparency.",
+    icon: "☷"
+  },
+  {
+    title: "No Public Access",
+    body: "Patients do not log in. All requests are handled through your facility.",
+    icon: "▣"
+  }
+];
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#f5efe2] text-[#102b3a]">
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-[#102b3a]/80 text-white backdrop-blur-2xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
+    <div className="min-h-screen bg-[#f7f3ea] text-[#102b3a]">
+      <header className="absolute inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0d2b3b]/88 text-white backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link href="/" className="flex items-center gap-3">
-            <span className="grid h-10 w-10 place-items-center rounded-full border border-[#f1c871]/40 bg-white/10 text-[#f1c871]">✦</span>
+            <span className="text-4xl leading-none text-white">🕊</span>
             <span>
-              <span className="block text-lg font-semibold leading-none">SpiritualSolace</span>
-              <span className="mt-1 block text-[10px] uppercase tracking-[0.2em] text-[#b8cac9]">Comfort with boundaries</span>
+              <span className="block text-3xl font-semibold leading-none tracking-[-0.04em]">
+                Spiritual<span className="text-[#9fb36b]">Solace</span>
+              </span>
+              <span className="mt-1 block text-xs tracking-wide text-[#d4dedc]">Compassion. Dignity. Delivered with Care.</span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-7 text-sm text-[#d8e7e6] lg:flex">
-            <a href="#journey" className="hover:text-white">Journey</a>
-            <a href="#message" className="hover:text-white">Message</a>
-            <a href="#moments" className="hover:text-white">Moments</a>
-            <a href="#trust" className="hover:text-white">Trust</a>
+
+          <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
+            <a href="#how" className="hover:text-[#d7e7b7]">How It Works</a>
+            <a href="#facilities" className="hover:text-[#d7e7b7]">For Facilities</a>
+            <a href="#responders" className="hover:text-[#d7e7b7]">For Responders</a>
+            <a href="#about" className="hover:text-[#d7e7b7]">About Us</a>
+            <a href="#resources" className="hover:text-[#d7e7b7]">Resources</a>
           </nav>
-          <Link href="/app" className="rounded-full bg-[#f1c871] px-5 py-2.5 text-sm font-bold text-[#102b3a] shadow-[0_14px_34px_rgba(241,200,113,0.25)] hover:bg-[#ffdc90]">
-            View demo
-          </Link>
+
+          <div className="hidden items-center gap-4 md:flex">
+            <Link href="/landing-v1" className="rounded-md border border-white/35 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
+              Log In
+            </Link>
+            <Link href="/app" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
+              View Demo
+            </Link>
+          </div>
         </div>
       </header>
 
       <main>
-        <section className="relative min-h-screen overflow-hidden bg-[#102b3a] pt-24 text-white">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_14%_18%,rgba(126,169,160,0.38),transparent_28%),radial-gradient(circle_at_76%_16%,rgba(241,200,113,0.22),transparent_26%),linear-gradient(140deg,#102b3a,#153747_52%,#244f58)]" />
-          <div className="absolute inset-x-0 bottom-0 h-56 bg-gradient-to-b from-transparent to-[#f5efe2]" />
+        <section className="relative overflow-hidden bg-[#0d2b3b] text-white">
+          <div className="absolute inset-0">
+            <Image src="/brand/spiritualsolace-hero-dove.png" alt="Soft comfort imagery" fill priority className="object-cover object-[72%_center] opacity-55 mix-blend-screen" />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(8,31,45,0.98)_0%,rgba(8,31,45,0.9)_38%,rgba(8,31,45,0.35)_70%,rgba(8,31,45,0.82)_100%)]" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_40%,rgba(255,255,255,0.18),transparent_28%)]" />
+          </div>
 
-          <div className="relative mx-auto grid min-h-[calc(100vh-6rem)] max-w-7xl items-center gap-12 px-5 pb-28 pt-10 md:px-8 lg:grid-cols-[0.92fr_1.08fr]">
-            <div className="z-10 max-w-3xl">
-              <p className="inline-flex rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#d8e7e6] backdrop-blur">
-                Reviewed support for care settings
-              </p>
-              <h1 className="mt-7 text-5xl font-semibold leading-[0.94] tracking-[-0.055em] md:text-7xl xl:text-8xl">
-                A few caring words can matter.
+          <div className="relative mx-auto flex min-h-[650px] max-w-7xl items-center px-6 pb-24 pt-32">
+            <div className="max-w-2xl">
+              <h1 className="font-serif text-5xl font-semibold leading-[1.05] tracking-[-0.035em] md:text-6xl lg:text-7xl">
+                When someone needs comfort, a few caring words <span className="italic text-[#9fb36b]">can</span> matter.
               </h1>
-              <p className="mt-7 max-w-2xl text-lg leading-8 text-[#d4e3e1] md:text-xl">
-                SpiritualSolace helps care facilities deliver reviewed prayers, encouragement, affirmations, and calming words from trusted community responders.
+              <p className="mt-7 max-w-xl text-lg leading-8 text-[#e8efef]">
+                SpiritualSolace helps hospitals and care facilities deliver reviewed prayers, encouragement, affirmations, and calming messages from trusted community responders.
               </p>
-              <div className="mt-9 flex flex-wrap gap-3">
-                <Link href="/app" className="rounded-full bg-[#f1c871] px-7 py-3.5 text-sm font-bold text-[#102b3a] shadow-[0_20px_48px_rgba(241,200,113,0.25)] hover:bg-[#ffdc90]">
-                  Explore the demo
+              <div className="mt-9 flex flex-wrap gap-4">
+                <Link href="/app" className="rounded-lg bg-[#86a45f] px-8 py-4 text-base font-bold text-white shadow-xl hover:bg-[#789752]">
+                  View Demo →
                 </Link>
-                <a href="#journey" className="rounded-full border border-white/20 bg-white/10 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/15">
-                  Follow the request
+                <a href="#how" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                  ⓘ How It Works
                 </a>
               </div>
             </div>
+          </div>
 
-            <div className="relative z-10 mx-auto w-full max-w-[620px] lg:translate-y-10">
-              <div className="absolute -left-12 top-16 h-56 w-56 rounded-full bg-[#f1c871]/20 blur-3xl" />
-              <div className="absolute -right-10 bottom-8 h-72 w-72 rounded-full bg-[#8fb5aa]/25 blur-3xl" />
-              <div className="relative overflow-hidden rounded-[3rem] border border-white/15 bg-white/10 p-3 shadow-[0_34px_90px_rgba(0,12,22,0.36)] backdrop-blur-md">
-                <div className="relative min-h-[620px] overflow-hidden rounded-[2.45rem] bg-[#eadfce]">
-                  <Image src="/brand/spiritualsolace-hero-dove.png" alt="Soft SpiritualSolace comfort image" fill priority className="object-cover object-[70%_center] opacity-85 mix-blend-multiply" />
-                  <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(16,43,58,0.02),rgba(16,43,58,0.46)),radial-gradient(circle_at_24%_16%,rgba(255,255,255,0.56),transparent_35%)]" />
-                  <div className="absolute bottom-6 left-6 right-6 rounded-[2rem] border border-white/60 bg-[#fffaf0]/92 p-6 text-[#102b3a] shadow-[0_24px_60px_rgba(16,43,58,0.22)] backdrop-blur">
-                    <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#6a817a]">A message for you</p>
-                    <p className="mt-4 text-2xl font-semibold leading-9 tracking-[-0.02em]">“May you feel courage, calm, and the presence of care around you today.”</p>
-                  </div>
+          <div className="relative border-t border-white/10 bg-[#0b2738]/78 px-6 py-5 backdrop-blur-md">
+            <div className="mx-auto grid max-w-7xl gap-4 md:grid-cols-5">
+              {trustStrip.map((item) => (
+                <div key={item.label} className="flex items-center justify-center gap-3 border-white/10 text-sm font-semibold text-[#dfe9e8] md:border-r last:border-r-0">
+                  <span className="text-xl text-[#9fb36b]">{item.icon}</span>
+                  <span>{item.label}</span>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
+
+          <div className="absolute -bottom-1 left-0 right-0 h-14 rounded-t-[50%] bg-[#f7f3ea]" />
         </section>
 
-        <section id="journey" className="relative -mt-20 px-5 md:px-8">
-          <div className="mx-auto max-w-6xl rounded-[3rem] border border-[#ded5c5] bg-[#fffaf0] p-7 shadow-[0_30px_90px_rgba(31,52,66,0.14)] md:p-10 lg:p-12">
-            <div className="grid gap-10 lg:grid-cols-[0.82fr_1.18fr]">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6a817a]">The request journey</p>
-                <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.04em] text-[#102b3a] md:text-5xl">A sensitive request should move carefully.</h2>
-                <p className="mt-5 text-base leading-7 text-[#586c66]">This is not a public wall or open chat. It is a guided path from request to reviewed comfort.</p>
-              </div>
-
-              <ol className="relative space-y-0 pl-7 before:absolute before:left-[13px] before:top-3 before:h-[calc(100%-1.5rem)] before:w-px before:bg-[#c9b98e]">
-                {journey.map(([title, body], index) => (
-                  <li key={title} className="relative pb-9 last:pb-0">
-                    <span className="absolute -left-7 top-1 grid h-7 w-7 place-items-center rounded-full bg-[#102b3a] text-xs font-bold text-[#f1c871] ring-8 ring-[#fffaf0]">{index + 1}</span>
-                    <div className="pl-3">
-                      <h3 className="text-xl font-semibold text-[#163747]">{title}</h3>
-                      <p className="mt-2 max-w-2xl text-sm leading-6 text-[#5c6f69]">{body}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
+        <section id="how" className="px-6 pb-14 pt-10">
+          <div className="mx-auto max-w-7xl text-center">
+            <h2 className="font-serif text-4xl font-semibold tracking-[-0.025em] text-[#102b3a]">How Comfort Is Delivered</h2>
+            <div className="mx-auto mt-3 flex w-28 items-center justify-center gap-3 text-[#8aa15d]">
+              <span className="h-px flex-1 bg-[#d5cabb]" />
+              <span>❦</span>
+              <span className="h-px flex-1 bg-[#d5cabb]" />
             </div>
-          </div>
-        </section>
 
-        <section id="message" className="relative overflow-hidden px-5 py-24 md:px-8 lg:py-32">
-          <div className="absolute inset-x-0 top-0 h-1/2 bg-[#f5efe2]" />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-[#eaf3ef]" />
-          <div className="relative mx-auto max-w-5xl rounded-[3.2rem] bg-[#102b3a] px-7 py-16 text-center text-white shadow-[0_34px_90px_rgba(16,43,58,0.25)] md:px-14 md:py-20">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#f1c871]">The emotional center</p>
-            <p className="mx-auto mt-8 max-w-4xl text-4xl font-semibold leading-tight tracking-[-0.045em] md:text-6xl">
-              “We are holding you in prayer today. May you feel courage, calm, and the presence of care around you.”
-            </p>
-            <p className="mt-8 text-sm leading-6 text-[#c8ddda]">Reviewed by staff · sent from an approved responder · one-way temporary delivery</p>
-          </div>
-        </section>
-
-        <section id="moments" className="bg-[#eaf3ef] px-5 pb-24 md:px-8 lg:pb-32">
-          <div className="mx-auto max-w-7xl">
-            <div className="max-w-3xl">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#6a817a]">Human moments</p>
-              <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.04em] text-[#102b3a] md:text-5xl">Designed around people, not modules.</h2>
-            </div>
-            <div className="mt-10 grid gap-5 lg:grid-cols-12">
-              {moments.map(([title, body, span]) => (
-                <article key={title} className={`${span} flex flex-col justify-end overflow-hidden rounded-[2.4rem] border border-white/65 bg-[#fffaf0] p-7 shadow-[0_18px_50px_rgba(31,52,66,0.09)]`}>
-                  <div className="mb-10 h-14 w-14 rounded-2xl bg-[#102b3a] text-center text-3xl leading-[3.5rem] text-[#f1c871]">✦</div>
-                  <h3 className="text-3xl font-semibold tracking-[-0.035em] text-[#153747]">{title}</h3>
-                  <p className="mt-3 max-w-xl text-sm leading-6 text-[#5c6f69]">{body}</p>
+            <div className="relative mt-12 grid gap-8 lg:grid-cols-5">
+              <div className="absolute left-[10%] right-[10%] top-[5.4rem] hidden border-t border-dashed border-[#aeb498] lg:block" />
+              {timeline.map((step, index) => (
+                <article key={step.title} className="relative flex flex-col items-center text-center">
+                  <p className="mb-4 text-sm font-semibold text-[#102b3a]">{step.time}</p>
+                  <div className={`relative z-10 grid h-20 w-20 place-items-center rounded-full text-3xl text-white shadow-[0_12px_26px_rgba(16,43,58,0.16)] ${index % 2 === 0 ? "bg-[#71925a]" : "bg-[#0d2b3b]"}`}>
+                    {step.icon}
+                  </div>
+                  <h3 className="mt-5 text-lg font-semibold text-[#102b3a]">{step.title}</h3>
+                  <p className="mt-2 max-w-[190px] text-sm leading-6 text-[#374b52]">{step.body}</p>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="trust" className="bg-[#102b3a] px-5 py-24 text-white md:px-8 lg:py-28">
-          <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#f1c871]">Facility trust</p>
-              <h2 className="mt-4 text-4xl font-semibold leading-tight tracking-[-0.04em] md:text-5xl">Comfort still needs controls.</h2>
-              <p className="mt-5 text-base leading-7 text-[#c8ddda]">Facilities define the responder list, review rules, delivery boundaries, and audit trail.</p>
+        <section id="message" className="px-6 py-8">
+          <div className="mx-auto grid max-w-7xl overflow-hidden rounded-2xl border border-[#e1d9cb] bg-[#f0eadf] shadow-[0_16px_40px_rgba(16,43,58,0.08)] lg:grid-cols-[0.9fr_1.25fr_0.9fr]">
+            <div className="relative min-h-[245px] bg-[#ded5c7]">
+              <Image src="/brand/spiritualsolace-hero-dove.png" alt="Comfort image" fill className="object-cover object-center opacity-70 mix-blend-multiply" />
+              <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(247,243,234,0.05),rgba(247,243,234,0.72))]" />
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {controls.map((control) => (
-                <div key={control} className="rounded-full border border-white/12 bg-white/8 px-5 py-4 text-sm font-semibold text-[#dbe9e8] backdrop-blur">✓ {control}</div>
-              ))}
+
+            <div className="flex flex-col justify-center px-8 py-9 text-center lg:px-10">
+              <h2 className="font-serif text-3xl font-semibold text-[#102b3a]">A Message of Comfort</h2>
+              <div className="mx-auto mt-2 flex w-24 items-center justify-center gap-2 text-[#8aa15d]">
+                <span className="h-px flex-1 bg-[#d5cabb]" />
+                <span>❦</span>
+                <span className="h-px flex-1 bg-[#d5cabb]" />
+              </div>
+              <p className="mt-7 font-serif text-2xl italic leading-9 text-[#273d47]">
+                “We are holding you in prayer today. May you feel courage, calm, and the presence of care around you.”
+              </p>
+              <p className="mt-5 text-sm text-[#607077]">— First Community Prayer Team</p>
             </div>
-          </div>
-          <div className="mx-auto mt-14 flex max-w-7xl flex-col gap-3 rounded-[2.2rem] border border-white/10 bg-white/8 p-6 backdrop-blur md:flex-row md:items-center md:justify-between md:p-8">
-            <div>
-              <h3 className="text-2xl font-semibold tracking-[-0.02em]">See the full workflow.</h3>
-              <p className="mt-2 text-sm text-[#c8ddda]">Operations board, request queue, responder routing, message review, patient view, audit log, and rules.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/app" className="rounded-full bg-[#f1c871] px-6 py-3 text-sm font-bold text-[#102b3a] hover:bg-[#ffdc90]">View demo</Link>
-              <Link href="/landing-v1" className="rounded-full border border-white/15 bg-white/10 px-6 py-3 text-sm font-bold text-white hover:bg-white/15">V1 archive</Link>
+
+            <div className="flex items-center px-7 py-8">
+              <div className="w-full rounded-xl bg-white/45 p-6 shadow-inner">
+                <h3 className="mb-5 flex items-center gap-3 text-base font-bold text-[#102b3a]"><span className="grid h-8 w-8 place-items-center rounded-full bg-[#71925a] text-white">✓</span>Delivered with Care</h3>
+                <ul className="space-y-3 text-sm text-[#263f4b]">
+                  <li>✓ Reviewed for safety and appropriateness</li>
+                  <li>✓ Matches patient preferences</li>
+                  <li>✓ One-way delivery to protect privacy</li>
+                  <li>✓ Temporary by design</li>
+                </ul>
+              </div>
             </div>
           </div>
         </section>
+
+        <section id="responders" className="px-6 py-8">
+          <div className="mx-auto max-w-7xl text-center">
+            <h2 className="font-serif text-4xl font-semibold tracking-[-0.025em] text-[#102b3a]">Where SpiritualSolace Helps</h2>
+            <div className="mx-auto mt-3 flex w-28 items-center justify-center gap-3 text-[#8aa15d]">
+              <span className="h-px flex-1 bg-[#d5cabb]" />
+              <span>❦</span>
+              <span className="h-px flex-1 bg-[#d5cabb]" />
+            </div>
+
+            <div className="mt-9 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+              {helpCards.map((card) => (
+                <article key={card.title} className="rounded-xl border border-[#ded7cb] bg-white p-7 shadow-[0_10px_26px_rgba(16,43,58,0.08)]">
+                  <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-[#8fa875] text-3xl text-white shadow-inner">{card.icon}</div>
+                  <h3 className="mt-6 font-serif text-xl font-semibold text-[#102b3a]">{card.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-[#374b52]">{card.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="facilities" className="px-6 py-8">
+          <div className="mx-auto grid max-w-7xl gap-7 rounded-2xl border border-[#d8d1c3] bg-[#e8ebe1] p-8 shadow-[0_14px_38px_rgba(16,43,58,0.08)] lg:grid-cols-[0.85fr_1.8fr]">
+            <div className="flex flex-col justify-between rounded-xl bg-[#eef1e8] p-6">
+              <div>
+                <div className="text-4xl text-[#71925a]">▦</div>
+                <h2 className="mt-4 font-serif text-3xl font-semibold leading-tight text-[#102b3a]">Built for<br />Care Facilities</h2>
+                <p className="mt-5 text-base leading-7 text-[#5d6f67]">SpiritualSolace is designed to fit your policies, protect your patients, and support your care teams.</p>
+              </div>
+              <Link href="/app" className="mt-7 inline-flex w-fit rounded-md bg-[#86a45f] px-6 py-3 text-sm font-bold text-white shadow-md hover:bg-[#789752]">
+                Learn More
+              </Link>
+            </div>
+
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {facilityFeatures.map((feature) => (
+                <article key={feature.title} className="flex gap-4">
+                  <span className="text-3xl text-[#71925a]">{feature.icon}</span>
+                  <div>
+                    <h3 className="font-bold text-[#102b3a]">{feature.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-[#374b52]">{feature.body}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="about" className="px-6 py-8">
+          <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-[1.1fr_1.1fr_1.1fr_0.9fr]">
+            <article className="rounded-xl bg-[#0d2b3b] p-8 text-white shadow-[0_12px_30px_rgba(16,43,58,0.18)]">
+              <div className="mb-4 text-4xl text-[#d7e7b7]">◇</div>
+              <h3 className="font-serif text-2xl font-semibold">Trust. Dignity. Compassion.</h3>
+              <p className="mt-4 text-sm leading-6 text-[#dce8e6]">SpiritualSolace exists to bring comfort without burden, connection without pressure, and care that respects every person’s journey.</p>
+            </article>
+            <article className="rounded-xl bg-[#ecefe5] p-8">
+              <div className="mb-4 text-4xl text-[#71925a]">▣</div>
+              <h3 className="font-bold text-[#102b3a]">Privacy-Aware</h3>
+              <p className="mt-3 text-sm leading-6 text-[#374b52]">Built with privacy and security in mind.</p>
+            </article>
+            <article className="rounded-xl bg-[#ecefe5] p-8">
+              <div className="mb-4 text-4xl text-[#71925a]">♡</div>
+              <h3 className="font-bold text-[#102b3a]">Faith-Inclusive</h3>
+              <p className="mt-3 text-sm leading-6 text-[#374b52]">Respecting all beliefs and traditions.</p>
+            </article>
+            <article className="rounded-xl bg-white p-8 text-center shadow-[0_10px_26px_rgba(16,43,58,0.08)]">
+              <h3 className="font-serif text-2xl font-semibold text-[#102b3a]">See It In Action</h3>
+              <p className="mt-3 text-sm leading-6 text-[#374b52]">Explore the dashboard and see how SpiritualSolace supports care teams.</p>
+              <Link href="/app" className="mt-6 inline-flex rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white hover:bg-[#789752]">
+                View Demo →
+              </Link>
+            </article>
+          </div>
+        </section>
       </main>
+
+      <footer id="resources" className="mt-8 bg-[#0d2b3b] px-6 py-10 text-white">
+        <div className="mx-auto grid max-w-7xl gap-8 md:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
+          <div className="flex items-center gap-3">
+            <span className="text-4xl">🕊</span>
+            <span className="text-2xl font-semibold">Spiritual<span className="text-[#9fb36b]">Solace</span></span>
+          </div>
+          <div><h4 className="text-xs font-bold uppercase tracking-widest text-[#9fb36b]">Product</h4><p className="mt-3 text-sm text-[#dce8e6]">How It Works<br />Features<br />Security</p></div>
+          <div><h4 className="text-xs font-bold uppercase tracking-widest text-[#9fb36b]">Resources</h4><p className="mt-3 text-sm text-[#dce8e6]">Blog<br />Help Center<br />Privacy Policy</p></div>
+          <div><h4 className="text-xs font-bold uppercase tracking-widest text-[#9fb36b]">Company</h4><p className="mt-3 text-sm text-[#dce8e6]">About Us<br />Contact<br />Careers</p></div>
+          <div><p className="text-sm text-[#dce8e6]">© 2026 SpiritualSolace. Demo prototype.</p></div>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { navigationItems, saveState } from "@/lib/app-shell-config";
+import { navigationGroups, saveState } from "@/lib/app-shell-config";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -11,7 +11,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f8f3e8] via-[#f6f1e7] to-[#eef2ee] lg:flex">
       <aside className="border-b border-[#ddd8cd] bg-[#f7f2e8]/95 lg:fixed lg:inset-y-0 lg:w-80 lg:border-b-0 lg:border-r">
-        <div className="flex h-full flex-col gap-7 p-6 lg:p-7">
+        <div className="flex h-full flex-col gap-6 p-6 lg:p-7">
           <div className="rounded-3xl border border-[#e2dbcf] bg-white/70 p-5 shadow-[0_8px_30px_rgba(77,94,86,0.08)]">
             <div className="flex items-start gap-3">
               <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d6d0c3] bg-[#f1ece3] text-xs font-semibold tracking-[0.16em] text-[#50625b]">SS</span>
@@ -21,36 +21,43 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-[#4c5e56]">
-              Facility-controlled spiritual support operations preview with calm, human-reviewed workflows.
+              Facility-controlled solace workflow for requests, review, delivery, and records.
             </p>
           </div>
 
-          <nav className="max-h-[52vh] space-y-2 overflow-y-auto rounded-3xl border border-[#e2dbcf] bg-white/75 p-3 text-sm shadow-[0_8px_22px_rgba(66,84,76,0.06)]">
-            {navigationItems.map((item) => {
-              const isActive = pathname === item.href;
+          <nav className="max-h-[55vh] space-y-5 overflow-y-auto rounded-3xl border border-[#e2dbcf] bg-white/75 p-4 text-sm shadow-[0_8px_22px_rgba(66,84,76,0.06)]">
+            {navigationGroups.map((group) => (
+              <section key={group.label}>
+                <p className="mb-2 px-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#6a7b74]">{group.label}</p>
+                <div className="space-y-1.5">
+                  {group.items.map((item) => {
+                    const isActive = pathname === item.href;
 
-              return (
-                <Link
-                  key={item.href + item.label}
-                  href={item.href}
-                  className={`block rounded-2xl px-4 py-3 font-medium transition ${
-                    isActive
-                      ? "border border-[#d8d9cf] bg-gradient-to-r from-[#edf1ea] to-[#f8f3ea] text-[#243847] shadow-sm"
-                      : "text-[#4e6058] hover:bg-[#f4efe6] hover:text-[#223746]"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
+                    return (
+                      <Link
+                        key={item.href + item.label}
+                        href={item.href}
+                        className={`block rounded-2xl px-4 py-3 font-medium transition ${
+                          isActive
+                            ? "border border-[#d8d9cf] bg-gradient-to-r from-[#edf1ea] to-[#f8f3ea] text-[#243847] shadow-sm"
+                            : "text-[#4e6058] hover:bg-[#f4efe6] hover:text-[#223746]"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
           </nav>
 
           <div className="space-y-3 rounded-3xl border border-[#e2dbcf] bg-[#f8f5ed] p-5 text-sm text-[#485a53] shadow-[0_8px_20px_rgba(76,94,86,0.06)]">
-            <p className="font-semibold text-[#223746]">Prototype safeguards</p>
+            <p className="font-semibold text-[#223746]">Workflow safeguards</p>
             <ul className="space-y-1.5 text-xs leading-relaxed text-[#5a6b64]">
-              <li>• No real patient data</li>
-              <li>• One-way temporary messaging only</li>
-              <li>• Human review before any delivery</li>
+              <li>• Request → review → delivery spine</li>
+              <li>• Human approval before delivery</li>
+              <li>• Admin and records separated from daily work</li>
             </ul>
           </div>
 

@@ -20,14 +20,14 @@ function workflowAccent(kind: string) {
   };
 
   if (kind === "routing") return {
-    label: "Routing Required",
+    label: "Intake Required",
     eyebrow: "Next staff step",
     band: "bg-[#2563eb]",
     surface: "bg-[#edf5ff]",
     border: "border-[#9ec1f3]",
     text: "text-[#214f91]",
     button: "bg-[#1d4ed8] text-white hover:bg-[#1e40af]",
-    routeLabel: "Open request"
+    routeLabel: "Open intake"
   };
 
   if (kind === "delivery") return {
@@ -76,7 +76,7 @@ const nextDecision = reviewMessage
         location: routingRequest.location,
         why: "This request needs intake confirmation before a responder path can move forward.",
         detail: routingRequest.note,
-        href: "/app/support-requests"
+        href: "/app/intake"
       }
     : {
         kind: "delivery",
@@ -99,7 +99,7 @@ const waitingItems = [
       title: request.requestType,
       subject: request.patientAlias,
       reason: request.priority === "Time Sensitive" ? "time sensitive" : request.status,
-      href: "/app/support-requests"
+      href: "/app/intake"
     })),
   ...solaceMessages
     .filter((message) => message.id !== reviewMessage?.id && message.status === "Needs Review")
@@ -186,7 +186,7 @@ export default function DashboardPage() {
                   <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6e7f67]">Other waiting items</p>
                   <h3 className="mt-2 font-serif text-3xl font-semibold text-[#102b3a]">{waitingItems.length} behind the next decision</h3>
                 </div>
-                <Link href="/app/support-requests" className="shrink-0 rounded-full border border-[#cfc6b8] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#102b3a]">View all</Link>
+                <Link href="/app/intake" className="shrink-0 rounded-full border border-[#cfc6b8] bg-white px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#102b3a]">View intake</Link>
               </div>
 
               <div className="divide-y divide-[#e1d8cb]">
@@ -227,25 +227,17 @@ export default function DashboardPage() {
             <section>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9fb36b]">Today</p>
               <div className="mt-5 grid grid-cols-3 gap-3 xl:grid-cols-1">
-                <div className="rounded-2xl border border-white/10 bg-white/7 p-4">
-                  <p className="text-4xl font-semibold tracking-[-0.05em]">{reviewCount}</p>
-                  <p className="mt-1 text-xs font-semibold text-[#d7e7b7]">reviews</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/7 p-4">
-                  <p className="text-4xl font-semibold tracking-[-0.05em]">{routingCount}</p>
-                  <p className="mt-1 text-xs font-semibold text-[#d7e7b7]">routing</p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/7 p-4">
-                  <p className="text-4xl font-semibold tracking-[-0.05em]">{deliveredCount}</p>
-                  <p className="mt-1 text-xs font-semibold text-[#d7e7b7]">delivered</p>
-                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/7 p-4"><p className="text-4xl font-semibold tracking-[-0.05em]">{reviewCount}</p><p className="mt-1 text-xs font-semibold text-[#d7e7b7]">reviews</p></div>
+                <div className="rounded-2xl border border-white/10 bg-white/7 p-4"><p className="text-4xl font-semibold tracking-[-0.05em]">{routingCount}</p><p className="mt-1 text-xs font-semibold text-[#d7e7b7]">intake</p></div>
+                <div className="rounded-2xl border border-white/10 bg-white/7 p-4"><p className="text-4xl font-semibold tracking-[-0.05em]">{deliveredCount}</p><p className="mt-1 text-xs font-semibold text-[#d7e7b7]">delivered</p></div>
               </div>
             </section>
 
             <section>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9fb36b]">Action shortcuts</p>
               <div className="mt-4 space-y-3">
-                <Link href="/app/support-requests" className="block rounded-full bg-white px-5 py-3 text-center text-sm font-black text-[#0d2b3b]">Requests</Link>
+                <Link href="/app/intake" className="block rounded-full bg-white px-5 py-3 text-center text-sm font-black text-[#0d2b3b]">Intake</Link>
+                <Link href="/app/match" className="block rounded-full border border-white/25 px-5 py-3 text-center text-sm font-black text-white">Match</Link>
                 <Link href="/app/message-review" className="block rounded-full border border-white/25 px-5 py-3 text-center text-sm font-black text-white">Review</Link>
                 <Link href="/app/delivery-workspace" className="block rounded-full border border-white/25 px-5 py-3 text-center text-sm font-black text-white">Delivery</Link>
               </div>
@@ -262,9 +254,7 @@ export default function DashboardPage() {
 
             <section className="rounded-[1.5rem] border border-white/10 bg-white/7 p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9fb36b]">Experiment</p>
-              <p className="mt-3 text-sm leading-6 text-[#dce8e6]">
-                Care Desk V4 tests the NS “Next Human Decision” pattern: one dominant action, color by status, everything else demoted.
-              </p>
+              <p className="mt-3 text-sm leading-6 text-[#dce8e6]">Care Desk now routes intake work to the clean Intake route and keeps legacy requests out of the primary path.</p>
             </section>
           </div>
         </aside>

@@ -22,6 +22,7 @@ export const navigationGroups = [
   {
     label: "Records",
     items: [
+      { label: "Record Closure", href: "/app/record" },
       { label: "View", href: "/app/patient-view" },
       { label: "Audit Log", href: "/app/audit-log" }
     ]

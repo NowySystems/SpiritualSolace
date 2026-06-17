@@ -1,4 +1,4 @@
-export const saveState = "SpiritualSolace 0.8 — Match support added";
+export const saveState = "SpiritualSolace 0.9 — Admin command screens";
 
 export const navigationGroups = [
   {
@@ -16,6 +16,7 @@ export const navigationGroups = [
     label: "Administration",
     items: [
       { label: "Match Support", href: "/app/match-support" },
+      { label: "Rules Command", href: "/app/rules-command" },
       { label: "Approved Responders", href: "/app/approved-responders" },
       { label: "Facility Rules", href: "/app/facility-rules" },
       { label: "Guardrails", href: "/app/guardrails" }

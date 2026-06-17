@@ -1,11 +1,12 @@
-export const saveState = "SpiritualSolace 0.6 — Decision workflow build";
+export const saveState = "SpiritualSolace 0.7 — Clean intake route added";
 
 export const navigationGroups = [
   {
     label: "Care Workflow",
     items: [
       { label: "Care Desk", href: "/app" },
-      { label: "Support Requests", href: "/app/support-requests" },
+      { label: "Intake", href: "/app/intake" },
+      { label: "Legacy Requests", href: "/app/support-requests" },
       { label: "Match Workspace", href: "/app/match" },
       { label: "Message Review", href: "/app/message-review" },
       { label: "Delivery Workspace", href: "/app/delivery-workspace" }

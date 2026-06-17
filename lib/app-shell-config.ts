@@ -1,4 +1,4 @@
-export const saveState = "SpiritualSolace 0.5 — Care workflow spine";
+export const saveState = "SpiritualSolace 0.6 — Decision workflow build";
 
 export const navigationGroups = [
   {
@@ -6,6 +6,7 @@ export const navigationGroups = [
     items: [
       { label: "Care Desk", href: "/app" },
       { label: "Support Requests", href: "/app/support-requests" },
+      { label: "Match Workspace", href: "/app/match" },
       { label: "Message Review", href: "/app/message-review" },
       { label: "Delivery Workspace", href: "/app/delivery-workspace" }
     ]
@@ -21,7 +22,7 @@ export const navigationGroups = [
   {
     label: "Records",
     items: [
-      { label: "Patient View", href: "/app/patient-view" },
+      { label: "View", href: "/app/patient-view" },
       { label: "Audit Log", href: "/app/audit-log" }
     ]
   }

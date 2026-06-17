@@ -31,7 +31,8 @@ export default function MatchWorkspacePage() {
                 <h2 className="mt-4 font-serif text-3xl font-semibold leading-tight text-[#102b3a]">{best.responder.name}</h2>
                 <p className="mt-2 text-sm leading-6 text-[#5f7069]">{best.responder.organization}</p>
                 <p className="mt-4 rounded-full border border-[#9ec1f3] bg-[#edf5ff] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#214f91]">Fit {best.score}/3</p>
-                <Link href="/app/message-review" className="mt-8 inline-flex w-full justify-center rounded-full bg-[#1d4ed8] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-md hover:bg-[#1e40af]">Continue to review →</Link>
+                <p className="mt-5 text-sm leading-6 text-[#5f7069]">After assignment, the returned comfort message goes to staff review before delivery.</p>
+                <Link href="/app/message-review" className="mt-8 inline-flex w-full justify-center rounded-full bg-[#1d4ed8] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-md hover:bg-[#1e40af]">Assign and review →</Link>
               </div>
             </div>
           </section>
@@ -49,8 +50,9 @@ export default function MatchWorkspacePage() {
           </section>
         </main>
         <aside className="border-t border-[#ddd4c8] bg-[#0d2b3b] p-6 text-white xl:border-l xl:border-t-0 xl:border-white/10">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9fb36b]">Experiment</p>
-          <p className="mt-4 text-sm leading-6 text-[#dce8e6]">Match is now a visible workflow stage between intake and message review.</p>
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9fb36b]">Stage</p>
+          <p className="mt-4 text-sm leading-6 text-[#dce8e6]">Match is the handoff between intake and message review. This route now explains the consequence of assignment.</p>
+          <div className="mt-6 space-y-3 text-sm text-[#dce8e6]"><p>1. Intake confirmed</p><p>2. Responder selected</p><p>3. Message review follows</p></div>
         </aside>
       </div>
     </div>

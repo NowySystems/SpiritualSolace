@@ -29,7 +29,10 @@ export default function RecordClosurePage() {
               <div className="rounded-[1.4rem] border border-white/70 bg-white/70 p-5 shadow-sm lg:w-72">
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[#6e7f67]">Closure state</p>
                 <p className="mt-4 rounded-full border border-[#c7b6e5] bg-[#f5f0fb] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#5b3a89]">Ready to close</p>
-                <Link href="/app/audit-log" className="mt-8 inline-flex w-full justify-center rounded-full bg-[#6d28d9] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-md hover:bg-[#5b21b6]">Open audit →</Link>
+                <div className="mt-8 flex flex-col gap-3">
+                  <Link href="/app/audit-log" className="inline-flex w-full justify-center rounded-full bg-[#6d28d9] px-6 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-md hover:bg-[#5b21b6]">Open audit →</Link>
+                  <Link href="/app" className="inline-flex w-full justify-center rounded-full border border-[#c7b6e5] bg-white px-6 py-3 text-sm font-black text-[#5b3a89]">Return to desk</Link>
+                </div>
               </div>
             </div>
           </section>
@@ -52,6 +55,7 @@ export default function RecordClosurePage() {
         <aside className="border-t border-[#ddd4c8] bg-[#0d2b3b] p-6 text-white xl:border-l xl:border-t-0 xl:border-white/10">
           <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9fb36b]">Stage</p>
           <p className="mt-4 text-sm leading-6 text-[#dce8e6]">Record closure gives the workflow a visible endpoint instead of ending at a delivery screen.</p>
+          <div className="mt-6 space-y-3 text-sm text-[#dce8e6]"><p>1. Verify visible record</p><p>2. Open audit if needed</p><p>3. Return to Care Desk</p></div>
         </aside>
       </div>
     </div>

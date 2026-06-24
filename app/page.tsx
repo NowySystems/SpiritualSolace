@@ -107,7 +107,7 @@ export default function LandingPage() {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">MVP guardrails</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold">Local demo state first. Human review before anything external.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              Working local actions now include Send Prayer Request, Schedule Visit, and Add Follow-Up. Contact Church, Assign Volunteer, Add Note, and Message Care Team remain scaffolded until human-reviewed external workflows are approved.
+              Working local actions now include Send Prayer Request, Schedule Visit, Add Follow-Up, and Add Note. Contact Church, Assign Volunteer, and Message Care Team remain scaffolded until human-reviewed external workflows are approved.
             </p>
           </div>
         </section>

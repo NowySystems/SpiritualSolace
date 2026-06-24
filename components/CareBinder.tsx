@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 
 type TimelineEvent = {
   id: string;
-  type: "VISIT" | "VISIT_SCHEDULED" | "PRAYER" | "CHURCH" | "NOTE" | "PLAN" | "FOLLOW_UP";
+  type: "VISIT" | "VISIT_SCHEDULED" | "PRAYER" | "CHURCH" | "NOTE" | "NOTE_ADDED" | "PLAN" | "FOLLOW_UP";
   title: string;
   date: string;
   actor: string;
@@ -161,6 +161,9 @@ const secondaryActions = ["Schedule Visit", "Contact Church", "Assign Volunteer"
 const followUpTypes = ["Gentle check-in", "Prayer support", "Volunteer visit", "Church care note", "Family encouragement"];
 const followUpOwners = ["Care Coordinator", "Sarah K.", "Thomas R.", "Church Care Team"];
 
+const noteTypes = ["General care note", "Visit note", "Prayer note", "Family/church update", "Consent/privacy note", "Student/supervisor note"];
+const noteVisibilityOptions = ["Internal care team", "Chaplain/pastor only", "Volunteer-safe summary", "Supervisor review"];
+
 const visitTypes = ["Pastoral visit", "Volunteer visit", "Chaplain visit", "Seminary student visit", "Prayer visit", "Care plan visit"];
 const visitDates = ["Today", "Tomorrow", "This week", "Custom"];
 const visitWindows = ["Morning", "Afternoon", "Evening", "Custom"];
@@ -173,6 +176,7 @@ function eventStyles(type: TimelineEvent["type"]) {
   if (type === "CHURCH") return "border-[#f3d59d] bg-[#fff8e8] text-[#806020]";
   if (type === "PLAN") return "border-[#b8d8e6] bg-[#eef8fb] text-[#2d6475]";
   if (type === "FOLLOW_UP") return "border-[#b7d6c0] bg-[#eef8ed] text-[#2e6842]";
+  if (type === "NOTE_ADDED") return "border-[#d9c7a7] bg-[#fff9ee] text-[#70552d]";
   return "border-[#cdd7df] bg-[#f5f8fa] text-[#405a6b]";
 }
 
@@ -184,6 +188,7 @@ export function CareBinder() {
   const [isPrayerOpen, setPrayerOpen] = useState(false);
   const [isVisitOpen, setVisitOpen] = useState(false);
   const [isFollowUpOpen, setFollowUpOpen] = useState(false);
+  const [isNoteOpen, setNoteOpen] = useState(false);
   const [templateId, setTemplateId] = useState(prayerTemplates[0].id);
   const [prayerText, setPrayerText] = useState(prayerTemplates[0].body);
   const [hasConsent, setHasConsent] = useState(false);
@@ -192,6 +197,10 @@ export function CareBinder() {
   const [followUpOwner, setFollowUpOwner] = useState(followUpOwners[0]);
   const [followUpNote, setFollowUpNote] = useState("");
   const [hasFollowUpConsent, setHasFollowUpConsent] = useState(false);
+  const [noteType, setNoteType] = useState(noteTypes[0]);
+  const [noteVisibility, setNoteVisibility] = useState(noteVisibilityOptions[0]);
+  const [noteBody, setNoteBody] = useState("");
+  const [noteFollowUpNeeded, setNoteFollowUpNeeded] = useState(false);
   const [visitType, setVisitType] = useState(visitTypes[0]);
   const [visitDate, setVisitDate] = useState(visitDates[0]);
   const [customVisitDate, setCustomVisitDate] = useState("");
@@ -229,6 +238,50 @@ export function CareBinder() {
     setHasConsent(false);
   };
 
+  const resetNoteForm = () => {
+    setNoteType(noteTypes[0]);
+    setNoteVisibility(noteVisibilityOptions[0]);
+    setNoteBody("");
+    setNoteFollowUpNeeded(false);
+  };
+
+  const closeNote = () => {
+    setNoteOpen(false);
+    resetNoteForm();
+  };
+
+  const submitNote = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!noteBody.trim()) return;
+
+    const newEvent: TimelineEvent = {
+      id: `note-added-${Date.now()}`,
+      type: "NOTE_ADDED",
+      title: `${noteType} added`,
+      date: "Today",
+      actor: "Care Coordinator",
+      detail: `${noteVisibility}. ${noteBody.trim()}${noteFollowUpNeeded ? " Follow-up flagged for care team review." : ""}`
+    };
+
+    setTimeline((items) => [newEvent, ...items]);
+    setRecentActivity((items) => [newEvent, ...items].slice(0, 3));
+
+    if (noteFollowUpNeeded) {
+      setResidentList((items) =>
+        items.map((resident) =>
+          resident.id === selectedResident.id
+            ? {
+                ...resident,
+                priority: "Note follow-up needed",
+                nextStep: "Review note follow-up"
+              }
+            : resident
+        )
+      );
+    }
+
+    closeNote();
+  };
 
   const resetVisitForm = () => {
     setVisitType(visitTypes[0]);
@@ -438,12 +491,15 @@ export function CareBinder() {
               {secondaryActions.map((action) => {
                 const isVisitAction = action === "Schedule Visit";
                 const isFollowUpAction = action === "Add Follow-Up";
-                const actionHandler = isVisitAction ? () => setVisitOpen(true) : isFollowUpAction ? () => setFollowUpOpen(true) : undefined;
+                const isNoteAction = action === "Add Note";
+                const actionHandler = isVisitAction ? () => setVisitOpen(true) : isFollowUpAction ? () => setFollowUpOpen(true) : isNoteAction ? () => setNoteOpen(true) : undefined;
                 const actionDescription = isVisitAction
                   ? "Plan a consent-confirmed spiritual care visit"
                   : isFollowUpAction
                     ? "Set a consent-confirmed next care touch"
-                    : "Scaffolded for a later workflow";
+                    : isNoteAction
+                      ? "Add a local spiritual care timeline note"
+                      : "Scaffolded for a later workflow";
 
                 return (
                   <button key={action} onClick={actionHandler} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
@@ -504,6 +560,53 @@ export function CareBinder() {
         </div>
       ) : null}
 
+
+      {isNoteOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#132d23]/55 p-4 backdrop-blur-sm">
+          <form onSubmit={submitNote} className="w-full max-w-2xl rounded-[1.8rem] border border-[#ded6c8] bg-[#fbf8f0] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6a7a63]">Local care documentation</p>
+                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Add Note</h2>
+                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}</p>
+              </div>
+              <button type="button" onClick={closeNote} className="rounded-full border border-[#d8d0c0] px-3 py-1.5 text-sm font-bold text-[#4d5f55]">Close</button>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="note-type">Note type</label>
+                <select id="note-type" value={noteType} onChange={(event) => setNoteType(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {noteTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="note-visibility">Visibility</label>
+                <select id="note-visibility" value={noteVisibility} onChange={(event) => setNoteVisibility(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {noteVisibilityOptions.map((visibility) => (
+                    <option key={visibility} value={visibility}>{visibility}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="note-body">Note body</label>
+            <textarea id="note-body" value={noteBody} onChange={(event) => setNoteBody(event.target.value)} rows={5} placeholder="Summarize the spiritual support observation, consent-safe context, or next care cue." className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+
+            <label className="mt-5 flex gap-3 rounded-2xl border border-[#e0d6c4] bg-[#fffaf0] p-4 text-sm leading-6 text-[#4f5e54]">
+              <input type="checkbox" checked={noteFollowUpNeeded} onChange={(event) => setNoteFollowUpNeeded(event.target.checked)} className="mt-1 h-4 w-4 accent-[#173b2d]" />
+              <span>Follow-up needed: route this note back to the care team before any outside action.</span>
+            </label>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={closeNote} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
+              <button type="submit" disabled={!noteBody.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Add Note</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
 
       {isVisitOpen ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#132d23]/55 p-4 backdrop-blur-sm">

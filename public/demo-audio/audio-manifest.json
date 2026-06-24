@@ -1,0 +1,70 @@
+{
+  "narrationAssets": {
+    "care-queue-jane-doe": {
+      "filename": "care-queue-jane-doe.mp3",
+      "scriptText": "Welcome to SpiritualSolace. Today we’ll follow Jane Doe, a demo resident receiving spiritual support through a coordinated care plan.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "person-header": {
+      "filename": "person-header.mp3",
+      "scriptText": "Jane’s record keeps the person at the center, with her room, age, faith preference, and support context visible before anyone takes action.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "current-need-next-safe-step": {
+      "filename": "current-need-next-safe-step.mp3",
+      "scriptText": "Every care need is paired with a clear next safe step, so the team knows what to review before moving forward.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "care-plan": {
+      "filename": "care-plan.mp3",
+      "scriptText": "The spiritual care plan organizes prayer, visits, family encouragement, and church connection into one shared support record.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "quick-actions": {
+      "filename": "quick-actions.mp3",
+      "scriptText": "Quick Actions let the care team send prayer requests, schedule visits, add follow-ups, contact churches, and record notes from one place.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "send-prayer-request-action": {
+      "filename": "send-prayer-request-action.mp3",
+      "scriptText": "Prayer requests stay consent-confirmed and human-reviewed before they become part of the care timeline.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "add-follow-up-action": {
+      "filename": "add-follow-up-action.mp3",
+      "scriptText": "Follow-ups help make sure spiritual care needs are not forgotten after the first contact.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "schedule-visit-action": {
+      "filename": "schedule-visit-action.mp3",
+      "scriptText": "Visits can be scheduled through the same approved workflow, keeping support coordinated and visible.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "contact-church-action": {
+      "filename": "contact-church-action.mp3",
+      "scriptText": "Church contact uses consent-aware sharing, so outside coordination stays limited, respectful, and reviewed.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "care-timeline": {
+      "filename": "care-timeline.mp3",
+      "scriptText": "Every care action becomes part of Jane’s timeline, creating continuity, accountability, and a clear story of support.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    },
+    "recent-activity": {
+      "filename": "recent-activity.mp3",
+      "scriptText": "Recent activity gives the team a quick view of what changed, who acted, and what still needs attention.",
+      "durationSeconds": null,
+      "status": "pending-audio"
+    }
+  }
+}

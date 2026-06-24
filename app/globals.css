@@ -26,8 +26,8 @@ a {
 }
 
 .driver-popover.spiritual-solace-demo-popover {
-  max-width: min(27rem, calc(100vw - 2rem));
-  min-width: min(23rem, calc(100vw - 2rem));
+  max-width: min(34rem, calc(100vw - 1rem));
+  min-width: min(24rem, calc(100vw - 1rem));
   padding: 1.15rem;
   border: 1px solid rgba(201, 164, 95, 0.38);
   border-radius: 1.5rem;
@@ -100,18 +100,78 @@ a {
   text-align: left;
 }
 
+.driver-popover.spiritual-solace-demo-popover .driver-popover-footer button {
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
 .driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-progress {
-  display: inline-flex !important;
+  display: none !important;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-review-note {
+  margin-top: 0.85rem;
+  border-radius: 1rem;
+  background: #f7efe2;
+  padding: 0.55rem 0.75rem;
+  color: #6b5b45;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-controls {
+  position: relative;
+  z-index: 1;
+  display: flex !important;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+  border-top: 1px solid #eadfce;
+  padding-top: 0.8rem;
+  pointer-events: auto;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-status-row,
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-control-row {
+  display: flex;
   align-items: center;
-  margin-top: 0.95rem;
-  padding: 0.35rem 0.65rem;
+  gap: 0.5rem;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-status-row {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-control-row {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-status-pill,
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-status-text {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
   border-radius: 999px;
-  background: #eaf2ed;
-  color: #2f644a;
+  padding: 0.35rem 0.65rem;
   font-size: 0.72rem;
   font-weight: 950;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-status-pill {
+  background: #eaf2ed;
+  color: #2f644a;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-status-text {
+  background: #fffaf2;
+  color: #6c5d49;
 }
 
 .driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-bottom {

@@ -441,41 +441,31 @@ function renderDemoAudioControls(
   popover.wrapper?.classList.add("spiritual-solace-demo-popover");
   popover.title?.classList.add("spiritual-solace-demo-popover-title");
   popover.description?.classList.add("spiritual-solace-demo-popover-description");
+  popover.footer?.classList.add("spiritual-solace-demo-footer");
 
   const stepNumber = Math.min(activeIndex + 1, careBinderDemoSteps.length);
+  const progressText = `Step ${stepNumber} of ${careBinderDemoSteps.length}`;
 
   if (popover.progress) {
     popover.progress.className = "spiritual-solace-demo-progress";
-    popover.progress.textContent = `Step ${stepNumber} of ${careBinderDemoSteps.length}`;
+    popover.progress.textContent = progressText;
   }
 
-  popover.footer?.classList.add("spiritual-solace-demo-footer");
-  popover.footerButtons.className = "mt-4 flex flex-col gap-3 border-t border-[#eadfce] pt-3 sm:flex-row sm:items-center sm:justify-between";
+  popover.footerButtons.className = "spiritual-solace-demo-controls";
 
-  const navControls = document.createElement("div");
-  navControls.className = "flex flex-wrap items-center justify-end gap-2";
+  const statusRow = document.createElement("div");
+  statusRow.className = "spiritual-solace-demo-status-row";
 
-  Array.from(popover.footerButtons.querySelectorAll("button")).forEach((button) => {
-    const controlButton = button as HTMLButtonElement;
-    const label = controlButton.textContent?.trim().toLowerCase() ?? "";
+  const stepLabel = document.createElement("span");
+  stepLabel.className = "spiritual-solace-demo-status-pill";
+  stepLabel.textContent = progressText;
 
-    if (label.includes("back")) {
-      styleDemoTourButton(controlButton, controlButton.disabled ? "disabled" : "secondary");
-    } else {
-      styleDemoTourButton(controlButton, "primary");
-    }
+  const audioStatusLabel = document.createElement("span");
+  audioStatusLabel.className = "spiritual-solace-demo-status-text";
+  audioStatusLabel.title = "Narration files are optional and are not bundled in this build.";
 
-    navControls.append(controlButton);
-  });
-
-  const audioControls = document.createElement("div");
-  audioControls.className = "flex flex-wrap items-center gap-2 rounded-2xl border border-[#eadfce] bg-[#fffaf2] p-1.5 shadow-sm";
-  audioControls.setAttribute("aria-label", "Demo narration status");
-
-  const textOnlyLabel = document.createElement("span");
-  textOnlyLabel.className = "px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-[#6c5d49]";
-  textOnlyLabel.textContent = "Text-only";
-  textOnlyLabel.title = "Narration files are optional and are not bundled in this build.";
+  const controlRow = document.createElement("div");
+  controlRow.className = "spiritual-solace-demo-control-row";
 
   const muteButton = document.createElement("button");
   muteButton.type = "button";
@@ -486,19 +476,29 @@ function renderDemoAudioControls(
   replayButton.type = "button";
   replayButton.textContent = "Replay";
 
+  const navButtons = Array.from(popover.footerButtons.querySelectorAll("button"));
+  navButtons.forEach((button) => {
+    const controlButton = button as HTMLButtonElement;
+    const label = controlButton.textContent?.trim().toLowerCase() ?? "";
+
+    if (label.includes("back")) {
+      styleDemoTourButton(controlButton, controlButton.disabled ? "disabled" : "secondary");
+    } else {
+      styleDemoTourButton(controlButton, "primary");
+    }
+  });
+
   const refreshAudioButtons = () => {
     const hasAudio = audioController.hasPlayableAudio();
     const isMuted = audioController.isMuted();
     const canReplay = hasAudio && !isMuted;
 
-    textOnlyLabel.hidden = hasAudio;
-    muteButton.hidden = !hasAudio;
-    replayButton.hidden = !hasAudio;
+    audioStatusLabel.textContent = hasAudio ? "Narration ready" : "Text-only demo";
     muteButton.textContent = isMuted ? "Voice off" : "Voice on";
-    muteButton.setAttribute("aria-pressed", String(isMuted));
+    muteButton.setAttribute("aria-pressed", String(!isMuted));
     replayButton.disabled = !canReplay;
     replayButton.setAttribute("aria-disabled", String(!canReplay));
-    replayButton.title = canReplay ? "Replay this narration" : "Turn voice on to replay this narration";
+    replayButton.title = canReplay ? "Replay this narration" : "Replay is unavailable until narration is present and voice is on";
     styleDemoTourButton(replayButton, canReplay ? "secondary" : "disabled");
   };
 
@@ -506,17 +506,20 @@ function renderDemoAudioControls(
     audioController.setMuted(!audioController.isMuted());
     refreshAudioButtons();
   });
-  replayButton.addEventListener("click", () => audioController.replay());
+  replayButton.addEventListener("click", () => {
+    if (!replayButton.disabled) audioController.replay();
+  });
 
   audioController.setStateListener(refreshAudioButtons);
   refreshAudioButtons();
 
   const reviewNote = document.createElement("p");
-  reviewNote.className = "mt-3 rounded-2xl bg-[#f7efe2] px-3 py-2 text-[0.72rem] font-bold leading-relaxed text-[#6b5b45]";
+  reviewNote.className = "spiritual-solace-demo-review-note";
   reviewNote.textContent = "Presentation mode only — nothing is sent, submitted, or stored outside this demo.";
 
-  audioControls.append(textOnlyLabel, muteButton, replayButton);
-  popover.footerButtons.replaceChildren(audioControls, navControls);
+  statusRow.append(stepLabel, audioStatusLabel);
+  controlRow.append(muteButton, replayButton, ...navButtons);
+  popover.footerButtons.replaceChildren(statusRow, controlRow);
   popover.footerButtons.insertAdjacentElement("beforebegin", reviewNote);
 }
 

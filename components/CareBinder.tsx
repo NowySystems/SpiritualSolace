@@ -267,6 +267,8 @@ type DemoNarrationMode = "loading" | "mp3" | "speech" | "text";
 
 type DemoAudioStateListener = (state: { mode: DemoNarrationMode; isMuted: boolean }) => void;
 
+type CareBinderDriver = ReturnType<typeof driver>;
+
 const demoTargetWaitMs = 2200;
 const demoTargetPollMs = 100;
 
@@ -395,7 +397,7 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
     },
     play,
     replay: () => {
-      if (!muted && currentStep && narrationMode !== "text") play(currentStep);
+      if (!muted && currentStep) play(currentStep);
     },
     stop
   };
@@ -473,13 +475,16 @@ function renderDemoAudioControls(
     progress?: HTMLElement;
   },
   audioController: DemoAudioController,
-  activeIndex = 0
+  driverAccessor: () => CareBinderDriver | null,
+  activeIndexAccessor: () => number,
+  replayActiveStep: () => void
 ) {
   popover.wrapper?.classList.add("spiritual-solace-demo-popover");
   popover.title?.classList.add("spiritual-solace-demo-popover-title");
   popover.description?.classList.add("spiritual-solace-demo-popover-description");
   popover.footer?.classList.add("spiritual-solace-demo-footer");
 
+  const activeIndex = activeIndexAccessor();
   const stepNumber = Math.min(activeIndex + 1, careBinderDemoSteps.length);
 
   if (popover.progress) {
@@ -487,23 +492,15 @@ function renderDemoAudioControls(
     popover.progress.textContent = `Step ${stepNumber} of ${careBinderDemoSteps.length}`;
   }
 
-  if (!popover.footerButtons) return;
+  const footerContainer = popover.footer ?? popover.footerButtons?.parentElement;
+  if (!footerContainer) return;
 
-  popover.footerButtons.classList.add("spiritual-solace-demo-native-actions");
-  Array.from(popover.footerButtons.querySelectorAll("button")).forEach((button) => {
-    const controlButton = button as HTMLButtonElement;
-    const label = controlButton.textContent?.trim().toLowerCase() ?? "";
+  if (popover.footerButtons) {
+    popover.footerButtons.classList.add("spiritual-solace-demo-native-actions");
+    popover.footerButtons.setAttribute("aria-hidden", "true");
+  }
 
-    styleDemoTourButton(controlButton, controlButton.disabled ? "disabled" : label.includes("back") ? "secondary" : "primary");
-
-    if (controlButton.dataset.demoAudioStopBound !== "true") {
-      controlButton.addEventListener("click", () => audioController.stop(), { capture: true });
-      controlButton.dataset.demoAudioStopBound = "true";
-    }
-  });
-
-  const footerContainer = popover.footer ?? popover.footerButtons.parentElement;
-  const existingPanel = footerContainer?.querySelector("[data-demo-audio-panel='true']");
+  const existingPanel = footerContainer.querySelector("[data-demo-audio-panel='true']");
   if (existingPanel) existingPanel.remove();
 
   const audioPanel = document.createElement("div");
@@ -528,6 +525,42 @@ function renderDemoAudioControls(
   replayButton.type = "button";
   replayButton.textContent = "Replay";
 
+  const navControls = document.createElement("div");
+  navControls.className = "spiritual-solace-demo-custom-actions";
+  navControls.setAttribute("aria-label", "Guided presentation navigation");
+
+  const backButton = document.createElement("button");
+  backButton.type = "button";
+  backButton.textContent = "Back";
+  backButton.disabled = activeIndex <= 0;
+  backButton.setAttribute("aria-disabled", String(activeIndex <= 0));
+  styleDemoTourButton(backButton, activeIndex <= 0 ? "disabled" : "secondary");
+
+  const nextButton = document.createElement("button");
+  nextButton.type = "button";
+  const isFinalStep = activeIndex >= careBinderDemoSteps.length - 1;
+  nextButton.textContent = isFinalStep ? "Finish" : "Next";
+  styleDemoTourButton(nextButton, "primary");
+
+  backButton.addEventListener("click", () => {
+    if (activeIndexAccessor() <= 0) return;
+    audioController.stop();
+    driverAccessor()?.movePrevious();
+  });
+
+  nextButton.addEventListener("click", () => {
+    audioController.stop();
+    const driverInstance = driverAccessor();
+    if (!driverInstance) return;
+
+    if (activeIndexAccessor() >= careBinderDemoSteps.length - 1) {
+      driverInstance.destroy();
+      return;
+    }
+
+    driverInstance.moveNext();
+  });
+
   const refreshAudioButtons = () => {
     const mode = audioController.narrationMode();
     const isMuted = audioController.isMuted();
@@ -551,7 +584,7 @@ function renderDemoAudioControls(
     audioController.setMuted(!audioController.isMuted());
     refreshAudioButtons();
   });
-  replayButton.addEventListener("click", () => audioController.replay());
+  replayButton.addEventListener("click", replayActiveStep);
 
   audioController.setStateListener(refreshAudioButtons);
   refreshAudioButtons();
@@ -561,8 +594,9 @@ function renderDemoAudioControls(
   reviewNote.textContent = "Presentation mode only — nothing is sent, submitted, or stored outside this demo.";
 
   audioControls.append(textOnlyLabel, muteButton, replayButton);
-  audioPanel.append(audioControls, reviewNote);
-  footerContainer?.insertBefore(audioPanel, popover.footerButtons);
+  navControls.append(backButton, nextButton);
+  audioPanel.append(audioControls, reviewNote, navControls);
+  footerContainer.insertBefore(audioPanel, popover.footerButtons ?? null);
 }
 
 function createDriverSteps(): DriveStep[] {
@@ -626,6 +660,8 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
   const [churchContactNote, setChurchContactNote] = useState("");
   const [hasChurchContactConsent, setHasChurchContactConsent] = useState(false);
   const demoAudioControllerRef = useRef<DemoAudioController | null>(null);
+  const demoDriverRef = useRef<CareBinderDriver | null>(null);
+  const activeDemoStepIndexRef = useRef(0);
   const hasAutoStartedDemoRef = useRef(false);
 
   const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
@@ -634,8 +670,16 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
     await waitForDemoTargets();
 
     demoAudioControllerRef.current?.stop();
+    demoDriverRef.current?.destroy();
+    demoDriverRef.current = null;
+    activeDemoStepIndexRef.current = 0;
+
     const audioController = createDemoAudioController(demoAudioControllerRef.current?.isMuted() ?? false);
     demoAudioControllerRef.current = audioController;
+
+    const playActiveDemoStep = () => {
+      audioController.play(careBinderDemoSteps[activeDemoStepIndexRef.current]);
+    };
 
     const driverObj = driver({
       showProgress: true,
@@ -646,19 +690,31 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       prevBtnText: "Back",
       doneBtnText: "Done",
       onHighlighted: (element?: Element) => {
-        audioController.play(findDemoStepByElement(element));
+        const highlightedStep = findDemoStepByElement(element);
+        const highlightedIndex = highlightedStep ? careBinderDemoSteps.findIndex((step) => step.id === highlightedStep.id) : activeDemoStepIndexRef.current;
+        activeDemoStepIndexRef.current = highlightedIndex >= 0 ? highlightedIndex : activeDemoStepIndexRef.current;
+        playActiveDemoStep();
       },
       onDestroyed: () => {
         audioController.stop();
+        demoDriverRef.current = null;
       },
       popoverClass: "spiritual-solace-demo-popover",
       progressText: "Step {{current}} of {{total}}",
       onPopoverRender: (popover, opts) => {
-        renderDemoAudioControls(popover, audioController, opts?.state?.activeIndex ?? 0);
+        activeDemoStepIndexRef.current = opts?.state?.activeIndex ?? activeDemoStepIndexRef.current;
+        renderDemoAudioControls(
+          popover,
+          audioController,
+          () => demoDriverRef.current,
+          () => activeDemoStepIndexRef.current,
+          playActiveDemoStep
+        );
       },
       steps: createDriverSteps()
     });
 
+    demoDriverRef.current = driverObj;
     driverObj.drive();
   }, []);
 

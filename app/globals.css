@@ -132,7 +132,22 @@ a {
 
 .driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-audio-panel {
   position: relative;
-  z-index: 0;
+  z-index: 3;
+  margin-top: 0.9rem;
+  pointer-events: auto;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-audio-panel button {
+  pointer-events: auto;
+}
+
+.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-custom-actions {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
   margin-top: 0.9rem;
   pointer-events: auto;
 }
@@ -140,7 +155,7 @@ a {
 .driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-native-actions {
   position: relative;
   z-index: 1;
-  display: flex !important;
+  display: none !important;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 0.5rem;

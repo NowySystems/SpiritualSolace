@@ -39,5 +39,7 @@ declare module "driver.js" {
   export function driver(config?: DriverConfig): {
     drive: () => void;
     destroy: () => void;
+    moveNext: () => void;
+    movePrevious: () => void;
   };
 }

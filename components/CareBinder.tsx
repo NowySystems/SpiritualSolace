@@ -263,43 +263,79 @@ const careBinderDemoSteps: DemoStep[] = [
   }
 ];
 
-type DemoAudioStateListener = (state: { hasPlayableAudio: boolean; isMuted: boolean }) => void;
+type DemoNarrationMode = "loading" | "mp3" | "speech" | "text";
+
+type DemoAudioStateListener = (state: { mode: DemoNarrationMode; isMuted: boolean }) => void;
 
 const demoTargetWaitMs = 2200;
 const demoTargetPollMs = 100;
 
 type DemoAudioController = {
   isMuted: () => boolean;
-  hasPlayableAudio: () => boolean;
+  narrationMode: () => DemoNarrationMode;
   setMuted: (isMuted: boolean) => void;
   setStateListener: (listener: DemoAudioStateListener) => void;
-  play: (src?: string) => void;
+  play: (step?: DemoStep) => void;
   replay: () => void;
   stop: () => void;
 };
 
 function createDemoAudioController(initialMuted = false): DemoAudioController {
   let audio: HTMLAudioElement | null = null;
-  let currentSrc = "";
+  let currentStep: DemoStep | undefined;
   let muted = initialMuted;
-  let hasPlayableAudio = false;
+  let narrationMode: DemoNarrationMode = "text";
   let stateListener: DemoAudioStateListener = () => undefined;
   const availabilityCache = new Map<string, boolean>();
 
   const notify = () => {
-    stateListener({ hasPlayableAudio, isMuted: muted });
+    stateListener({ mode: narrationMode, isMuted: muted });
   };
 
-  const setHasPlayableAudio = (value: boolean) => {
-    hasPlayableAudio = value;
+  const setNarrationMode = (value: DemoNarrationMode) => {
+    narrationMode = value;
     notify();
   };
 
-  const stop = () => {
-    if (!audio) return;
+  const canUseBrowserSpeech = () => typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
 
-    audio.pause();
-    audio.currentTime = 0;
+  const chooseFriendlyVoice = () => {
+    if (!canUseBrowserSpeech()) return undefined;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find((voice) => /samantha|ava|jenny|aria|emma|natural|female|warm/i.test(`${voice.name} ${voice.voiceURI}`));
+    return preferredVoice ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ?? voices[0];
+  };
+
+  const stop = () => {
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+
+    if (canUseBrowserSpeech()) {
+      window.speechSynthesis.cancel();
+    }
+  };
+
+  const speakDescription = (step?: DemoStep) => {
+    stop();
+
+    if (!step || muted || !canUseBrowserSpeech()) {
+      setNarrationMode("text");
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(step.description);
+    utterance.rate = 0.94;
+    utterance.pitch = 1.02;
+    utterance.volume = 0.86;
+    const friendlyVoice = chooseFriendlyVoice();
+    if (friendlyVoice) utterance.voice = friendlyVoice;
+    utterance.onerror = () => setNarrationMode("text");
+
+    setNarrationMode("speech");
+    window.speechSynthesis.speak(utterance);
   };
 
   const checkAudioAvailability = async (src: string) => {
@@ -316,35 +352,38 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
     }
   };
 
-  const play = (src?: string) => {
+  const play = (step?: DemoStep) => {
     stop();
-    currentSrc = src ?? "";
-    setHasPlayableAudio(false);
+    currentStep = step;
 
-    if (!src || muted) return;
+    if (!step || muted) {
+      setNarrationMode(canUseBrowserSpeech() ? "speech" : "text");
+      return;
+    }
 
-    void checkAudioAvailability(src).then((isAvailable) => {
-      if (!isAvailable || currentSrc !== src || muted) {
-        setHasPlayableAudio(false);
+    setNarrationMode("loading");
+
+    void checkAudioAvailability(step.futureAudioSrc).then((isAvailable) => {
+      if (currentStep?.id !== step.id || muted) return;
+
+      if (!isAvailable) {
+        speakDescription(step);
         return;
       }
 
-      audio = new Audio(src);
+      audio = new Audio(step.futureAudioSrc);
       audio.preload = "auto";
       audio.volume = 0.82;
-      audio.addEventListener("canplaythrough", () => setHasPlayableAudio(true), { once: true });
-      audio.addEventListener("error", () => setHasPlayableAudio(false), { once: true });
+      audio.addEventListener("canplaythrough", () => setNarrationMode("mp3"), { once: true });
+      audio.addEventListener("error", () => speakDescription(step), { once: true });
 
-      audio.play().catch(() => {
-        stop();
-        setHasPlayableAudio(false);
-      });
+      audio.play().then(() => setNarrationMode("mp3")).catch(() => speakDescription(step));
     });
   };
 
   return {
     isMuted: () => muted,
-    hasPlayableAudio: () => hasPlayableAudio,
+    narrationMode: () => narrationMode,
     setMuted: (isMuted: boolean) => {
       muted = isMuted;
       if (muted) stop();
@@ -356,7 +395,7 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
     },
     play,
     replay: () => {
-      if (currentSrc && hasPlayableAudio) play(currentSrc);
+      if (!muted && currentStep && narrationMode !== "text") play(currentStep);
     },
     stop
   };
@@ -465,6 +504,7 @@ function renderDemoAudioControls(
       styleDemoTourButton(controlButton, "primary");
     }
 
+    controlButton.addEventListener("click", () => audioController.stop());
     navControls.append(controlButton);
   });
 
@@ -487,18 +527,21 @@ function renderDemoAudioControls(
   replayButton.textContent = "Replay";
 
   const refreshAudioButtons = () => {
-    const hasAudio = audioController.hasPlayableAudio();
+    const mode = audioController.narrationMode();
     const isMuted = audioController.isMuted();
-    const canReplay = hasAudio && !isMuted;
+    const voiceAvailable = mode === "loading" || mode === "mp3" || mode === "speech";
+    const canReplay = voiceAvailable && !isMuted && mode !== "loading";
 
-    textOnlyLabel.hidden = hasAudio;
-    muteButton.hidden = !hasAudio;
-    replayButton.hidden = !hasAudio;
+    textOnlyLabel.hidden = voiceAvailable;
+    muteButton.hidden = !voiceAvailable;
+    replayButton.hidden = !voiceAvailable;
+    textOnlyLabel.textContent = mode === "text" ? "Text-only" : "Voice loading";
     muteButton.textContent = isMuted ? "Voice off" : "Voice on";
-    muteButton.setAttribute("aria-pressed", String(isMuted));
+    muteButton.title = mode === "mp3" ? "Local MP3 narration is playing" : "Browser speech narration is available";
+    muteButton.setAttribute("aria-pressed", String(!isMuted));
     replayButton.disabled = !canReplay;
     replayButton.setAttribute("aria-disabled", String(!canReplay));
-    replayButton.title = canReplay ? "Replay this narration" : "Turn voice on to replay this narration";
+    replayButton.title = canReplay ? "Replay this narration" : "Narration will be ready shortly";
     styleDemoTourButton(replayButton, canReplay ? "secondary" : "disabled");
   };
 
@@ -601,7 +644,7 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       prevBtnText: "Back",
       doneBtnText: "Done",
       onHighlighted: (element?: Element) => {
-        audioController.play(findDemoStepByElement(element)?.futureAudioSrc);
+        audioController.play(findDemoStepByElement(element));
       },
       onDestroyed: () => {
         audioController.stop();

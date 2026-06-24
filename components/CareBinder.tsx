@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 
 type TimelineEvent = {
   id: string;
-  type: "VISIT" | "PRAYER" | "CHURCH" | "NOTE" | "PLAN";
+  type: "VISIT" | "PRAYER" | "CHURCH" | "NOTE" | "PLAN" | "FOLLOW_UP";
   title: string;
   date: string;
   actor: string;
@@ -28,7 +28,7 @@ type Resident = {
   carePlan: string[];
 };
 
-const residents: Resident[] = [
+const initialResidents: Resident[] = [
   {
     id: "jane-doe",
     name: "Jane Doe",
@@ -158,24 +158,35 @@ const prayerTemplates = [
 
 const secondaryActions = ["Schedule Visit", "Contact Church", "Assign Volunteer", "Add Follow-Up", "Add Note", "Message Care Team"];
 
+const followUpTypes = ["Gentle check-in", "Prayer support", "Volunteer visit", "Church care note", "Family encouragement"];
+const followUpOwners = ["Care Coordinator", "Sarah K.", "Thomas R.", "Church Care Team"];
+
 function eventStyles(type: TimelineEvent["type"]) {
   if (type === "PRAYER") return "border-[#d8c6ff] bg-[#f5efff] text-[#5b3d91]";
   if (type === "VISIT") return "border-[#bfe4c7] bg-[#effaf0] text-[#2f6f45]";
   if (type === "CHURCH") return "border-[#f3d59d] bg-[#fff8e8] text-[#806020]";
   if (type === "PLAN") return "border-[#b8d8e6] bg-[#eef8fb] text-[#2d6475]";
+  if (type === "FOLLOW_UP") return "border-[#b7d6c0] bg-[#eef8ed] text-[#2e6842]";
   return "border-[#cdd7df] bg-[#f5f8fa] text-[#405a6b]";
 }
 
 export function CareBinder() {
+  const [residentList, setResidentList] = useState(initialResidents);
   const [selectedId, setSelectedId] = useState("jane-doe");
   const [timeline, setTimeline] = useState(initialTimeline);
   const [recentActivity, setRecentActivity] = useState(initialTimeline.slice(0, 3));
   const [isPrayerOpen, setPrayerOpen] = useState(false);
+  const [isFollowUpOpen, setFollowUpOpen] = useState(false);
   const [templateId, setTemplateId] = useState(prayerTemplates[0].id);
   const [prayerText, setPrayerText] = useState(prayerTemplates[0].body);
   const [hasConsent, setHasConsent] = useState(false);
+  const [followUpType, setFollowUpType] = useState(followUpTypes[0]);
+  const [followUpDueDate, setFollowUpDueDate] = useState("");
+  const [followUpOwner, setFollowUpOwner] = useState(followUpOwners[0]);
+  const [followUpNote, setFollowUpNote] = useState("");
+  const [hasFollowUpConsent, setHasFollowUpConsent] = useState(false);
 
-  const selectedResident = useMemo(() => residents.find((resident) => resident.id === selectedId) ?? residents[0], [selectedId]);
+  const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
 
   const chooseTemplate = (id: string) => {
     const template = prayerTemplates.find((item) => item.id === id) ?? prayerTemplates[0];
@@ -202,6 +213,48 @@ export function CareBinder() {
     setHasConsent(false);
   };
 
+  const resetFollowUpForm = () => {
+    setFollowUpType(followUpTypes[0]);
+    setFollowUpDueDate("");
+    setFollowUpOwner(followUpOwners[0]);
+    setFollowUpNote("");
+    setHasFollowUpConsent(false);
+  };
+
+  const closeFollowUp = () => {
+    setFollowUpOpen(false);
+    resetFollowUpForm();
+  };
+
+  const submitFollowUp = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!hasFollowUpConsent || !followUpDueDate || !followUpNote.trim()) return;
+
+    const newEvent: TimelineEvent = {
+      id: `follow-up-${Date.now()}`,
+      type: "FOLLOW_UP",
+      title: `${followUpType} follow-up set`,
+      date: "Today",
+      actor: followUpOwner,
+      detail: `Due ${followUpDueDate}. ${followUpNote.trim()}`
+    };
+
+    setTimeline((items) => [newEvent, ...items]);
+    setRecentActivity((items) => [newEvent, ...items].slice(0, 3));
+    setResidentList((items) =>
+      items.map((resident) =>
+        resident.id === selectedResident.id
+          ? {
+              ...resident,
+              priority: "Follow-up scheduled",
+              nextStep: `${followUpOwner} should complete the ${followUpType.toLowerCase()} by ${followUpDueDate}, then add a timeline note before any outside action.`
+            }
+          : resident
+      )
+    );
+    closeFollowUp();
+  };
+
   return (
     <div className="min-h-[calc(100vh-8rem)] overflow-hidden rounded-[2rem] border border-[#d9d2c4] bg-[#ede6d8] shadow-[0_24px_70px_rgba(38,55,49,0.16)]">
       <div className="border-b border-[#214532]/20 bg-[#173b2d] px-5 py-4 text-white">
@@ -219,11 +272,11 @@ export function CareBinder() {
           <div className="p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Care Queue</h2>
-              <span className="rounded-full bg-[#dfe8d2] px-2.5 py-1 text-[11px] font-bold text-[#33523d]">{residents.length} demo residents</span>
+              <span className="rounded-full bg-[#dfe8d2] px-2.5 py-1 text-[11px] font-bold text-[#33523d]">{residentList.length} demo residents</span>
             </div>
             <p className="mt-3 text-xs leading-5 text-[#66746b]">Select a resident to open the person record, choose one action, then confirm the timeline update.</p>
             <div className="mt-4 space-y-2">
-              {residents.map((resident) => (
+              {residentList.map((resident) => (
                 <button key={resident.id} onClick={() => setSelectedId(resident.id)} className={`w-full rounded-2xl border p-3 text-left transition ${selectedResident.id === resident.id ? "border-[#8da167] bg-white shadow-md" : "border-transparent bg-white/55 hover:border-[#d8d0c0]"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -315,12 +368,15 @@ export function CareBinder() {
                 Send Prayer Request
                 <span className="mt-1 block text-xs font-medium text-[#d7e7c5]">Choose, edit, consent, submit</span>
               </button>
-              {secondaryActions.map((action) => (
-                <button key={action} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
-                  {action}
-                  <span className="mt-1 block text-xs font-medium text-[#718075]">Scaffolded for a later workflow</span>
-                </button>
-              ))}
+              {secondaryActions.map((action) => {
+                const isFollowUpAction = action === "Add Follow-Up";
+                return (
+                  <button key={action} onClick={isFollowUpAction ? () => setFollowUpOpen(true) : undefined} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
+                    {action}
+                    <span className="mt-1 block text-xs font-medium text-[#718075]">{isFollowUpAction ? "Set a consent-confirmed next care touch" : "Scaffolded for a later workflow"}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <section className="mt-6">
@@ -368,6 +424,56 @@ export function CareBinder() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => setPrayerOpen(false)} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
               <button type="submit" disabled={!hasConsent || !prayerText.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Submit Prayer Request</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      {isFollowUpOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#132d23]/55 p-4 backdrop-blur-sm">
+          <form onSubmit={submitFollowUp} className="w-full max-w-2xl rounded-[1.8rem] border border-[#ded6c8] bg-[#fbf8f0] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6a7a63]">Local care action</p>
+                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Add Follow-Up</h2>
+                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}</p>
+              </div>
+              <button type="button" onClick={closeFollowUp} className="rounded-full border border-[#d8d0c0] px-3 py-1.5 text-sm font-bold text-[#4d5f55]">Close</button>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="follow-up-type">Follow-up type</label>
+                <select id="follow-up-type" value={followUpType} onChange={(event) => setFollowUpType(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {followUpTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="follow-up-due-date">Due date</label>
+                <input id="follow-up-due-date" type="date" value={followUpDueDate} onChange={(event) => setFollowUpDueDate(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+              </div>
+            </div>
+
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="follow-up-owner">Owner</label>
+            <select id="follow-up-owner" value={followUpOwner} onChange={(event) => setFollowUpOwner(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+              {followUpOwners.map((owner) => (
+                <option key={owner} value={owner}>{owner}</option>
+              ))}
+            </select>
+
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="follow-up-note">Care note</label>
+            <textarea id="follow-up-note" value={followUpNote} onChange={(event) => setFollowUpNote(event.target.value)} rows={4} placeholder="Describe the next safe spiritual support step." className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+
+            <label className="mt-5 flex gap-3 rounded-2xl border border-[#e0d6c4] bg-[#fffaf0] p-4 text-sm leading-6 text-[#4f5e54]">
+              <input type="checkbox" checked={hasFollowUpConsent} onChange={(event) => setHasFollowUpConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-[#173b2d]" />
+              <span>I confirm the resident&apos;s consent and care preferences support this follow-up, and any external contact still requires human review.</span>
+            </label>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={closeFollowUp} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
+              <button type="submit" disabled={!hasFollowUpConsent || !followUpDueDate || !followUpNote.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Add Follow-Up</button>
             </div>
           </form>
         </div>

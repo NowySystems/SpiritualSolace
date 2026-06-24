@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 
@@ -265,6 +265,9 @@ const careBinderDemoSteps: DemoStep[] = [
 
 type DemoAudioStateListener = (state: { hasPlayableAudio: boolean; isMuted: boolean }) => void;
 
+const demoTargetWaitMs = 2200;
+const demoTargetPollMs = 100;
+
 type DemoAudioController = {
   isMuted: () => boolean;
   hasPlayableAudio: () => boolean;
@@ -281,6 +284,7 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
   let muted = initialMuted;
   let hasPlayableAudio = false;
   let stateListener: DemoAudioStateListener = () => undefined;
+  const availabilityCache = new Map<string, boolean>();
 
   const notify = () => {
     stateListener({ hasPlayableAudio, isMuted: muted });
@@ -298,22 +302,43 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
     audio.currentTime = 0;
   };
 
+  const checkAudioAvailability = async (src: string) => {
+    if (availabilityCache.has(src)) return availabilityCache.get(src) ?? false;
+
+    try {
+      const response = await fetch(src, { method: "HEAD", cache: "no-store" });
+      const isAvailable = response.ok;
+      availabilityCache.set(src, isAvailable);
+      return isAvailable;
+    } catch {
+      availabilityCache.set(src, false);
+      return false;
+    }
+  };
+
   const play = (src?: string) => {
     stop();
     currentSrc = src ?? "";
-    setHasPlayableAudio(Boolean(src));
+    setHasPlayableAudio(false);
 
     if (!src || muted) return;
 
-    audio = new Audio(src);
-    audio.preload = "auto";
-    audio.volume = 0.82;
-    audio.addEventListener("canplaythrough", () => setHasPlayableAudio(true), { once: true });
-    audio.addEventListener("error", () => setHasPlayableAudio(false), { once: true });
+    void checkAudioAvailability(src).then((isAvailable) => {
+      if (!isAvailable || currentSrc !== src || muted) {
+        setHasPlayableAudio(false);
+        return;
+      }
 
-    audio.play().catch(() => {
-      stop();
-      setHasPlayableAudio(false);
+      audio = new Audio(src);
+      audio.preload = "auto";
+      audio.volume = 0.82;
+      audio.addEventListener("canplaythrough", () => setHasPlayableAudio(true), { once: true });
+      audio.addEventListener("error", () => setHasPlayableAudio(false), { once: true });
+
+      audio.play().catch(() => {
+        stop();
+        setHasPlayableAudio(false);
+      });
     });
   };
 
@@ -335,6 +360,32 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
     },
     stop
   };
+}
+
+function demoTargetsReady() {
+  return careBinderDemoSteps.every((step) => document.querySelector(step.target));
+}
+
+function waitForDemoTargets(timeoutMs = demoTargetWaitMs) {
+  const startedAt = window.performance.now();
+
+  return new Promise<boolean>((resolve) => {
+    const checkTargets = () => {
+      if (demoTargetsReady()) {
+        resolve(true);
+        return;
+      }
+
+      if (window.performance.now() - startedAt >= timeoutMs) {
+        resolve(false);
+        return;
+      }
+
+      window.setTimeout(checkTargets, demoTargetPollMs);
+    };
+
+    checkTargets();
+  });
 }
 
 function findDemoStepByElement(element?: Element): DemoStep | undefined {
@@ -397,10 +448,14 @@ function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audio
   const audioControls = document.createElement("div");
   audioControls.className = "flex flex-wrap items-center gap-2 rounded-2xl border border-[#eadfce] bg-[#fffaf2] p-1.5 shadow-sm";
 
+  const textOnlyLabel = document.createElement("span");
+  textOnlyLabel.className = "px-3 py-2 text-xs font-bold text-[#6c5d49]";
+  textOnlyLabel.textContent = "Text-only demo";
+  textOnlyLabel.title = "Narration files are optional and are not bundled in this build.";
+
   const muteButton = document.createElement("button");
   muteButton.type = "button";
   styleDemoTourButton(muteButton, "secondary");
-  muteButton.textContent = audioController.isMuted() ? "Voice off" : "Voice on";
   muteButton.setAttribute("aria-pressed", String(audioController.isMuted()));
 
   const replayButton = document.createElement("button");
@@ -408,14 +463,18 @@ function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audio
   replayButton.textContent = "Replay";
 
   const refreshAudioButtons = () => {
+    const hasAudio = audioController.hasPlayableAudio();
     const isMuted = audioController.isMuted();
-    const canReplay = audioController.hasPlayableAudio() && !isMuted;
+    const canReplay = hasAudio && !isMuted;
 
+    textOnlyLabel.hidden = hasAudio;
+    muteButton.hidden = !hasAudio;
+    replayButton.hidden = !hasAudio;
     muteButton.textContent = isMuted ? "Voice off" : "Voice on";
     muteButton.setAttribute("aria-pressed", String(isMuted));
     replayButton.disabled = !canReplay;
     replayButton.setAttribute("aria-disabled", String(!canReplay));
-    replayButton.title = canReplay ? "Replay this narration" : "Narration is unavailable for this step";
+    replayButton.title = canReplay ? "Replay this narration" : "Turn voice on to replay this narration";
     styleDemoTourButton(replayButton, canReplay ? "secondary" : "disabled");
   };
 
@@ -428,7 +487,7 @@ function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audio
   audioController.setStateListener(refreshAudioButtons);
   refreshAudioButtons();
 
-  audioControls.append(muteButton, replayButton);
+  audioControls.append(textOnlyLabel, muteButton, replayButton);
   popover.footerButtons.replaceChildren(audioControls, navControls);
 }
 
@@ -493,10 +552,13 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
   const [churchContactNote, setChurchContactNote] = useState("");
   const [hasChurchContactConsent, setHasChurchContactConsent] = useState(false);
   const demoAudioControllerRef = useRef<DemoAudioController | null>(null);
+  const hasAutoStartedDemoRef = useRef(false);
 
   const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
 
-  const startGuidedDemo = () => {
+  const startGuidedDemo = useCallback(async () => {
+    await waitForDemoTargets();
+
     demoAudioControllerRef.current?.stop();
     const audioController = createDemoAudioController(demoAudioControllerRef.current?.isMuted() ?? false);
     demoAudioControllerRef.current = audioController;
@@ -522,17 +584,18 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
     });
 
     driverObj.drive();
-  };
+  }, []);
 
   useEffect(() => {
-    if (!autoStartDemo) return;
+    if (!autoStartDemo || hasAutoStartedDemoRef.current) return;
 
+    hasAutoStartedDemoRef.current = true;
     const demoTimer = window.setTimeout(() => {
-      startGuidedDemo();
+      void startGuidedDemo();
     }, 450);
 
     return () => window.clearTimeout(demoTimer);
-  }, [autoStartDemo]);
+  }, [autoStartDemo, startGuidedDemo]);
 
   const chooseTemplate = (id: string) => {
     const template = prayerTemplates.find((item) => item.id === id) ?? prayerTemplates[0];
@@ -756,7 +819,7 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <p className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-[#f7f4ef]">Local demo state · no external action until human review</p>
-            <button type="button" onClick={startGuidedDemo} className="rounded-full bg-[#cbbbea] px-4 py-2 text-xs font-black text-[#16243a] shadow-sm hover:bg-[#d8cff1]">Start Guided Demo</button>
+            <button type="button" onClick={() => void startGuidedDemo()} className="rounded-full bg-[#cbbbea] px-4 py-2 text-xs font-black text-[#16243a] shadow-sm hover:bg-[#d8cff1]">Start Guided Demo</button>
           </div>
         </div>
       </div>

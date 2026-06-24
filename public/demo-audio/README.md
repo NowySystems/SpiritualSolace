@@ -2,9 +2,11 @@
 
 This folder is reserved for approved local MP3 narration assets for the Care Binder Driver.js guided tour.
 
-MP3 files are not committed in this PR. The tour works without audio: if a matching file is missing or cannot be decoded, the guided demo remains text-only and the Replay control is disabled for that step.
+MP3 files are not committed in this PR. The tour works without audio: if a matching file is missing, fails the local availability check, or cannot be decoded, the guided demo remains text-only. The Care Binder popover shows a text-only status instead of exposing broken replay or voice controls.
 
 Approved narration copy for each expected audio file is documented in [`narration-scripts.md`](./narration-scripts.md). Use that script pack when generating real narration outside the application.
+
+Launch the guided demo from the landing page **See How It Works** button or directly at `/care-binder?demo=true`. The Care Binder page also includes **Start Guided Demo** to restart the tour manually.
 
 When real narration is approved, add local MP3 files using these exact filenames:
 

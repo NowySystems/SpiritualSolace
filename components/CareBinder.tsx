@@ -263,9 +263,13 @@ const careBinderDemoSteps: DemoStep[] = [
   }
 ];
 
+type DemoAudioStateListener = (state: { hasPlayableAudio: boolean; isMuted: boolean }) => void;
+
 type DemoAudioController = {
   isMuted: () => boolean;
+  hasPlayableAudio: () => boolean;
   setMuted: (isMuted: boolean) => void;
+  setStateListener: (listener: DemoAudioStateListener) => void;
   play: (src?: string) => void;
   replay: () => void;
   stop: () => void;
@@ -275,6 +279,17 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
   let audio: HTMLAudioElement | null = null;
   let currentSrc = "";
   let muted = initialMuted;
+  let hasPlayableAudio = false;
+  let stateListener: DemoAudioStateListener = () => undefined;
+
+  const notify = () => {
+    stateListener({ hasPlayableAudio, isMuted: muted });
+  };
+
+  const setHasPlayableAudio = (value: boolean) => {
+    hasPlayableAudio = value;
+    notify();
+  };
 
   const stop = () => {
     if (!audio) return;
@@ -285,28 +300,38 @@ function createDemoAudioController(initialMuted = false): DemoAudioController {
 
   const play = (src?: string) => {
     stop();
+    currentSrc = src ?? "";
+    setHasPlayableAudio(Boolean(src));
 
     if (!src || muted) return;
 
-    currentSrc = src;
     audio = new Audio(src);
     audio.preload = "auto";
     audio.volume = 0.82;
+    audio.addEventListener("canplaythrough", () => setHasPlayableAudio(true), { once: true });
+    audio.addEventListener("error", () => setHasPlayableAudio(false), { once: true });
 
     audio.play().catch(() => {
       stop();
+      setHasPlayableAudio(false);
     });
   };
 
   return {
     isMuted: () => muted,
+    hasPlayableAudio: () => hasPlayableAudio,
     setMuted: (isMuted: boolean) => {
       muted = isMuted;
       if (muted) stop();
+      notify();
+    },
+    setStateListener: (listener: DemoAudioStateListener) => {
+      stateListener = listener;
+      notify();
     },
     play,
     replay: () => {
-      if (currentSrc) play(currentSrc);
+      if (currentSrc && hasPlayableAudio) play(currentSrc);
     },
     stop
   };
@@ -324,33 +349,87 @@ function findDemoStepByElement(element?: Element): DemoStep | undefined {
   });
 }
 
+function styleDemoTourButton(button: HTMLButtonElement, variant: "primary" | "secondary" | "disabled") {
+  const baseClasses = [
+    "min-h-9",
+    "min-w-[4.75rem]",
+    "rounded-full",
+    "px-4",
+    "py-2",
+    "text-xs",
+    "font-black",
+    "transition",
+    "focus:outline-none",
+    "focus:ring-2",
+    "focus:ring-[#c9a45f]",
+    "focus:ring-offset-2"
+  ];
+  const variantClasses = {
+    primary: ["border", "border-[#173b2d]", "bg-[#173b2d]", "text-white", "shadow-sm", "hover:bg-[#214f3d]"],
+    secondary: ["border", "border-[#d9cbb4]", "bg-[#fffaf2]", "text-[#44564c]", "hover:border-[#c9a45f]", "hover:text-[#173b2d]"],
+    disabled: ["cursor-not-allowed", "border", "border-[#e6ded2]", "bg-[#f4eee5]", "text-[#b7aa98]", "opacity-100"]
+  }[variant];
+
+  button.className = [...baseClasses, ...variantClasses].join(" ");
+}
+
 function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audioController: DemoAudioController) {
   if (!popover.footerButtons) return;
 
-  const controls = document.createElement("div");
-  controls.className = "mt-3 flex items-center gap-2 border-t border-[#e5dccd] pt-3";
+  popover.footerButtons.className = "mt-4 flex flex-col gap-3 border-t border-[#eadfce] pt-3 sm:flex-row sm:items-center sm:justify-between";
+
+  const navControls = document.createElement("div");
+  navControls.className = "flex flex-wrap items-center justify-end gap-2";
+
+  Array.from(popover.footerButtons.querySelectorAll("button")).forEach((button) => {
+    const controlButton = button as HTMLButtonElement;
+    const label = controlButton.textContent?.trim().toLowerCase() ?? "";
+
+    if (label.includes("back")) {
+      styleDemoTourButton(controlButton, controlButton.disabled ? "disabled" : "secondary");
+    } else {
+      styleDemoTourButton(controlButton, "primary");
+    }
+
+    navControls.append(controlButton);
+  });
+
+  const audioControls = document.createElement("div");
+  audioControls.className = "flex flex-wrap items-center gap-2 rounded-2xl border border-[#eadfce] bg-[#fffaf2] p-1.5 shadow-sm";
 
   const muteButton = document.createElement("button");
   muteButton.type = "button";
-  muteButton.className = "rounded-full border border-[#d8d0c0] px-3 py-1.5 text-xs font-black text-[#44564c]";
-  muteButton.textContent = audioController.isMuted() ? "Unmute voice" : "Mute voice";
+  styleDemoTourButton(muteButton, "secondary");
+  muteButton.textContent = audioController.isMuted() ? "Voice off" : "Voice on";
   muteButton.setAttribute("aria-pressed", String(audioController.isMuted()));
-
-  muteButton.addEventListener("click", () => {
-    const nextMuted = !audioController.isMuted();
-    audioController.setMuted(nextMuted);
-    muteButton.textContent = nextMuted ? "Unmute voice" : "Mute voice";
-    muteButton.setAttribute("aria-pressed", String(nextMuted));
-  });
 
   const replayButton = document.createElement("button");
   replayButton.type = "button";
-  replayButton.className = "rounded-full bg-[#173b2d] px-3 py-1.5 text-xs font-black text-white";
-  replayButton.textContent = "Replay voice";
+  replayButton.textContent = "Replay";
+
+  const refreshAudioButtons = () => {
+    const isMuted = audioController.isMuted();
+    const canReplay = audioController.hasPlayableAudio() && !isMuted;
+
+    muteButton.textContent = isMuted ? "Voice off" : "Voice on";
+    muteButton.setAttribute("aria-pressed", String(isMuted));
+    replayButton.disabled = !canReplay;
+    replayButton.setAttribute("aria-disabled", String(!canReplay));
+    replayButton.title = canReplay ? "Replay this narration" : "Narration is unavailable for this step";
+    styleDemoTourButton(replayButton, canReplay ? "secondary" : "disabled");
+  };
+
+  muteButton.addEventListener("click", () => {
+    audioController.setMuted(!audioController.isMuted());
+    refreshAudioButtons();
+  });
   replayButton.addEventListener("click", () => audioController.replay());
 
-  controls.append(muteButton, replayButton);
-  popover.footerButtons.prepend(controls);
+  audioController.setStateListener(refreshAudioButtons);
+  refreshAudioButtons();
+
+  audioControls.append(muteButton, replayButton);
+  popover.footerButtons.replaceChildren(audioControls, navControls);
 }
 
 function createDriverSteps(): DriveStep[] {

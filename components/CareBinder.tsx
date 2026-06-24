@@ -475,11 +475,10 @@ function renderDemoAudioControls(
   audioController: DemoAudioController,
   activeIndex = 0
 ) {
-  if (!popover.footerButtons) return;
-
   popover.wrapper?.classList.add("spiritual-solace-demo-popover");
   popover.title?.classList.add("spiritual-solace-demo-popover-title");
   popover.description?.classList.add("spiritual-solace-demo-popover-description");
+  popover.footer?.classList.add("spiritual-solace-demo-footer");
 
   const stepNumber = Math.min(activeIndex + 1, careBinderDemoSteps.length);
 
@@ -488,25 +487,28 @@ function renderDemoAudioControls(
     popover.progress.textContent = `Step ${stepNumber} of ${careBinderDemoSteps.length}`;
   }
 
-  popover.footer?.classList.add("spiritual-solace-demo-footer");
-  popover.footerButtons.className = "mt-4 flex flex-col gap-3 border-t border-[#eadfce] pt-3 sm:flex-row sm:items-center sm:justify-between";
+  if (!popover.footerButtons) return;
 
-  const navControls = document.createElement("div");
-  navControls.className = "flex flex-wrap items-center justify-end gap-2";
-
+  popover.footerButtons.classList.add("spiritual-solace-demo-native-actions");
   Array.from(popover.footerButtons.querySelectorAll("button")).forEach((button) => {
     const controlButton = button as HTMLButtonElement;
     const label = controlButton.textContent?.trim().toLowerCase() ?? "";
 
-    if (label.includes("back")) {
-      styleDemoTourButton(controlButton, controlButton.disabled ? "disabled" : "secondary");
-    } else {
-      styleDemoTourButton(controlButton, "primary");
-    }
+    styleDemoTourButton(controlButton, controlButton.disabled ? "disabled" : label.includes("back") ? "secondary" : "primary");
 
-    controlButton.addEventListener("click", () => audioController.stop());
-    navControls.append(controlButton);
+    if (controlButton.dataset.demoAudioStopBound !== "true") {
+      controlButton.addEventListener("click", () => audioController.stop(), { capture: true });
+      controlButton.dataset.demoAudioStopBound = "true";
+    }
   });
+
+  const footerContainer = popover.footer ?? popover.footerButtons.parentElement;
+  const existingPanel = footerContainer?.querySelector("[data-demo-audio-panel='true']");
+  if (existingPanel) existingPanel.remove();
+
+  const audioPanel = document.createElement("div");
+  audioPanel.dataset.demoAudioPanel = "true";
+  audioPanel.className = "spiritual-solace-demo-audio-panel";
 
   const audioControls = document.createElement("div");
   audioControls.className = "flex flex-wrap items-center gap-2 rounded-2xl border border-[#eadfce] bg-[#fffaf2] p-1.5 shadow-sm";
@@ -559,8 +561,8 @@ function renderDemoAudioControls(
   reviewNote.textContent = "Presentation mode only — nothing is sent, submitted, or stored outside this demo.";
 
   audioControls.append(textOnlyLabel, muteButton, replayButton);
-  popover.footerButtons.replaceChildren(audioControls, navControls);
-  popover.footerButtons.insertAdjacentElement("beforebegin", reviewNote);
+  audioPanel.append(audioControls, reviewNote);
+  footerContainer?.insertBefore(audioPanel, popover.footerButtons);
 }
 
 function createDriverSteps(): DriveStep[] {

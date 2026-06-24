@@ -276,15 +276,15 @@ function createDriverSteps(): DriveStep[] {
 }
 
 function eventStyles(type: TimelineEvent["type"]) {
-  if (type === "PRAYER") return "border-[#d8c6ff] bg-[#f5efff] text-[#5b3d91]";
-  if (type === "VISIT") return "border-[#bfe4c7] bg-[#effaf0] text-[#2f6f45]";
-  if (type === "VISIT_SCHEDULED") return "border-[#9cc9b7] bg-[#eef8f4] text-[#275d50]";
-  if (type === "CHURCH") return "border-[#f3d59d] bg-[#fff8e8] text-[#806020]";
-  if (type === "CHURCH_CONTACTED") return "border-[#e4b55e] bg-[#fff3cf] text-[#76501a]";
-  if (type === "PLAN") return "border-[#b8d8e6] bg-[#eef8fb] text-[#2d6475]";
-  if (type === "FOLLOW_UP") return "border-[#b7d6c0] bg-[#eef8ed] text-[#2e6842]";
-  if (type === "NOTE_ADDED") return "border-[#d9c7a7] bg-[#fff9ee] text-[#70552d]";
-  return "border-[#cdd7df] bg-[#f5f8fa] text-[#405a6b]";
+  if (type === "PRAYER") return "border-[#cbbbea] bg-[#f4effc] text-[#5b4a83]";
+  if (type === "VISIT") return "border-[#b7d1c0] bg-[#eef6f0] text-[#315f44]";
+  if (type === "VISIT_SCHEDULED") return "border-[#9fc6bd] bg-[#edf7f5] text-[#275d55]";
+  if (type === "CHURCH") return "border-[#e5c071] bg-[#fff7e6] text-[#76551c]";
+  if (type === "CHURCH_CONTACTED") return "border-[#e2b45f] bg-[#fff2d8] text-[#76501a]";
+  if (type === "PLAN") return "border-[#b5c8d4] bg-[#eef4f7] text-[#385d70]";
+  if (type === "FOLLOW_UP") return "border-[#ddb66c] bg-[#fff4df] text-[#76501a]";
+  if (type === "NOTE_ADDED") return "border-[#b9c8d2] bg-[#f1f6f8] text-[#405a6b]";
+  return "border-[#cbd6dc] bg-[#f5f8fa] text-[#405a6b]";
 }
 
 export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean }) {
@@ -564,106 +564,106 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
   };
 
   return (
-    <div className="min-h-[calc(100vh-8rem)] overflow-hidden rounded-[2rem] border border-[#d9d2c4] bg-[#ede6d8] shadow-[0_24px_70px_rgba(38,55,49,0.16)]">
-      <div className="border-b border-[#214532]/20 bg-[#173b2d] px-5 py-4 text-white">
+    <div className="min-h-[calc(100vh-8rem)] overflow-hidden rounded-[2rem] border border-[#d8d6d1] bg-[#f2f0ec] shadow-[0_24px_70px_rgba(30,41,59,0.14)]">
+      <div className="border-b border-white/10 bg-[#16243a] px-5 py-4 text-white">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Queue → Person → Action → Timeline</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#cbbbea]">Queue → Person → Action → Timeline</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Care Binder</h1>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <p className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-[#edf5e6]">Local demo state · no external action until human review</p>
-            <button type="button" onClick={startGuidedDemo} className="rounded-full bg-[#c8d9b3] px-4 py-2 text-xs font-black text-[#173b2d] shadow-sm hover:bg-[#d8e6c8]">Start Guided Demo</button>
+            <p className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-[#f7f4ef]">Local demo state · no external action until human review</p>
+            <button type="button" onClick={startGuidedDemo} className="rounded-full bg-[#cbbbea] px-4 py-2 text-xs font-black text-[#16243a] shadow-sm hover:bg-[#d8cff1]">Start Guided Demo</button>
           </div>
         </div>
       </div>
 
-      <div className="grid min-h-[760px] lg:grid-cols-[310px_minmax(0,1fr)_300px]">
-        <aside data-demo-target="care-queue" className="border-b border-[#d8d0c0] bg-[#f5efe3] lg:border-b-0 lg:border-r">
-          <div className="p-4">
+      <div className="grid min-h-[760px] lg:grid-cols-[310px_minmax(0,1fr)_310px]">
+        <aside data-demo-target="care-queue" className="border-b border-[#d8d6d1] bg-[#ebe8e2] lg:border-b-0 lg:border-r">
+          <div className="p-4 md:p-5">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Care Queue</h2>
-              <span className="rounded-full bg-[#dfe8d2] px-2.5 py-1 text-[11px] font-bold text-[#33523d]">{residentList.length} demo residents</span>
+              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Care Queue</h2>
+              <span className="rounded-full bg-[#eef6f0] px-2.5 py-1 text-[11px] font-bold text-[#315f44]">{residentList.length} demo residents</span>
             </div>
-            <p className="mt-3 text-xs leading-5 text-[#66746b]">Select a resident to open the person record, choose one action, then confirm the timeline update.</p>
+            <p className="mt-3 text-xs leading-5 text-[#5e6a72]">Select a resident to open the person record, choose one action, then confirm the timeline update.</p>
             <div className="mt-4 space-y-2">
               {residentList.map((resident) => (
-                <button key={resident.id} data-demo-target={resident.id === "jane-doe" ? "care-queue-jane-doe" : undefined} onClick={() => setSelectedId(resident.id)} className={`w-full rounded-2xl border p-3 text-left transition ${selectedResident.id === resident.id ? "border-[#8da167] bg-white shadow-md" : "border-transparent bg-white/55 hover:border-[#d8d0c0]"}`}>
+                <button key={resident.id} data-demo-target={resident.id === "jane-doe" ? "care-queue-jane-doe" : undefined} onClick={() => setSelectedId(resident.id)} className={`w-full rounded-2xl border p-4 text-left transition ${selectedResident.id === resident.id ? "border-[#8f7bb8] bg-[#fffdf9] shadow-md" : "border-transparent bg-[#fffdf9]/70 hover:border-[#cfcac2] hover:bg-[#fffdf9]"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-bold text-[#1f342b]">{resident.name}</p>
-                      <p className="mt-1 text-xs text-[#69766c]">Room {resident.room} · Age {resident.age}</p>
+                      <p className="font-bold text-[#1e2b3f]">{resident.name}</p>
+                      <p className="mt-1 text-xs text-[#65717a]">Room {resident.room} · Age {resident.age}</p>
                     </div>
-                    <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${resident.status === "Active" ? "bg-[#dff2df] text-[#217342]" : "bg-[#fff2c8] text-[#856014]"}`}>{resident.status}</span>
+                    <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase ${resident.status === "Active" ? "bg-[#eef6f0] text-[#315f44]" : "bg-[#fff4df] text-[#76501a]"}`}>{resident.status}</span>
                   </div>
-                  <p className="mt-3 text-xs font-semibold text-[#6a5f4c]">{resident.priority}</p>
+                  <p className="mt-3 text-xs font-semibold text-[#5f5872]">{resident.priority}</p>
                 </button>
               ))}
             </div>
           </div>
         </aside>
 
-        <main className="bg-[#eee8db] p-5 lg:p-7">
-          <section data-demo-target="person-header" className="rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6 shadow-sm">
+        <main className="bg-[#f2f0ec] p-5 lg:p-7">
+          <section data-demo-target="person-header" className="rounded-[1.7rem] border border-[#d8d6d1] bg-[#fffdf9] p-6 shadow-sm">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="font-serif text-4xl font-semibold tracking-[-0.04em] text-[#1e342b]">{selectedResident.name}</h2>
-                  <span className="rounded-full bg-[#dff2df] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#227343]">{selectedResident.status}</span>
+                  <h2 className="font-serif text-4xl font-semibold tracking-[-0.04em] text-[#1e2b3f] md:text-5xl">{selectedResident.name}</h2>
+                  <span className="rounded-full bg-[#eef6f0] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#315f44]">{selectedResident.status}</span>
                 </div>
-                <p className="mt-2 text-sm font-semibold text-[#5c6b62]">Room {selectedResident.room} · Age {selectedResident.age} · {selectedResident.faith}</p>
-                <p className="mt-4 max-w-3xl text-base leading-7 text-[#44574f]">{selectedResident.summary}</p>
+                <p className="mt-2 text-sm font-semibold text-[#5e6a72]">Room {selectedResident.room} · Age {selectedResident.age} · {selectedResident.faith}</p>
+                <p className="mt-4 max-w-3xl text-base leading-7 text-[#3f4f5b]">{selectedResident.summary}</p>
               </div>
-              <div data-demo-target="current-need-next-safe-step" className="rounded-2xl border border-[#e1dacd] bg-[#f4efdf] p-4 xl:w-80">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#657568]">What should happen next?</p>
-                <p className="mt-2 text-sm font-semibold leading-6 text-[#20372d]">{selectedResident.nextStep}</p>
+              <div data-demo-target="current-need-next-safe-step" className="rounded-2xl border border-[#d7cdeb] bg-[#f4effc] p-5 xl:w-80">
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5b4a83]">What should happen next?</p>
+                <p className="mt-2 text-sm font-semibold leading-6 text-[#1e2b3f]">{selectedResident.nextStep}</p>
               </div>
             </div>
           </section>
 
           <section className="mt-5 grid gap-5 xl:grid-cols-[1fr_0.92fr]">
-            <div className="rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
-              <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Current Needs</h3>
+            <div className="rounded-[1.7rem] border border-[#d8d6d1] bg-[#fffdf9] p-6">
+              <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Current Needs</h3>
               <div className="mt-4 flex flex-wrap gap-2">
                 {selectedResident.needs.map((need) => (
-                  <span key={need} className="rounded-full border border-[#ded3bc] bg-[#fffaf0] px-3 py-2 text-xs font-bold text-[#6d5c36]">{need}</span>
+                  <span key={need} className="rounded-full border border-[#cbd6dc] bg-[#f1f6f8] px-3 py-2 text-xs font-bold text-[#405a6b]">{need}</span>
                 ))}
               </div>
             </div>
-            <div className="rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
-              <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Church Connection</h3>
-              <p className="mt-3 font-bold text-[#20372d]">{selectedResident.church}</p>
-              <p className="mt-1 text-sm text-[#5f6d64]">Pastor: {selectedResident.pastor}</p>
-              <p className="mt-1 text-sm text-[#5f6d64]">Volunteer: {selectedResident.volunteer}</p>
+            <div className="rounded-[1.7rem] border border-[#d8d6d1] bg-[#fffdf9] p-6">
+              <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Church Connection</h3>
+              <p className="mt-3 font-bold text-[#1e2b3f]">{selectedResident.church}</p>
+              <p className="mt-1 text-sm text-[#5e6a72]">Pastor: {selectedResident.pastor}</p>
+              <p className="mt-1 text-sm text-[#5e6a72]">Volunteer: {selectedResident.volunteer}</p>
             </div>
           </section>
 
-          <section data-demo-target="care-plan" className="mt-5 rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
-            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Spiritual Care Plan</h3>
+          <section data-demo-target="care-plan" className="mt-5 rounded-[1.7rem] border border-[#d8d6d1] bg-[#fffdf9] p-6">
+            <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Spiritual Care Plan</h3>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               {selectedResident.carePlan.map((step, index) => (
-                <div key={step} className="rounded-2xl border border-[#ded6c8] bg-[#fffaf0] p-4">
-                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#7a6a45]">Plan {index + 1}</p>
-                  <p className="mt-2 text-sm leading-6 text-[#405249]">{step}</p>
+                <div key={step} className="rounded-2xl border border-[#dbe3dd] bg-[#f8fbf8] p-4">
+                  <p className="text-[11px] font-black uppercase tracking-[0.14em] text-[#315f44]">Plan {index + 1}</p>
+                  <p className="mt-2 text-sm leading-6 text-[#3f4f5b]">{step}</p>
                 </div>
               ))}
             </div>
           </section>
 
-          <section data-demo-target="care-timeline" className="mt-5 rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
+          <section data-demo-target="care-timeline" className="mt-5 rounded-[1.7rem] border border-[#d8d6d1] bg-[#fffdf9] p-6">
             <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Care Timeline</h3>
-              <p className="text-xs font-semibold text-[#69766c]">Newest first</p>
+              <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Care Timeline</h3>
+              <p className="text-xs font-semibold text-[#65717a]">Newest first</p>
             </div>
             <div className="mt-5 space-y-4">
               {timeline.map((item) => (
-                <article key={item.id} className="grid gap-4 border-l-2 border-[#d9d1c2] pl-4 sm:grid-cols-[92px_1fr]">
-                  <p className="text-xs font-bold text-[#69766c]">{item.date}</p>
-                  <div>
+                <article key={item.id} className="grid gap-4 rounded-2xl border border-[#e2dfd9] bg-white p-4 shadow-[0_10px_30px_rgba(30,41,59,0.05)] sm:grid-cols-[92px_1fr]">
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#65717a]">{item.date}</p>
+                  <div className="border-l-2 border-[#d8d6d1] pl-4">
                     <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${eventStyles(item.type)}`}>{item.type}</span>
-                    <h4 className="mt-2 font-bold text-[#1f342b]">{item.title}</h4>
-                    <p className="mt-1 text-xs font-bold text-[#6a765f]">{item.actor}</p>
-                    <p className="mt-1 text-sm leading-6 text-[#506158]">{item.detail}</p>
+                    <h4 className="mt-2 font-bold text-[#1e2b3f]">{item.title}</h4>
+                    <p className="mt-1 text-xs font-bold text-[#5b4a83]">{item.actor}</p>
+                    <p className="mt-1 text-sm leading-6 text-[#4b5b66]">{item.detail}</p>
                   </div>
                 </article>
               ))}
@@ -671,14 +671,15 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
           </section>
         </main>
 
-        <aside className="border-t border-[#d8d0c0] bg-[#f5efe3] lg:border-l lg:border-t-0">
-          <div className="sticky top-24 p-4">
-            <div data-demo-target="quick-actions">
-              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Actions</h2>
+        <aside className="border-t border-[#d8d6d1] bg-[#ebe8e2] lg:border-l lg:border-t-0">
+          <div className="sticky top-24 p-4 md:p-5">
+            <div data-demo-target="quick-actions" className="rounded-[1.5rem] border border-[#d8d6d1] bg-[#fffdf9] p-4 shadow-sm">
+              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Quick Actions</h2>
+              <p className="mt-2 text-xs leading-5 text-[#5e6a72]">Choose one local action, then confirm the timeline update.</p>
             <div className="mt-4 space-y-2">
-              <button data-demo-target="send-prayer-request-action" onClick={() => setPrayerOpen(true)} className="w-full rounded-2xl bg-[#173b2d] px-4 py-3 text-left text-sm font-black text-white shadow-md hover:bg-[#234b3b]">
+              <button data-demo-target="send-prayer-request-action" onClick={() => setPrayerOpen(true)} className="w-full rounded-2xl bg-[#16243a] px-4 py-4 text-left text-sm font-black text-white shadow-md hover:bg-[#243653]">
                 Send Prayer Request
-                <span className="mt-1 block text-xs font-medium text-[#d7e7c5]">Choose, edit, consent, submit</span>
+                <span className="mt-1 block text-xs font-medium text-[#d8cff1]">Choose, edit, consent, submit</span>
               </button>
               {secondaryActions.map((action) => {
                 const isVisitAction = action === "Schedule Visit";
@@ -697,9 +698,9 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
                         : "Scaffolded for a later workflow";
 
                 return (
-                  <button key={action} data-demo-target={isVisitAction ? "schedule-visit-action" : isFollowUpAction ? "add-follow-up-action" : isChurchContactAction ? "contact-church-action" : undefined} onClick={actionHandler} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
+                  <button key={action} data-demo-target={isVisitAction ? "schedule-visit-action" : isFollowUpAction ? "add-follow-up-action" : isChurchContactAction ? "contact-church-action" : undefined} onClick={actionHandler} className="w-full rounded-2xl border border-[#d8d6d1] bg-white px-4 py-4 text-left text-sm font-bold text-[#1e2b3f] hover:border-[#cbbbea] hover:bg-[#f9f6ff]" type="button">
                     {action}
-                    <span className="mt-1 block text-xs font-medium text-[#718075]">{actionDescription}</span>
+                    <span className="mt-1 block text-xs font-medium text-[#65717a]">{actionDescription}</span>
                   </button>
                 );
               })}
@@ -707,12 +708,12 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
             </div>
 
             <section data-demo-target="recent-activity" className="mt-6">
-              <h3 className="text-xs font-black uppercase tracking-[0.18em] text-[#53655b]">Recent Activity</h3>
+              <h3 className="text-xs font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Recent Activity</h3>
               <div className="mt-3 space-y-2">
                 {recentActivity.map((item) => (
-                  <div key={item.id} className="rounded-2xl border border-[#ded6c8] bg-white/65 p-3">
-                    <p className="text-xs font-bold text-[#6d776d]">{item.date} · {item.actor}</p>
-                    <p className="mt-1 text-sm font-bold text-[#20372d]">{item.title}</p>
+                  <div key={item.id} className="rounded-2xl border border-[#d8d6d1] bg-[#fffdf9] p-3">
+                    <p className="text-xs font-bold text-[#65717a]">{item.date} · {item.actor}</p>
+                    <p className="mt-1 text-sm font-bold text-[#1e2b3f]">{item.title}</p>
                   </div>
                 ))}
               </div>

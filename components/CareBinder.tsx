@@ -424,9 +424,32 @@ function styleDemoTourButton(button: HTMLButtonElement, variant: "primary" | "se
   button.className = [...baseClasses, ...variantClasses].join(" ");
 }
 
-function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audioController: DemoAudioController) {
+function renderDemoAudioControls(
+  popover: {
+    wrapper?: HTMLElement;
+    title?: HTMLElement;
+    description?: HTMLElement;
+    footer?: HTMLElement;
+    footerButtons?: HTMLElement;
+    progress?: HTMLElement;
+  },
+  audioController: DemoAudioController,
+  activeIndex = 0
+) {
   if (!popover.footerButtons) return;
 
+  popover.wrapper?.classList.add("spiritual-solace-demo-popover");
+  popover.title?.classList.add("spiritual-solace-demo-popover-title");
+  popover.description?.classList.add("spiritual-solace-demo-popover-description");
+
+  const stepNumber = Math.min(activeIndex + 1, careBinderDemoSteps.length);
+
+  if (popover.progress) {
+    popover.progress.className = "spiritual-solace-demo-progress";
+    popover.progress.textContent = `Step ${stepNumber} of ${careBinderDemoSteps.length}`;
+  }
+
+  popover.footer?.classList.add("spiritual-solace-demo-footer");
   popover.footerButtons.className = "mt-4 flex flex-col gap-3 border-t border-[#eadfce] pt-3 sm:flex-row sm:items-center sm:justify-between";
 
   const navControls = document.createElement("div");
@@ -447,10 +470,11 @@ function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audio
 
   const audioControls = document.createElement("div");
   audioControls.className = "flex flex-wrap items-center gap-2 rounded-2xl border border-[#eadfce] bg-[#fffaf2] p-1.5 shadow-sm";
+  audioControls.setAttribute("aria-label", "Demo narration status");
 
   const textOnlyLabel = document.createElement("span");
-  textOnlyLabel.className = "px-3 py-2 text-xs font-bold text-[#6c5d49]";
-  textOnlyLabel.textContent = "Text-only demo";
+  textOnlyLabel.className = "px-3 py-2 text-xs font-black uppercase tracking-[0.16em] text-[#6c5d49]";
+  textOnlyLabel.textContent = "Text-only";
   textOnlyLabel.title = "Narration files are optional and are not bundled in this build.";
 
   const muteButton = document.createElement("button");
@@ -487,8 +511,13 @@ function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audio
   audioController.setStateListener(refreshAudioButtons);
   refreshAudioButtons();
 
+  const reviewNote = document.createElement("p");
+  reviewNote.className = "mt-3 rounded-2xl bg-[#f7efe2] px-3 py-2 text-[0.72rem] font-bold leading-relaxed text-[#6b5b45]";
+  reviewNote.textContent = "Presentation mode only — nothing is sent, submitted, or stored outside this demo.";
+
   audioControls.append(textOnlyLabel, muteButton, replayButton);
   popover.footerButtons.replaceChildren(audioControls, navControls);
+  popover.footerButtons.insertAdjacentElement("beforebegin", reviewNote);
 }
 
 function createDriverSteps(): DriveStep[] {
@@ -577,8 +606,10 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       onDestroyed: () => {
         audioController.stop();
       },
-      onPopoverRender: (popover: { footerButtons?: HTMLElement }) => {
-        renderDemoAudioControls(popover, audioController);
+      popoverClass: "spiritual-solace-demo-popover",
+      progressText: "Step {{current}} of {{total}}",
+      onPopoverRender: (popover, opts) => {
+        renderDemoAudioControls(popover, audioController, opts?.state?.activeIndex ?? 0);
       },
       steps: createDriverSteps()
     });

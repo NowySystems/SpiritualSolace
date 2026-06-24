@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 
 type TimelineEvent = {
   id: string;
-  type: "VISIT" | "PRAYER" | "CHURCH" | "NOTE" | "PLAN" | "FOLLOW_UP";
+  type: "VISIT" | "VISIT_SCHEDULED" | "PRAYER" | "CHURCH" | "NOTE" | "PLAN" | "FOLLOW_UP";
   title: string;
   date: string;
   actor: string;
@@ -161,9 +161,15 @@ const secondaryActions = ["Schedule Visit", "Contact Church", "Assign Volunteer"
 const followUpTypes = ["Gentle check-in", "Prayer support", "Volunteer visit", "Church care note", "Family encouragement"];
 const followUpOwners = ["Care Coordinator", "Sarah K.", "Thomas R.", "Church Care Team"];
 
+const visitTypes = ["Pastoral visit", "Volunteer visit", "Chaplain visit", "Seminary student visit", "Prayer visit", "Care plan visit"];
+const visitDates = ["Today", "Tomorrow", "This week", "Custom"];
+const visitWindows = ["Morning", "Afternoon", "Evening", "Custom"];
+const visitVisitors = ["Pastor Sam", "Church Care Team", "Volunteer", "Chaplain", "Seminary Student"];
+
 function eventStyles(type: TimelineEvent["type"]) {
   if (type === "PRAYER") return "border-[#d8c6ff] bg-[#f5efff] text-[#5b3d91]";
   if (type === "VISIT") return "border-[#bfe4c7] bg-[#effaf0] text-[#2f6f45]";
+  if (type === "VISIT_SCHEDULED") return "border-[#9cc9b7] bg-[#eef8f4] text-[#275d50]";
   if (type === "CHURCH") return "border-[#f3d59d] bg-[#fff8e8] text-[#806020]";
   if (type === "PLAN") return "border-[#b8d8e6] bg-[#eef8fb] text-[#2d6475]";
   if (type === "FOLLOW_UP") return "border-[#b7d6c0] bg-[#eef8ed] text-[#2e6842]";
@@ -176,6 +182,7 @@ export function CareBinder() {
   const [timeline, setTimeline] = useState(initialTimeline);
   const [recentActivity, setRecentActivity] = useState(initialTimeline.slice(0, 3));
   const [isPrayerOpen, setPrayerOpen] = useState(false);
+  const [isVisitOpen, setVisitOpen] = useState(false);
   const [isFollowUpOpen, setFollowUpOpen] = useState(false);
   const [templateId, setTemplateId] = useState(prayerTemplates[0].id);
   const [prayerText, setPrayerText] = useState(prayerTemplates[0].body);
@@ -185,6 +192,15 @@ export function CareBinder() {
   const [followUpOwner, setFollowUpOwner] = useState(followUpOwners[0]);
   const [followUpNote, setFollowUpNote] = useState("");
   const [hasFollowUpConsent, setHasFollowUpConsent] = useState(false);
+  const [visitType, setVisitType] = useState(visitTypes[0]);
+  const [visitDate, setVisitDate] = useState(visitDates[0]);
+  const [customVisitDate, setCustomVisitDate] = useState("");
+  const [visitWindow, setVisitWindow] = useState(visitWindows[0]);
+  const [customVisitWindow, setCustomVisitWindow] = useState("");
+  const [visitVisitor, setVisitVisitor] = useState(visitVisitors[0]);
+  const [visitLocation, setVisitLocation] = useState("");
+  const [visitNote, setVisitNote] = useState("");
+  const [hasVisitConsent, setHasVisitConsent] = useState(false);
 
   const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
 
@@ -211,6 +227,57 @@ export function CareBinder() {
     setRecentActivity((items) => [newEvent, ...items].slice(0, 3));
     setPrayerOpen(false);
     setHasConsent(false);
+  };
+
+
+  const resetVisitForm = () => {
+    setVisitType(visitTypes[0]);
+    setVisitDate(visitDates[0]);
+    setCustomVisitDate("");
+    setVisitWindow(visitWindows[0]);
+    setCustomVisitWindow("");
+    setVisitVisitor(visitVisitors[0]);
+    setVisitLocation("");
+    setVisitNote("");
+    setHasVisitConsent(false);
+  };
+
+  const closeVisit = () => {
+    setVisitOpen(false);
+    resetVisitForm();
+  };
+
+  const submitVisit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const resolvedDate = visitDate === "Custom" ? customVisitDate : visitDate;
+    const resolvedWindow = visitWindow === "Custom" ? customVisitWindow : visitWindow;
+
+    if (!hasVisitConsent || !resolvedDate.trim() || !resolvedWindow.trim() || !visitLocation.trim() || !visitNote.trim()) return;
+
+    const newEvent: TimelineEvent = {
+      id: `visit-scheduled-${Date.now()}`,
+      type: "VISIT_SCHEDULED",
+      title: `${visitType} scheduled`,
+      date: "Today",
+      actor: visitVisitor,
+      detail: `${resolvedDate} · ${resolvedWindow} · ${visitLocation.trim()}. ${visitNote.trim()}`
+    };
+
+    setTimeline((items) => [newEvent, ...items]);
+    setRecentActivity((items) => [newEvent, ...items].slice(0, 3));
+    setResidentList((items) =>
+      items.map((resident) =>
+        resident.id === selectedResident.id
+          ? {
+              ...resident,
+              priority: "Visit scheduled",
+              nextStep: `${visitVisitor} should complete the ${visitType.toLowerCase()} ${resolvedDate.toLowerCase()} during the ${resolvedWindow.toLowerCase()} window, then add a timeline note before any outside action.`
+            }
+          : resident
+      )
+    );
+    closeVisit();
   };
 
   const resetFollowUpForm = () => {
@@ -369,11 +436,19 @@ export function CareBinder() {
                 <span className="mt-1 block text-xs font-medium text-[#d7e7c5]">Choose, edit, consent, submit</span>
               </button>
               {secondaryActions.map((action) => {
+                const isVisitAction = action === "Schedule Visit";
                 const isFollowUpAction = action === "Add Follow-Up";
+                const actionHandler = isVisitAction ? () => setVisitOpen(true) : isFollowUpAction ? () => setFollowUpOpen(true) : undefined;
+                const actionDescription = isVisitAction
+                  ? "Plan a consent-confirmed spiritual care visit"
+                  : isFollowUpAction
+                    ? "Set a consent-confirmed next care touch"
+                    : "Scaffolded for a later workflow";
+
                 return (
-                  <button key={action} onClick={isFollowUpAction ? () => setFollowUpOpen(true) : undefined} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
+                  <button key={action} onClick={actionHandler} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
                     {action}
-                    <span className="mt-1 block text-xs font-medium text-[#718075]">{isFollowUpAction ? "Set a consent-confirmed next care touch" : "Scaffolded for a later workflow"}</span>
+                    <span className="mt-1 block text-xs font-medium text-[#718075]">{actionDescription}</span>
                   </button>
                 );
               })}
@@ -424,6 +499,85 @@ export function CareBinder() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => setPrayerOpen(false)} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
               <button type="submit" disabled={!hasConsent || !prayerText.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Submit Prayer Request</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+
+      {isVisitOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#132d23]/55 p-4 backdrop-blur-sm">
+          <form onSubmit={submitVisit} className="w-full max-w-3xl rounded-[1.8rem] border border-[#ded6c8] bg-[#fbf8f0] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6a7a63]">Local spiritual support action</p>
+                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Schedule Visit</h2>
+                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}</p>
+              </div>
+              <button type="button" onClick={closeVisit} className="rounded-full border border-[#d8d0c0] px-3 py-1.5 text-sm font-bold text-[#4d5f55]">Close</button>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="visit-type">Visit type</label>
+                <select id="visit-type" value={visitType} onChange={(event) => setVisitType(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {visitTypes.map((type) => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="visit-visitor">Assigned visitor</label>
+                <select id="visit-visitor" value={visitVisitor} onChange={(event) => setVisitVisitor(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {visitVisitors.map((visitor) => (
+                    <option key={visitor} value={visitor}>{visitor}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="visit-date">Date</label>
+                <select id="visit-date" value={visitDate} onChange={(event) => setVisitDate(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {visitDates.map((date) => (
+                    <option key={date} value={date}>{date}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="visit-window">Time window</label>
+                <select id="visit-window" value={visitWindow} onChange={(event) => setVisitWindow(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {visitWindows.map((window) => (
+                    <option key={window} value={window}>{window}</option>
+                  ))}
+                </select>
+              </div>
+              {visitDate === "Custom" ? (
+                <div>
+                  <label className="block text-sm font-bold text-[#20372d]" htmlFor="custom-visit-date">Custom date</label>
+                  <input id="custom-visit-date" value={customVisitDate} onChange={(event) => setCustomVisitDate(event.target.value)} placeholder="Example: Friday after lunch" className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+                </div>
+              ) : null}
+              {visitWindow === "Custom" ? (
+                <div>
+                  <label className="block text-sm font-bold text-[#20372d]" htmlFor="custom-visit-window">Custom time window</label>
+                  <input id="custom-visit-window" value={customVisitWindow} onChange={(event) => setCustomVisitWindow(event.target.value)} placeholder="Example: 2:00–3:00 PM" className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+                </div>
+              ) : null}
+            </div>
+
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="visit-location">Location / room</label>
+            <input id="visit-location" value={visitLocation} onChange={(event) => setVisitLocation(event.target.value)} placeholder={`Room ${selectedResident.room} or approved chapel/common area`} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="visit-note">Visit note</label>
+            <textarea id="visit-note" value={visitNote} onChange={(event) => setVisitNote(event.target.value)} rows={4} placeholder="Describe the safe spiritual support purpose for this visit." className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+
+            <label className="mt-5 flex gap-3 rounded-2xl border border-[#e0d6c4] bg-[#fffaf0] p-4 text-sm leading-6 text-[#4f5e54]">
+              <input type="checkbox" checked={hasVisitConsent} onChange={(event) => setHasVisitConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-[#173b2d]" />
+              <span>I confirm the resident&apos;s consent and care preferences support this spiritual support visit, and any outside contact still requires human review.</span>
+            </label>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={closeVisit} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
+              <button type="submit" disabled={!hasVisitConsent || !(visitDate === "Custom" ? customVisitDate.trim() : visitDate) || !(visitWindow === "Custom" ? customVisitWindow.trim() : visitWindow) || !visitLocation.trim() || !visitNote.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Schedule Visit</button>
             </div>
           </form>
         </div>

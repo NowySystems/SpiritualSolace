@@ -4,7 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 
 type TimelineEvent = {
   id: string;
-  type: "VISIT" | "VISIT_SCHEDULED" | "PRAYER" | "CHURCH" | "NOTE" | "NOTE_ADDED" | "PLAN" | "FOLLOW_UP";
+  type: "VISIT" | "VISIT_SCHEDULED" | "PRAYER" | "CHURCH" | "CHURCH_CONTACTED" | "NOTE" | "NOTE_ADDED" | "PLAN" | "FOLLOW_UP";
   title: string;
   date: string;
   actor: string;
@@ -158,6 +158,10 @@ const prayerTemplates = [
 
 const secondaryActions = ["Schedule Visit", "Contact Church", "Assign Volunteer", "Add Follow-Up", "Add Note", "Message Care Team"];
 
+const churchContactTargetTypes = ["Preferred church on file", "Pastor", "Church care team", "Prayer list coordinator", "Family-provided church contact"];
+const churchContactPurposes = ["Request prayer support", "Coordinate visit", "Confirm church affiliation", "Add to prayer list", "Share limited update", "Request pastor follow-up"];
+const churchSharingLevels = ["Name only", "Name + room/location", "Limited spiritual support need", "Prayer list approved details", "Staff-only draft / not shared yet"];
+
 const followUpTypes = ["Gentle check-in", "Prayer support", "Volunteer visit", "Church care note", "Family encouragement"];
 const followUpOwners = ["Care Coordinator", "Sarah K.", "Thomas R.", "Church Care Team"];
 
@@ -174,6 +178,7 @@ function eventStyles(type: TimelineEvent["type"]) {
   if (type === "VISIT") return "border-[#bfe4c7] bg-[#effaf0] text-[#2f6f45]";
   if (type === "VISIT_SCHEDULED") return "border-[#9cc9b7] bg-[#eef8f4] text-[#275d50]";
   if (type === "CHURCH") return "border-[#f3d59d] bg-[#fff8e8] text-[#806020]";
+  if (type === "CHURCH_CONTACTED") return "border-[#e4b55e] bg-[#fff3cf] text-[#76501a]";
   if (type === "PLAN") return "border-[#b8d8e6] bg-[#eef8fb] text-[#2d6475]";
   if (type === "FOLLOW_UP") return "border-[#b7d6c0] bg-[#eef8ed] text-[#2e6842]";
   if (type === "NOTE_ADDED") return "border-[#d9c7a7] bg-[#fff9ee] text-[#70552d]";
@@ -189,6 +194,7 @@ export function CareBinder() {
   const [isVisitOpen, setVisitOpen] = useState(false);
   const [isFollowUpOpen, setFollowUpOpen] = useState(false);
   const [isNoteOpen, setNoteOpen] = useState(false);
+  const [isChurchContactOpen, setChurchContactOpen] = useState(false);
   const [templateId, setTemplateId] = useState(prayerTemplates[0].id);
   const [prayerText, setPrayerText] = useState(prayerTemplates[0].body);
   const [hasConsent, setHasConsent] = useState(false);
@@ -210,6 +216,11 @@ export function CareBinder() {
   const [visitLocation, setVisitLocation] = useState("");
   const [visitNote, setVisitNote] = useState("");
   const [hasVisitConsent, setHasVisitConsent] = useState(false);
+  const [churchContactTargetType, setChurchContactTargetType] = useState(churchContactTargetTypes[0]);
+  const [churchContactPurpose, setChurchContactPurpose] = useState(churchContactPurposes[0]);
+  const [churchSharingLevel, setChurchSharingLevel] = useState(churchSharingLevels[0]);
+  const [churchContactNote, setChurchContactNote] = useState("");
+  const [hasChurchContactConsent, setHasChurchContactConsent] = useState(false);
 
   const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
 
@@ -331,6 +342,56 @@ export function CareBinder() {
       )
     );
     closeVisit();
+  };
+
+
+  const getChurchContactTarget = (targetType: string) => {
+    if (targetType === "Preferred church on file") return selectedResident.church;
+    if (targetType === "Pastor") return selectedResident.pastor;
+    return targetType;
+  };
+
+  const resetChurchContactForm = () => {
+    setChurchContactTargetType(churchContactTargetTypes[0]);
+    setChurchContactPurpose(churchContactPurposes[0]);
+    setChurchSharingLevel(churchSharingLevels[0]);
+    setChurchContactNote("");
+    setHasChurchContactConsent(false);
+  };
+
+  const closeChurchContact = () => {
+    setChurchContactOpen(false);
+    resetChurchContactForm();
+  };
+
+  const submitChurchContact = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!hasChurchContactConsent || !churchContactNote.trim()) return;
+
+    const resolvedTarget = getChurchContactTarget(churchContactTargetType);
+    const newEvent: TimelineEvent = {
+      id: `church-contacted-${Date.now()}`,
+      type: "CHURCH_CONTACTED",
+      title: "Church contact prepared for human review",
+      date: "Today",
+      actor: "Care Coordinator",
+      detail: `${churchContactPurpose} · ${resolvedTarget} · Sharing level: ${churchSharingLevel}. ${churchContactNote.trim()}`
+    };
+
+    setTimeline((items) => [newEvent, ...items]);
+    setRecentActivity((items) => [newEvent, ...items].slice(0, 3));
+    setResidentList((items) =>
+      items.map((resident) =>
+        resident.id === selectedResident.id
+          ? {
+              ...resident,
+              priority: "Church coordination ready",
+              nextStep: `Human reviewer should confirm the ${churchContactPurpose.toLowerCase()} with ${resolvedTarget} using ${churchSharingLevel.toLowerCase()} only, then log the outcome before any additional outside action.`
+            }
+          : resident
+      )
+    );
+    closeChurchContact();
   };
 
   const resetFollowUpForm = () => {
@@ -492,14 +553,17 @@ export function CareBinder() {
                 const isVisitAction = action === "Schedule Visit";
                 const isFollowUpAction = action === "Add Follow-Up";
                 const isNoteAction = action === "Add Note";
-                const actionHandler = isVisitAction ? () => setVisitOpen(true) : isFollowUpAction ? () => setFollowUpOpen(true) : isNoteAction ? () => setNoteOpen(true) : undefined;
+                const isChurchContactAction = action === "Contact Church";
+                const actionHandler = isVisitAction ? () => setVisitOpen(true) : isFollowUpAction ? () => setFollowUpOpen(true) : isNoteAction ? () => setNoteOpen(true) : isChurchContactAction ? () => setChurchContactOpen(true) : undefined;
                 const actionDescription = isVisitAction
                   ? "Plan a consent-confirmed spiritual care visit"
                   : isFollowUpAction
                     ? "Set a consent-confirmed next care touch"
                     : isNoteAction
                       ? "Add a local spiritual care timeline note"
-                      : "Scaffolded for a later workflow";
+                      : isChurchContactAction
+                        ? "Prepare consent-limited church coordination"
+                        : "Scaffolded for a later workflow";
 
                 return (
                   <button key={action} onClick={actionHandler} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
@@ -560,6 +624,62 @@ export function CareBinder() {
         </div>
       ) : null}
 
+
+      {isChurchContactOpen ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#132d23]/55 p-4 backdrop-blur-sm">
+          <form onSubmit={submitChurchContact} className="w-full max-w-3xl rounded-[1.8rem] border border-[#ded6c8] bg-[#fbf8f0] p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6a7a63]">Consent-limited local draft</p>
+                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Contact Church</h2>
+                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}. This records a local coordination step only; it does not send email, SMS, or outreach.</p>
+              </div>
+              <button type="button" onClick={closeChurchContact} className="rounded-full border border-[#d8d0c0] px-3 py-1.5 text-sm font-bold text-[#4d5f55]">Close</button>
+            </div>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="church-contact-target">Church/contact target</label>
+                <select id="church-contact-target" value={churchContactTargetType} onChange={(event) => setChurchContactTargetType(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {churchContactTargetTypes.map((target) => (
+                    <option key={target} value={target}>{target}</option>
+                  ))}
+                </select>
+                <p className="mt-2 text-xs font-semibold text-[#6a765f]">Selected: {getChurchContactTarget(churchContactTargetType)}</p>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="church-contact-purpose">Contact purpose</label>
+                <select id="church-contact-purpose" value={churchContactPurpose} onChange={(event) => setChurchContactPurpose(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {churchContactPurposes.map((purpose) => (
+                    <option key={purpose} value={purpose}>{purpose}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="church-sharing-level">Sharing level</label>
+                <select id="church-sharing-level" value={churchSharingLevel} onChange={(event) => setChurchSharingLevel(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                  {churchSharingLevels.map((level) => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="church-contact-note">Note/message summary</label>
+            <textarea id="church-contact-note" value={churchContactNote} onChange={(event) => setChurchContactNote(event.target.value)} rows={5} placeholder="Summarize the consent-safe church coordination request without private medical details." className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+
+            <label className="mt-5 flex gap-3 rounded-2xl border border-[#e0d6c4] bg-[#fffaf0] p-4 text-sm leading-6 text-[#4f5e54]">
+              <input type="checkbox" checked={hasChurchContactConsent} onChange={(event) => setHasChurchContactConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-[#173b2d]" />
+              <span>This contact follows the resident&apos;s consent and sharing preferences.</span>
+            </label>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
+              <button type="button" onClick={closeChurchContact} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
+              <button type="submit" disabled={!hasChurchContactConsent || !churchContactNote.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Record Church Contact</button>
+            </div>
+          </form>
+        </div>
+      ) : null}
 
       {isNoteOpen ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-[#132d23]/55 p-4 backdrop-blur-sm">

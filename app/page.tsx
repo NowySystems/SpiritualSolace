@@ -4,8 +4,8 @@ import Link from "next/link";
 const flow = [
   { label: "Queue", detail: "Start with the resident list and the highest-ready care need." },
   { label: "Person", detail: "Open Jane Doe's demo record with current needs and church connection." },
-  { label: "Action", detail: "Send a consent-confirmed prayer request from the right panel." },
-  { label: "Timeline", detail: "Confirm the PRAYER event and recent activity update." }
+  { label: "Action", detail: "Send a prayer request or prepare a consent-limited church contact from the right panel." },
+  { label: "Timeline", detail: "Confirm the local event and recent activity update before deciding the next safe step." }
 ];
 
 export default function LandingPage() {
@@ -75,11 +75,12 @@ export default function LandingPage() {
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[#53655b]">Selected Resident</p>
                     <h2 className="mt-3 font-serif text-4xl font-semibold">Jane Doe</h2>
                     <div className="mt-4 rounded-2xl bg-[#fffaf0] p-4 text-sm leading-6">Current needs, church connection, and spiritual care plan stay visible by default.</div>
-                    <div className="mt-4 rounded-2xl bg-white p-4 text-sm leading-6">Care timeline confirms the prayer request after consent.</div>
+                    <div className="mt-4 rounded-2xl bg-white p-4 text-sm leading-6">Care timeline confirms consent-first local actions after review.</div>
                   </div>
                   <div className="bg-[#f5efe3] p-4">
                     <p className="text-xs font-black uppercase tracking-[0.18em] text-[#53655b]">Actions</p>
                     <div className="mt-3 rounded-2xl bg-[#173b2d] p-3 text-sm font-black text-white">Send Prayer Request</div>
+                    <div className="mt-3 rounded-2xl bg-white/70 p-3 text-sm font-bold">Contact Church</div>
                     <div className="mt-3 rounded-2xl bg-white/70 p-3 text-sm font-bold">Recent Activity</div>
                   </div>
                 </div>
@@ -107,7 +108,7 @@ export default function LandingPage() {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">MVP guardrails</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold">Local demo state first. Human review before anything external.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              Working local actions now include Send Prayer Request, Schedule Visit, Add Follow-Up, and Add Note. Contact Church, Assign Volunteer, and Message Care Team remain scaffolded until human-reviewed external workflows are approved.
+              Working local actions now include Send Prayer Request, Contact Church, Schedule Visit, Add Follow-Up, and Add Note. Assign Volunteer and Message Care Team remain scaffolded until human-reviewed external workflows are approved.
             </p>
           </div>
         </section>

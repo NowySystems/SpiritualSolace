@@ -1,6 +1,8 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { driver, type DriveStep } from "driver.js";
+import "driver.js/dist/driver.css";
 
 type TimelineEvent = {
   id: string;
@@ -173,6 +175,106 @@ const visitDates = ["Today", "Tomorrow", "This week", "Custom"];
 const visitWindows = ["Morning", "Afternoon", "Evening", "Custom"];
 const visitVisitors = ["Pastor Sam", "Church Care Team", "Volunteer", "Chaplain", "Seminary Student"];
 
+type DemoStep = {
+  id: string;
+  target: string;
+  title: string;
+  description: string;
+  futureAudioSrc: string;
+};
+
+const careBinderDemoSteps: DemoStep[] = [
+  {
+    id: "care-queue-jane-doe",
+    target: '[data-demo-target="care-queue-jane-doe"]',
+    title: "Start with Jane Doe",
+    description: "Jane Doe is the selected demo resident. The queue keeps the next ready care need close at hand.",
+    futureAudioSrc: "/audio/demo/care-queue-jane-doe.mp3"
+  },
+  {
+    id: "person-header",
+    target: '[data-demo-target="person-header"]',
+    title: "Person-centered view",
+    description: "SpiritualSolace centers the whole person first: preferences, support summary, and consent-aware context.",
+    futureAudioSrc: "/audio/demo/person-header.mp3"
+  },
+  {
+    id: "current-need-next-safe-step",
+    target: '[data-demo-target="current-need-next-safe-step"]',
+    title: "Next safe step",
+    description: "The current need is paired with a clear next step so the care team knows what to review before acting.",
+    futureAudioSrc: "/audio/demo/current-need-next-safe-step.mp3"
+  },
+  {
+    id: "care-plan",
+    target: '[data-demo-target="care-plan"]',
+    title: "Care plan",
+    description: "The plan keeps spiritual support gentle, documented, and human-reviewed before anything external happens.",
+    futureAudioSrc: "/audio/demo/care-plan.mp3"
+  },
+  {
+    id: "quick-actions",
+    target: '[data-demo-target="quick-actions"]',
+    title: "Quick actions",
+    description: "Use these local workflows to prepare care steps. The tour is informational only and will not submit forms.",
+    futureAudioSrc: "/audio/demo/quick-actions.mp3"
+  },
+  {
+    id: "send-prayer-request-action",
+    target: '[data-demo-target="send-prayer-request-action"]',
+    title: "Prayer request",
+    description: "Draft a warm prayer request, confirm consent, and keep it ready for human review.",
+    futureAudioSrc: "/audio/demo/send-prayer-request-action.mp3"
+  },
+  {
+    id: "add-follow-up-action",
+    target: '[data-demo-target="add-follow-up-action"]',
+    title: "Add follow-up",
+    description: "Set the next care touch so support continues without relying on memory or scattered notes.",
+    futureAudioSrc: "/audio/demo/add-follow-up-action.mp3"
+  },
+  {
+    id: "schedule-visit-action",
+    target: '[data-demo-target="schedule-visit-action"]',
+    title: "Schedule visit",
+    description: "Plan a consent-confirmed spiritual care visit with timing, owner, location, and purpose.",
+    futureAudioSrc: "/audio/demo/schedule-visit-action.mp3"
+  },
+  {
+    id: "contact-church-action",
+    target: '[data-demo-target="contact-church-action"]',
+    title: "Consent-aware church contact",
+    description: "Prepare limited church coordination for human review. Nothing is emailed, sent, or submitted automatically.",
+    futureAudioSrc: "/audio/demo/contact-church-action.mp3"
+  },
+  {
+    id: "care-timeline",
+    target: '[data-demo-target="care-timeline"]',
+    title: "Timeline as the care story",
+    description: "The timeline tells the care story newest first, preserving what happened and what should happen next.",
+    futureAudioSrc: "/audio/demo/care-timeline.mp3"
+  },
+  {
+    id: "recent-activity",
+    target: '[data-demo-target="recent-activity"]',
+    title: "Recent activity",
+    description: "Recent activity gives the right rail a quick confirmation that local actions were recorded safely.",
+    futureAudioSrc: "/audio/demo/recent-activity.mp3"
+  }
+];
+
+function createDriverSteps(): DriveStep[] {
+  return careBinderDemoSteps.map((step) => ({
+    element: step.target,
+    popover: {
+      title: step.title,
+      description: step.description,
+      side: "bottom",
+      align: "start"
+    }
+  }));
+}
+
 function eventStyles(type: TimelineEvent["type"]) {
   if (type === "PRAYER") return "border-[#d8c6ff] bg-[#f5efff] text-[#5b3d91]";
   if (type === "VISIT") return "border-[#bfe4c7] bg-[#effaf0] text-[#2f6f45]";
@@ -185,7 +287,7 @@ function eventStyles(type: TimelineEvent["type"]) {
   return "border-[#cdd7df] bg-[#f5f8fa] text-[#405a6b]";
 }
 
-export function CareBinder() {
+export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean }) {
   const [residentList, setResidentList] = useState(initialResidents);
   const [selectedId, setSelectedId] = useState("jane-doe");
   const [timeline, setTimeline] = useState(initialTimeline);
@@ -223,6 +325,31 @@ export function CareBinder() {
   const [hasChurchContactConsent, setHasChurchContactConsent] = useState(false);
 
   const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
+
+  const startGuidedDemo = () => {
+    const driverObj = driver({
+      showProgress: true,
+      allowClose: true,
+      overlayOpacity: 0.55,
+      stagePadding: 8,
+      nextBtnText: "Next",
+      prevBtnText: "Back",
+      doneBtnText: "Done",
+      steps: createDriverSteps()
+    });
+
+    driverObj.drive();
+  };
+
+  useEffect(() => {
+    if (!autoStartDemo) return;
+
+    const demoTimer = window.setTimeout(() => {
+      startGuidedDemo();
+    }, 450);
+
+    return () => window.clearTimeout(demoTimer);
+  }, [autoStartDemo]);
 
   const chooseTemplate = (id: string) => {
     const template = prayerTemplates.find((item) => item.id === id) ?? prayerTemplates[0];
@@ -444,12 +571,15 @@ export function CareBinder() {
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Queue → Person → Action → Timeline</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Care Binder</h1>
           </div>
-          <p className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-[#edf5e6]">Local demo state · no external action until human review</p>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <p className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-[#edf5e6]">Local demo state · no external action until human review</p>
+            <button type="button" onClick={startGuidedDemo} className="rounded-full bg-[#c8d9b3] px-4 py-2 text-xs font-black text-[#173b2d] shadow-sm hover:bg-[#d8e6c8]">Start Guided Demo</button>
+          </div>
         </div>
       </div>
 
       <div className="grid min-h-[760px] lg:grid-cols-[310px_minmax(0,1fr)_300px]">
-        <aside className="border-b border-[#d8d0c0] bg-[#f5efe3] lg:border-b-0 lg:border-r">
+        <aside data-demo-target="care-queue" className="border-b border-[#d8d0c0] bg-[#f5efe3] lg:border-b-0 lg:border-r">
           <div className="p-4">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Care Queue</h2>
@@ -458,7 +588,7 @@ export function CareBinder() {
             <p className="mt-3 text-xs leading-5 text-[#66746b]">Select a resident to open the person record, choose one action, then confirm the timeline update.</p>
             <div className="mt-4 space-y-2">
               {residentList.map((resident) => (
-                <button key={resident.id} onClick={() => setSelectedId(resident.id)} className={`w-full rounded-2xl border p-3 text-left transition ${selectedResident.id === resident.id ? "border-[#8da167] bg-white shadow-md" : "border-transparent bg-white/55 hover:border-[#d8d0c0]"}`}>
+                <button key={resident.id} data-demo-target={resident.id === "jane-doe" ? "care-queue-jane-doe" : undefined} onClick={() => setSelectedId(resident.id)} className={`w-full rounded-2xl border p-3 text-left transition ${selectedResident.id === resident.id ? "border-[#8da167] bg-white shadow-md" : "border-transparent bg-white/55 hover:border-[#d8d0c0]"}`}>
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-bold text-[#1f342b]">{resident.name}</p>
@@ -474,7 +604,7 @@ export function CareBinder() {
         </aside>
 
         <main className="bg-[#eee8db] p-5 lg:p-7">
-          <section className="rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6 shadow-sm">
+          <section data-demo-target="person-header" className="rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6 shadow-sm">
             <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -484,7 +614,7 @@ export function CareBinder() {
                 <p className="mt-2 text-sm font-semibold text-[#5c6b62]">Room {selectedResident.room} · Age {selectedResident.age} · {selectedResident.faith}</p>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-[#44574f]">{selectedResident.summary}</p>
               </div>
-              <div className="rounded-2xl border border-[#e1dacd] bg-[#f4efdf] p-4 xl:w-80">
+              <div data-demo-target="current-need-next-safe-step" className="rounded-2xl border border-[#e1dacd] bg-[#f4efdf] p-4 xl:w-80">
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-[#657568]">What should happen next?</p>
                 <p className="mt-2 text-sm font-semibold leading-6 text-[#20372d]">{selectedResident.nextStep}</p>
               </div>
@@ -508,7 +638,7 @@ export function CareBinder() {
             </div>
           </section>
 
-          <section className="mt-5 rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
+          <section data-demo-target="care-plan" className="mt-5 rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
             <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Spiritual Care Plan</h3>
             <div className="mt-4 grid gap-3 md:grid-cols-3">
               {selectedResident.carePlan.map((step, index) => (
@@ -520,7 +650,7 @@ export function CareBinder() {
             </div>
           </section>
 
-          <section className="mt-5 rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
+          <section data-demo-target="care-timeline" className="mt-5 rounded-[1.7rem] border border-[#d9d1c2] bg-[#fbf8f0] p-6">
             <div className="flex items-center justify-between gap-4">
               <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Care Timeline</h3>
               <p className="text-xs font-semibold text-[#69766c]">Newest first</p>
@@ -543,9 +673,10 @@ export function CareBinder() {
 
         <aside className="border-t border-[#d8d0c0] bg-[#f5efe3] lg:border-l lg:border-t-0">
           <div className="sticky top-24 p-4">
-            <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Actions</h2>
+            <div data-demo-target="quick-actions">
+              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#53655b]">Actions</h2>
             <div className="mt-4 space-y-2">
-              <button onClick={() => setPrayerOpen(true)} className="w-full rounded-2xl bg-[#173b2d] px-4 py-3 text-left text-sm font-black text-white shadow-md hover:bg-[#234b3b]">
+              <button data-demo-target="send-prayer-request-action" onClick={() => setPrayerOpen(true)} className="w-full rounded-2xl bg-[#173b2d] px-4 py-3 text-left text-sm font-black text-white shadow-md hover:bg-[#234b3b]">
                 Send Prayer Request
                 <span className="mt-1 block text-xs font-medium text-[#d7e7c5]">Choose, edit, consent, submit</span>
               </button>
@@ -566,15 +697,16 @@ export function CareBinder() {
                         : "Scaffolded for a later workflow";
 
                 return (
-                  <button key={action} onClick={actionHandler} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
+                  <button key={action} data-demo-target={isVisitAction ? "schedule-visit-action" : isFollowUpAction ? "add-follow-up-action" : isChurchContactAction ? "contact-church-action" : undefined} onClick={actionHandler} className="w-full rounded-2xl border border-[#d8d0c0] bg-white/70 px-4 py-3 text-left text-sm font-bold text-[#20372d] hover:bg-white" type="button">
                     {action}
                     <span className="mt-1 block text-xs font-medium text-[#718075]">{actionDescription}</span>
                   </button>
                 );
               })}
             </div>
+            </div>
 
-            <section className="mt-6">
+            <section data-demo-target="recent-activity" className="mt-6">
               <h3 className="text-xs font-black uppercase tracking-[0.18em] text-[#53655b]">Recent Activity</h3>
               <div className="mt-3 space-y-2">
                 {recentActivity.map((item) => (

@@ -1,5 +1,5 @@
 import { CareBinder } from "@/components/CareBinder";
 
-export default function CareBinderAppPage() {
+export default function CareBinderRoutePage() {
   return <CareBinder />;
 }

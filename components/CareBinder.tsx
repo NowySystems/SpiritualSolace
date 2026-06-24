@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 
@@ -189,79 +189,169 @@ const careBinderDemoSteps: DemoStep[] = [
     target: '[data-demo-target="care-queue-jane-doe"]',
     title: "Start with Jane Doe",
     description: "Jane Doe is the selected demo resident. The queue keeps the next ready care need close at hand.",
-    futureAudioSrc: "/audio/demo/care-queue-jane-doe.mp3"
+    futureAudioSrc: "/demo-audio/care-queue-jane-doe.mp3"
   },
   {
     id: "person-header",
     target: '[data-demo-target="person-header"]',
     title: "Person-centered view",
     description: "SpiritualSolace centers the whole person first: preferences, support summary, and consent-aware context.",
-    futureAudioSrc: "/audio/demo/person-header.mp3"
+    futureAudioSrc: "/demo-audio/person-header.mp3"
   },
   {
     id: "current-need-next-safe-step",
     target: '[data-demo-target="current-need-next-safe-step"]',
     title: "Next safe step",
     description: "The current need is paired with a clear next step so the care team knows what to review before acting.",
-    futureAudioSrc: "/audio/demo/current-need-next-safe-step.mp3"
+    futureAudioSrc: "/demo-audio/current-need-next-safe-step.mp3"
   },
   {
     id: "care-plan",
     target: '[data-demo-target="care-plan"]',
     title: "Care plan",
     description: "The plan keeps spiritual support gentle, documented, and human-reviewed before anything external happens.",
-    futureAudioSrc: "/audio/demo/care-plan.mp3"
+    futureAudioSrc: "/demo-audio/care-plan.mp3"
   },
   {
     id: "quick-actions",
     target: '[data-demo-target="quick-actions"]',
     title: "Quick actions",
     description: "Use these local workflows to prepare care steps. The tour is informational only and will not submit forms.",
-    futureAudioSrc: "/audio/demo/quick-actions.mp3"
+    futureAudioSrc: "/demo-audio/quick-actions.mp3"
   },
   {
     id: "send-prayer-request-action",
     target: '[data-demo-target="send-prayer-request-action"]',
     title: "Prayer request",
     description: "Draft a warm prayer request, confirm consent, and keep it ready for human review.",
-    futureAudioSrc: "/audio/demo/send-prayer-request-action.mp3"
+    futureAudioSrc: "/demo-audio/send-prayer-request-action.mp3"
   },
   {
     id: "add-follow-up-action",
     target: '[data-demo-target="add-follow-up-action"]',
     title: "Add follow-up",
     description: "Set the next care touch so support continues without relying on memory or scattered notes.",
-    futureAudioSrc: "/audio/demo/add-follow-up-action.mp3"
+    futureAudioSrc: "/demo-audio/add-follow-up-action.mp3"
   },
   {
     id: "schedule-visit-action",
     target: '[data-demo-target="schedule-visit-action"]',
     title: "Schedule visit",
     description: "Plan a consent-confirmed spiritual care visit with timing, owner, location, and purpose.",
-    futureAudioSrc: "/audio/demo/schedule-visit-action.mp3"
+    futureAudioSrc: "/demo-audio/schedule-visit-action.mp3"
   },
   {
     id: "contact-church-action",
     target: '[data-demo-target="contact-church-action"]',
     title: "Consent-aware church contact",
     description: "Prepare limited church coordination for human review. Nothing is emailed, sent, or submitted automatically.",
-    futureAudioSrc: "/audio/demo/contact-church-action.mp3"
+    futureAudioSrc: "/demo-audio/contact-church-action.mp3"
   },
   {
     id: "care-timeline",
     target: '[data-demo-target="care-timeline"]',
     title: "Timeline as the care story",
     description: "The timeline tells the care story newest first, preserving what happened and what should happen next.",
-    futureAudioSrc: "/audio/demo/care-timeline.mp3"
+    futureAudioSrc: "/demo-audio/care-timeline.mp3"
   },
   {
     id: "recent-activity",
     target: '[data-demo-target="recent-activity"]',
     title: "Recent activity",
     description: "Recent activity gives the right rail a quick confirmation that local actions were recorded safely.",
-    futureAudioSrc: "/audio/demo/recent-activity.mp3"
+    futureAudioSrc: "/demo-audio/recent-activity.mp3"
   }
 ];
+
+type DemoAudioController = {
+  isMuted: () => boolean;
+  setMuted: (isMuted: boolean) => void;
+  play: (src?: string) => void;
+  replay: () => void;
+  stop: () => void;
+};
+
+function createDemoAudioController(initialMuted = false): DemoAudioController {
+  let audio: HTMLAudioElement | null = null;
+  let currentSrc = "";
+  let muted = initialMuted;
+
+  const stop = () => {
+    if (!audio) return;
+
+    audio.pause();
+    audio.currentTime = 0;
+  };
+
+  const play = (src?: string) => {
+    stop();
+
+    if (!src || muted) return;
+
+    currentSrc = src;
+    audio = new Audio(src);
+    audio.preload = "auto";
+    audio.volume = 0.82;
+
+    audio.play().catch(() => {
+      stop();
+    });
+  };
+
+  return {
+    isMuted: () => muted,
+    setMuted: (isMuted: boolean) => {
+      muted = isMuted;
+      if (muted) stop();
+    },
+    play,
+    replay: () => {
+      if (currentSrc) play(currentSrc);
+    },
+    stop
+  };
+}
+
+function findDemoStepByElement(element?: Element): DemoStep | undefined {
+  if (!element) return undefined;
+
+  return careBinderDemoSteps.find((step) => {
+    try {
+      return element.matches(step.target);
+    } catch {
+      return false;
+    }
+  });
+}
+
+function renderDemoAudioControls(popover: { footerButtons?: HTMLElement }, audioController: DemoAudioController) {
+  if (!popover.footerButtons) return;
+
+  const controls = document.createElement("div");
+  controls.className = "mt-3 flex items-center gap-2 border-t border-[#e5dccd] pt-3";
+
+  const muteButton = document.createElement("button");
+  muteButton.type = "button";
+  muteButton.className = "rounded-full border border-[#d8d0c0] px-3 py-1.5 text-xs font-black text-[#44564c]";
+  muteButton.textContent = audioController.isMuted() ? "Unmute voice" : "Mute voice";
+  muteButton.setAttribute("aria-pressed", String(audioController.isMuted()));
+
+  muteButton.addEventListener("click", () => {
+    const nextMuted = !audioController.isMuted();
+    audioController.setMuted(nextMuted);
+    muteButton.textContent = nextMuted ? "Unmute voice" : "Mute voice";
+    muteButton.setAttribute("aria-pressed", String(nextMuted));
+  });
+
+  const replayButton = document.createElement("button");
+  replayButton.type = "button";
+  replayButton.className = "rounded-full bg-[#173b2d] px-3 py-1.5 text-xs font-black text-white";
+  replayButton.textContent = "Replay voice";
+  replayButton.addEventListener("click", () => audioController.replay());
+
+  controls.append(muteButton, replayButton);
+  popover.footerButtons.prepend(controls);
+}
 
 function createDriverSteps(): DriveStep[] {
   return careBinderDemoSteps.map((step) => ({
@@ -323,10 +413,15 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
   const [churchSharingLevel, setChurchSharingLevel] = useState(churchSharingLevels[0]);
   const [churchContactNote, setChurchContactNote] = useState("");
   const [hasChurchContactConsent, setHasChurchContactConsent] = useState(false);
+  const demoAudioControllerRef = useRef<DemoAudioController | null>(null);
 
   const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
 
   const startGuidedDemo = () => {
+    demoAudioControllerRef.current?.stop();
+    const audioController = createDemoAudioController(demoAudioControllerRef.current?.isMuted() ?? false);
+    demoAudioControllerRef.current = audioController;
+
     const driverObj = driver({
       showProgress: true,
       allowClose: true,
@@ -335,6 +430,15 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       nextBtnText: "Next",
       prevBtnText: "Back",
       doneBtnText: "Done",
+      onHighlighted: (element?: Element) => {
+        audioController.play(findDemoStepByElement(element)?.futureAudioSrc);
+      },
+      onDestroyed: () => {
+        audioController.stop();
+      },
+      onPopoverRender: (popover: { footerButtons?: HTMLElement }) => {
+        renderDemoAudioControls(popover, audioController);
+      },
       steps: createDriverSteps()
     });
 

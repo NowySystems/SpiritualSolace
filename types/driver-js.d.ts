@@ -6,6 +6,7 @@ declare module "driver.js" {
       description?: string;
       side?: "top" | "right" | "bottom" | "left";
       align?: "start" | "center" | "end";
+      popoverClass?: string;
     };
   };
 
@@ -19,7 +20,19 @@ declare module "driver.js" {
     doneBtnText?: string;
     onHighlighted?: (element?: Element) => void;
     onDestroyed?: () => void;
-    onPopoverRender?: (popover: { footerButtons?: HTMLElement }) => void;
+    popoverClass?: string;
+    progressText?: string;
+    onPopoverRender?: (
+      popover: {
+        wrapper?: HTMLElement;
+        title?: HTMLElement;
+        description?: HTMLElement;
+        footer?: HTMLElement;
+        footerButtons?: HTMLElement;
+        progress?: HTMLElement;
+      },
+      opts?: { state?: { activeIndex?: number } }
+    ) => void;
     steps?: DriveStep[];
   };
 

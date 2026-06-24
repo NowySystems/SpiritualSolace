@@ -54,8 +54,8 @@ export default function LandingPage() {
                   <Link href="/care-binder" className="rounded-lg bg-[#86a45f] px-8 py-4 text-base font-bold text-white shadow-xl hover:bg-[#789752]">
                     Open Care Binder →
                   </Link>
-                  <Link href="/app" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
-                    Open in Demo Shell
+                  <Link href="/care-binder?demo=true" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                    See How It Works
                   </Link>
                 </div>
               </div>

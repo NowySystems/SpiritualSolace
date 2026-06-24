@@ -1,8 +1,10 @@
-# Guided demo narration placeholders
+# Care Binder demo narration
 
-Place pre-generated narration files for the Care Binder Driver.js tour in this folder.
+This folder is reserved for approved local MP3 narration assets for the Care Binder Driver.js guided tour.
 
-Expected local paths:
+MP3 files are not committed in this PR. The tour works without audio: if a matching file is missing or cannot be decoded, the guided demo remains text-only and the Replay control is disabled for that step.
+
+When real narration is approved, add local MP3 files using these exact filenames:
 
 - `/demo-audio/care-queue-jane-doe.mp3`
 - `/demo-audio/person-header.mp3`
@@ -16,4 +18,4 @@ Expected local paths:
 - `/demo-audio/care-timeline.mp3`
 - `/demo-audio/recent-activity.mp3`
 
-These files should be generated outside the application and committed or deployed as static assets. The tour never calls ElevenLabs or any external audio service at runtime, and missing files are ignored so the text-only demo remains usable.
+The app does not call ElevenLabs or any other live narration API at runtime. Any future narration files should be generated and approved outside the application, then added here as static local assets.

@@ -4,6 +4,8 @@ This folder is reserved for approved local MP3 narration assets for the Care Bin
 
 MP3 files are not committed in this PR. The tour works without audio: if a matching file is missing or cannot be decoded, the guided demo remains text-only and the Replay control is disabled for that step.
 
+Approved narration copy for each expected audio file is documented in [`narration-scripts.md`](./narration-scripts.md). Use that script pack when generating real narration outside the application.
+
 When real narration is approved, add local MP3 files using these exact filenames:
 
 - `/demo-audio/care-queue-jane-doe.mp3`

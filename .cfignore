@@ -1,9 +1,0 @@
-# Cloudflare Pages fallback ignore rules.
-# The supported Next.js deployment path for this project builds with OpenNext
-# and uploads .open-next/assets, not raw .next artifacts. These ignores prevent
-# accidental Pages static uploads from including Next.js compiler caches.
-.next
-.next/cache
-.open-next
-node_modules
-.git

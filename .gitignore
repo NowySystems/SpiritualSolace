@@ -134,3 +134,10 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# OpenNext for Cloudflare build output
+.open-next
+
+# Cloudflare local artifacts
+.dev.vars
+.wrangler

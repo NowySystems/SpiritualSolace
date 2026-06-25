@@ -3,9 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SpiritualSolace Demo Prototype",
+  title: "ChurchWork | Spiritual care operations for churches",
   description:
-    "Demo-only spiritual support request workflow shell with facility-controlled review and one-way temporary messaging."
+    "Spiritual care operations for churches, volunteers, and care teams coordinating prayer requests, visits, follow-ups, volunteer care, and church connections."
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

@@ -195,7 +195,7 @@ const careBinderDemoSteps: DemoStep[] = [
     id: "person-header",
     target: '[data-demo-target="person-header"]',
     title: "Person-centered view",
-    description: "SpiritualSolace centers the whole person first: preferences, support summary, and consent-aware context.",
+    description: "ChurchWork centers the whole person first: preferences, support summary, and consent-aware context.",
     futureAudioSrc: "/demo-audio/person-header.mp3"
   },
   {
@@ -947,7 +947,7 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#cbbbea]">Queue → Person → Action → Timeline</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">Care Binder</h1>
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.03em]">ChurchWork Care Binder</h1>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <p className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-[#f7f4ef]">Local demo state · no external action until human review</p>

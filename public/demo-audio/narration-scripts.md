@@ -8,7 +8,7 @@ Do not commit generated MP3 files until they are separately approved. The applic
 
 ### `care-queue-jane-doe.mp3`
 
-Welcome to SpiritualSolace. Today we’ll follow Jane Doe, a demo resident receiving spiritual support through a coordinated care plan.
+Welcome to ChurchWork. Today we’ll follow Jane Doe, a demo resident receiving spiritual support through a coordinated care plan.
 
 ### `person-header.mp3`
 

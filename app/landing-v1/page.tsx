@@ -63,7 +63,7 @@ export default function LandingV1Page() {
           <div className="flex items-center gap-3">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#b8c2c9] bg-white/80 text-sm font-semibold text-slate-600">✦</span>
             <div>
-              <p className="text-xl font-semibold tracking-tight text-slate-900">SpiritualSolace</p>
+              <p className="text-xl font-semibold tracking-tight text-slate-900">ChurchWork</p>
               <p className="text-xs tracking-[0.08em] text-slate-500">One-way support. Lasting comfort.</p>
             </div>
           </div>
@@ -84,8 +84,8 @@ export default function LandingV1Page() {
       <main>
         <section className="relative isolate min-h-[74vh] overflow-hidden">
           <Image
-            src="/brand/spiritualsolace-hero-dove.png"
-            alt="SpiritualSolace hero dove"
+            src="/brand/churchwork-hero-dove.png"
+            alt="ChurchWork hero dove"
             fill
             priority
             className="-z-30 object-cover object-[74%_center] md:object-[78%_center]"
@@ -132,7 +132,7 @@ export default function LandingV1Page() {
           <section className="rounded-3xl border border-[#e6e1d8] bg-white/82 p-8 text-center shadow-sm">
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Support that brings peace, not pressure.</h2>
             <p className="mx-auto mt-4 max-w-3xl text-slate-600">
-              SpiritualSolace helps facilities offer compassionate spiritual support with clear boundaries, thoughtful review, and one-way temporary delivery designed to preserve dignity.
+              ChurchWork helps facilities offer compassionate spiritual support with clear boundaries, thoughtful review, and one-way temporary delivery designed to preserve dignity.
             </p>
           </section>
 
@@ -196,7 +196,7 @@ export default function LandingV1Page() {
             </div>
           </section>
 
-          <p className="pb-2 text-center text-xs tracking-wide text-slate-500">SpiritualSolace · Private Preview · Built by Nowy Systems</p>
+          <p className="pb-2 text-center text-xs tracking-wide text-slate-500">ChurchWork · Private Preview · Built by Nowy Systems</p>
         </div>
       </main>
     </div>

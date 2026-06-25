@@ -1,6 +1,6 @@
-export const saveState = "SpiritualSolace 0.4 — Operations board demo build";
+export const saveState = "ChurchWork 0.4 — Operations board demo build";
 
-export const compatibilityBaseline = "SpiritualSolace 0.1 — One-way temporary support messaging baseline";
+export const compatibilityBaseline = "ChurchWork 0.1 — One-way temporary support messaging baseline";
 
 export const legacyNavigationAudit = ["/grants-gov-live", "/learning-loop", "/daily-brief"];
 
@@ -52,7 +52,7 @@ export const sourceTierDefinitions = [
     label: "Legacy source compatibility shim",
     examples: "Legacy CRCF pages retained for compile compatibility only.",
     categories: ["Legacy"],
-    posture: "SpiritualSolace demo compatibility"
+    posture: "ChurchWork demo compatibility"
   }
 ];
 
@@ -75,7 +75,7 @@ export const sourceRegistry = [
     reliability: "N/A",
     connectionStatus: "Disabled",
     currentStatus: "Compatibility Only",
-    usefulFor: "Build compatibility while Spiritual Solace replaces inherited pages.",
+    usefulFor: "Build compatibility while ChurchWork replaces inherited pages.",
     recommendedStaffAction: "Do not use for production workflows.",
     notes: "This shim replaced corrupted legacy static data that contained merge-conflict artifacts."
   }
@@ -85,7 +85,7 @@ export const marketSignals = [
   {
     market: "Spiritual support operations",
     focus: "Facility-controlled solace workflow",
-    use: "Demo placeholder replacing inherited donor-market intelligence while Spiritual Solace modules are rebuilt."
+    use: "Demo placeholder replacing inherited donor-market intelligence while ChurchWork modules are rebuilt."
   },
   {
     market: "Responder coverage",

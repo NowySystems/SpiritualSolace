@@ -1,4 +1,4 @@
-export const saveState = "SpiritualSolace Care Binder — local demo workflow";
+export const saveState = "ChurchWork Care Binder — local demo workflow";
 
 export const navigationGroups = [
   {

@@ -23,7 +23,7 @@ export default function LandingPage() {
 
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
             <a href="#care-binder" className="hover:text-[#d7e7b7]">Care Binder</a>
-            <Link href="/request-care" className="hover:text-[#d7e7b7]">Requester Demo</Link>
+            <Link href="/request-care?demo=true" className="hover:text-[#d7e7b7]">Requester Demo</Link>
             <a href="#flow" className="hover:text-[#d7e7b7]">Care Flow</a>
             <a href="#guardrails" className="hover:text-[#d7e7b7]">Guardrails</a>
             <a href="#pilot-contact" className="hover:text-[#d7e7b7]">Pilot Demo</a>
@@ -60,7 +60,7 @@ export default function LandingPage() {
                 Coordinate spiritual care requests, visits, follow-ups, volunteer care, and facility-dependent response templates in one simple care workflow.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link href="/request-care" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                <Link href="/request-care?demo=true" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
                   Preview Request Portal
                 </Link>
                 <Link href="/care-binder?demo=true" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">

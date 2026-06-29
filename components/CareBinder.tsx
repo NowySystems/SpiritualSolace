@@ -41,14 +41,14 @@ const initialResidents: Resident[] = [
     priority: "Prayer request ready",
     summary:
       "Demo resident welcomes Protestant spiritual care, short volunteer visits, and family-aware encouragement through the approved facility workflow.",
-    nextStep: "Send a consent-confirmed prayer request for human review, then verify the new PRAYER event in the timeline.",
+    nextStep: "Prepare a consent-confirmed prayer template for human review, then verify the new PRAYER event in the timeline.",
     needs: ["Prayer Support", "Weekly Visit", "Family Encouragement", "Church Check-In"],
     church: "First Assembly of God",
     pastor: "Rev. Michael Torres",
     volunteer: "Sarah K.",
     carePlan: [
       "Offer brief, calm prayer support when consent is documented.",
-      "Keep external church communication human-reviewed and one-way until approved.",
+      "Keep external church communication human-reviewed, template-based, and one-way until facility approval.",
       "Log every care action to the resident timeline before moving to the next step."
     ]
   },
@@ -142,23 +142,23 @@ const prayerTemplates = [
     id: "comfort",
     label: "Comfort & peace",
     body:
-      "Please pray for Jane Doe in Room 104B, asking for comfort, peace, and reassurance today. She welcomes Protestant prayer support and a gentle message of encouragement."
+      "Template: Please pray for Jane Doe in Room 104B, asking for comfort, peace, and reassurance today. She welcomes Protestant prayer support and a gentle one-way note of encouragement if the facility allows it."
   },
   {
     id: "weekly",
     label: "Weekly support",
     body:
-      "Please pray that Jane Doe feels steady, cared for, and strengthened this week. A short, warm note from the church care team would be appreciated."
+      "Template: Please pray that Jane Doe feels steady, cared for, and strengthened this week. A short, warm one-way note from the church care team may be prepared only if the facility allows it."
   },
   {
     id: "family",
     label: "Family encouragement",
     body:
-      "Please pray for Jane Doe and her family, asking that they feel supported, hopeful, and surrounded by compassionate care."
+      "Template: Please pray for Jane Doe and her family, asking that they feel supported, hopeful, and surrounded by compassionate care. Do not invite a reply or ongoing conversation."
   }
 ];
 
-const secondaryActions = ["Schedule Visit", "Contact Church", "Assign Volunteer", "Add Follow-Up", "Add Note", "Message Care Team"];
+const secondaryActions = ["Schedule Visit", "Prepare Church Template", "Assign Volunteer", "Add Follow-Up", "Add Note", "Prepare Care Note"];
 
 const churchContactTargetTypes = ["Preferred church on file", "Pastor", "Church care team", "Prayer list coordinator", "Family-provided church contact"];
 const churchContactPurposes = ["Request prayer support", "Coordinate visit", "Confirm church affiliation", "Add to prayer list", "Share limited update", "Request pastor follow-up"];
@@ -1056,14 +1056,14 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
               <p className="mt-2 text-xs leading-5 text-[#5e6a72]">Choose one local action, then confirm the timeline update.</p>
             <div className="mt-4 space-y-2">
               <button data-demo-target="send-prayer-request-action" onClick={() => setPrayerOpen(true)} className="w-full rounded-2xl bg-[#16243a] px-4 py-4 text-left text-sm font-black text-white shadow-md hover:bg-[#243653]">
-                Send Prayer Request
-                <span className="mt-1 block text-xs font-medium text-[#d8cff1]">Choose, edit, consent, submit</span>
+                Prepare Prayer Template
+                <span className="mt-1 block text-xs font-medium text-[#d8cff1]">Choose, edit, consent, save</span>
               </button>
               {secondaryActions.map((action) => {
                 const isVisitAction = action === "Schedule Visit";
                 const isFollowUpAction = action === "Add Follow-Up";
                 const isNoteAction = action === "Add Note";
-                const isChurchContactAction = action === "Contact Church";
+                const isChurchContactAction = action === "Prepare Church Template";
                 const actionHandler = isVisitAction ? () => setVisitOpen(true) : isFollowUpAction ? () => setFollowUpOpen(true) : isNoteAction ? () => setNoteOpen(true) : isChurchContactAction ? () => setChurchContactOpen(true) : undefined;
                 const actionDescription = isVisitAction
                   ? "Plan a consent-confirmed spiritual care visit"
@@ -1106,30 +1106,30 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6a7a63]">Human-reviewed action</p>
-                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Send Prayer Request</h2>
-                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}</p>
+                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Prepare Prayer Template</h2>
+                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}. Pilot responses are canned/template-based and do not create a two-way conversation.</p>
               </div>
               <button type="button" onClick={() => setPrayerOpen(false)} className="rounded-full border border-[#d8d0c0] px-3 py-1.5 text-sm font-bold text-[#4d5f55]">Close</button>
             </div>
 
-            <label className="mt-6 block text-sm font-bold text-[#20372d]" htmlFor="prayer-template">Canned template</label>
+            <label className="mt-6 block text-sm font-bold text-[#20372d]" htmlFor="prayer-template">Canned response template</label>
             <select id="prayer-template" value={templateId} onChange={(event) => chooseTemplate(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
               {prayerTemplates.map((template) => (
                 <option key={template.id} value={template.id}>{template.label}</option>
               ))}
             </select>
 
-            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="prayer-text">Custom prayer/support text</label>
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="prayer-text">Prepared one-way template text</label>
             <textarea id="prayer-text" value={prayerText} onChange={(event) => setPrayerText(event.target.value)} rows={6} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
 
             <label className="mt-5 flex gap-3 rounded-2xl border border-[#e0d6c4] bg-[#fffaf0] p-4 text-sm leading-6 text-[#4f5e54]">
               <input type="checkbox" checked={hasConsent} onChange={(event) => setHasConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-[#173b2d]" />
-              <span>I confirm consent is documented and this request will receive human review before any external church or volunteer action.</span>
+              <span>I confirm consent is documented and this facility-dependent template will receive human review before any external church or volunteer action.</span>
             </label>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={() => setPrayerOpen(false)} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
-              <button type="submit" disabled={!hasConsent || !prayerText.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Submit Prayer Request</button>
+              <button type="submit" disabled={!hasConsent || !prayerText.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Save Prepared Template</button>
             </div>
           </form>
         </div>
@@ -1142,15 +1142,15 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#6a7a63]">Consent-limited local draft</p>
-                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Contact Church</h2>
-                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}. This records a local coordination step only; it does not send email, SMS, or outreach.</p>
+                <h2 className="mt-2 font-serif text-3xl font-semibold text-[#1f342b]">Prepare Church Template</h2>
+                <p className="mt-2 text-sm text-[#5d6b62]">For {selectedResident.name}, Room {selectedResident.room}. This prepares a local template only; it does not send email, SMS, outreach, or open a conversation.</p>
               </div>
               <button type="button" onClick={closeChurchContact} className="rounded-full border border-[#d8d0c0] px-3 py-1.5 text-sm font-bold text-[#4d5f55]">Close</button>
             </div>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <div>
-                <label className="block text-sm font-bold text-[#20372d]" htmlFor="church-contact-target">Church/contact target</label>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="church-contact-target">Template recipient type</label>
                 <select id="church-contact-target" value={churchContactTargetType} onChange={(event) => setChurchContactTargetType(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
                   {churchContactTargetTypes.map((target) => (
                     <option key={target} value={target}>{target}</option>
@@ -1159,7 +1159,7 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
                 <p className="mt-2 text-xs font-semibold text-[#6a765f]">Selected: {getChurchContactTarget(churchContactTargetType)}</p>
               </div>
               <div>
-                <label className="block text-sm font-bold text-[#20372d]" htmlFor="church-contact-purpose">Contact purpose</label>
+                <label className="block text-sm font-bold text-[#20372d]" htmlFor="church-contact-purpose">Template purpose</label>
                 <select id="church-contact-purpose" value={churchContactPurpose} onChange={(event) => setChurchContactPurpose(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
                   {churchContactPurposes.map((purpose) => (
                     <option key={purpose} value={purpose}>{purpose}</option>
@@ -1176,8 +1176,8 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
               </div>
             </div>
 
-            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="church-contact-note">Note/message summary</label>
-            <textarea id="church-contact-note" value={churchContactNote} onChange={(event) => setChurchContactNote(event.target.value)} rows={5} placeholder="Summarize the consent-safe church coordination request without private medical details." className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
+            <label className="mt-5 block text-sm font-bold text-[#20372d]" htmlFor="church-contact-note">Template summary</label>
+            <textarea id="church-contact-note" value={churchContactNote} onChange={(event) => setChurchContactNote(event.target.value)} rows={5} placeholder="Prepare consent-safe, facility-dependent template language without private medical details or any request for a reply." className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#20372d] outline-none ring-[#8aa363] focus:ring-2" />
 
             <label className="mt-5 flex gap-3 rounded-2xl border border-[#e0d6c4] bg-[#fffaf0] p-4 text-sm leading-6 text-[#4f5e54]">
               <input type="checkbox" checked={hasChurchContactConsent} onChange={(event) => setHasChurchContactConsent(event.target.checked)} className="mt-1 h-4 w-4 accent-[#173b2d]" />
@@ -1186,7 +1186,7 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <button type="button" onClick={closeChurchContact} className="rounded-full border border-[#cfc5b5] px-5 py-3 text-sm font-black text-[#44564c]">Cancel</button>
-              <button type="submit" disabled={!hasChurchContactConsent || !churchContactNote.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Record Church Contact</button>
+              <button type="submit" disabled={!hasChurchContactConsent || !churchContactNote.trim()} className="rounded-full bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] disabled:cursor-not-allowed disabled:bg-[#aab3a8]">Save Church Template</button>
             </div>
           </form>
         </div>

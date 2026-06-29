@@ -57,7 +57,7 @@ export default function LandingPage() {
                 Helping churches organize the work of caring for people.
               </h1>
               <p className="mt-7 max-w-2xl text-lg leading-8 text-[#e8efef]">
-                Coordinate spiritual care requests, visits, follow-ups, volunteer care, and church connections in one simple care workflow.
+                Coordinate spiritual care requests, visits, follow-ups, volunteer care, and facility-dependent response templates in one simple care workflow.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
                 <Link href="/request-care" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
@@ -71,7 +71,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <p className="mt-5 max-w-2xl text-sm font-semibold leading-6 text-[#cbd8d7]">
-                Request Portal preview is gated and demo-only. It does not accept, store, route, or send real care requests.
+                Request Portal preview is gated and demo-only. Pilot responses are canned/template-based, facility-dependent, and one-way; it does not accept, store, route, send real care requests, or support two-way conversation.
               </p>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function LandingPage() {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">MVP guardrails</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold">Gated demo state first. Human review before anything external.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              The Request Portal preview is demo-only and does not submit, store, email, or route requests. Working local Care Binder actions include Send Prayer Request, Contact Church, Schedule Visit, Add Follow-Up, and Add Note. Assign Volunteer and Message Care Team remain scaffolded until human-reviewed external workflows are approved.
+              The Request Portal preview is demo-only and does not submit, store, email, or route requests. Working local Care Binder actions prepare templates or local records only: Prepare Prayer Template, Prepare Church Template, Schedule Visit, Add Follow-Up, and Add Note. Assign Volunteer and Prepare Care Note remain scaffolded until human-reviewed external workflows are approved; no messaging infrastructure or two-way conversation is added.
             </p>
           </div>
         </section>

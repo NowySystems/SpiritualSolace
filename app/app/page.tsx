@@ -1,5 +1,10 @@
 import { CareBinder } from "@/components/CareBinder";
+import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
 
 export default function CareBinderAppPage() {
-  return <CareBinder />;
+  return (
+    <ChurchWorkAccessGate>
+      <CareBinder />
+    </ChurchWorkAccessGate>
+  );
 }

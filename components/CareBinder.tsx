@@ -4,6 +4,10 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 
+type TimelineEventVisibility = "internal_only" | "shared_with_partner" | "partner_note" | "system_audit";
+
+type TimelineLens = "facility" | "partner" | "platform";
+
 type TimelineEvent = {
   id: string;
   type: "VISIT" | "VISIT_SCHEDULED" | "PRAYER" | "CHURCH" | "CHURCH_CONTACTED" | "NOTE" | "NOTE_ADDED" | "PLAN" | "FOLLOW_UP";
@@ -11,6 +15,9 @@ type TimelineEvent = {
   date: string;
   actor: string;
   detail: string;
+  visibility: TimelineEventVisibility;
+  sharingLevel: string;
+  consentStatus: "documented" | "pending" | "staff_review";
 };
 
 type Resident = {
@@ -109,7 +116,10 @@ const initialTimeline: TimelineEvent[] = [
     title: "Volunteer visit completed",
     date: "Jun 21",
     actor: "Sarah K.",
-    detail: "Short weekly visit completed and marked ready for prayer follow-up."
+    detail: "Short weekly visit completed and marked ready for prayer follow-up.",
+    visibility: "shared_with_partner",
+    sharingLevel: "Approved shared summary",
+    consentStatus: "documented"
   },
   {
     id: "plan-reviewed-jun-20",
@@ -117,7 +127,10 @@ const initialTimeline: TimelineEvent[] = [
     title: "Spiritual care plan reviewed",
     date: "Jun 20",
     actor: "Care Coordinator",
-    detail: "Care plan aligned around prayer support, weekly visit, and church check-in."
+    detail: "Care plan aligned around prayer support, weekly visit, and church check-in.",
+    visibility: "internal_only",
+    sharingLevel: "Facility care team",
+    consentStatus: "staff_review"
   },
   {
     id: "church-contact-jun-18",
@@ -125,7 +138,10 @@ const initialTimeline: TimelineEvent[] = [
     title: "Church connection confirmed",
     date: "Jun 18",
     actor: "Pastor Michael Torres",
-    detail: "Church contact confirmed for continued human-reviewed care coordination."
+    detail: "Church contact confirmed for continued human-reviewed care coordination.",
+    visibility: "partner_note",
+    sharingLevel: "Approved partner note",
+    consentStatus: "documented"
   },
   {
     id: "care-note-jun-15",
@@ -133,9 +149,38 @@ const initialTimeline: TimelineEvent[] = [
     title: "Current needs organized",
     date: "Jun 15",
     actor: "Care Coordinator",
-    detail: "Needs grouped for prayer support, weekly visit, family encouragement, and church check-in."
+    detail: "Needs grouped for prayer support, weekly visit, family encouragement, and church check-in.",
+    visibility: "system_audit",
+    sharingLevel: "Admin audit",
+    consentStatus: "staff_review"
   }
 ];
+
+
+const timelineLensOptions: { id: TimelineLens; label: string; description: string }[] = [
+  { id: "facility", label: "Facility care team", description: "Full internal timeline for the organization managing care." },
+  { id: "partner", label: "Partner/church care team", description: "Approved shared timeline only, filtered by consent and sharing level." },
+  { id: "platform", label: "Platform owner", description: "Broader audit/admin lens where appropriate." }
+];
+
+const timelineVisibilityLabels: Record<TimelineEventVisibility, string> = {
+  internal_only: "Internal only",
+  shared_with_partner: "Shared with partner",
+  partner_note: "Partner note",
+  system_audit: "System audit"
+};
+
+const timelineLensSummary: Record<TimelineLens, string> = {
+  facility: "Facility users see the full internal care story for their organization.",
+  partner: "Partner and church users see only consent-documented shared events and partner notes.",
+  platform: "Platform owners can review broader administrative and audit events where appropriate."
+};
+
+function canShowTimelineEvent(event: TimelineEvent, lens: TimelineLens) {
+  if (lens === "facility") return event.visibility !== "system_audit" || event.consentStatus !== "pending";
+  if (lens === "partner") return event.consentStatus === "documented" && ["shared_with_partner", "partner_note"].includes(event.visibility);
+  return true;
+}
 
 const prayerTemplates = [
   {
@@ -168,7 +213,12 @@ const followUpTypes = ["Gentle check-in", "Prayer support", "Volunteer visit", "
 const followUpOwners = ["Care Coordinator", "Sarah K.", "Thomas R.", "Church Care Team"];
 
 const noteTypes = ["General care note", "Visit note", "Prayer note", "Family/church update", "Consent/privacy note", "Student/supervisor note"];
-const noteVisibilityOptions = ["Internal care team", "Chaplain/pastor only", "Volunteer-safe summary", "Supervisor review"];
+const noteVisibilityOptions: { value: TimelineEventVisibility; label: string; help: string }[] = [
+  { value: "internal_only", label: "Internal only", help: "Facility care team lens only." },
+  { value: "shared_with_partner", label: "Shared with partner", help: "Approved shared timeline after consent review." },
+  { value: "partner_note", label: "Partner note", help: "Visible to partner/church care team when consent is documented." },
+  { value: "system_audit", label: "System audit", help: "Administrative audit lens only." }
+];
 
 const visitTypes = ["Pastoral visit", "Volunteer visit", "Chaplain visit", "Seminary student visit", "Prayer visit", "Care plan visit"];
 const visitDates = ["Today", "Tomorrow", "This week", "Custom"];
@@ -642,7 +692,7 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
   const [followUpNote, setFollowUpNote] = useState("");
   const [hasFollowUpConsent, setHasFollowUpConsent] = useState(false);
   const [noteType, setNoteType] = useState(noteTypes[0]);
-  const [noteVisibility, setNoteVisibility] = useState(noteVisibilityOptions[0]);
+  const [noteVisibility, setNoteVisibility] = useState<TimelineEventVisibility>(noteVisibilityOptions[0].value);
   const [noteBody, setNoteBody] = useState("");
   const [noteFollowUpNeeded, setNoteFollowUpNeeded] = useState(false);
   const [visitType, setVisitType] = useState(visitTypes[0]);
@@ -659,12 +709,14 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
   const [churchSharingLevel, setChurchSharingLevel] = useState(churchSharingLevels[0]);
   const [churchContactNote, setChurchContactNote] = useState("");
   const [hasChurchContactConsent, setHasChurchContactConsent] = useState(false);
+  const [timelineLens, setTimelineLens] = useState<TimelineLens>("facility");
   const demoAudioControllerRef = useRef<DemoAudioController | null>(null);
   const demoDriverRef = useRef<CareBinderDriver | null>(null);
   const activeDemoStepIndexRef = useRef(0);
   const hasAutoStartedDemoRef = useRef(false);
 
   const selectedResident = useMemo(() => residentList.find((resident) => resident.id === selectedId) ?? residentList[0], [residentList, selectedId]);
+  const visibleTimeline = useMemo(() => timeline.filter((item) => canShowTimelineEvent(item, timelineLens)), [timeline, timelineLens]);
 
   const startGuidedDemo = useCallback(async () => {
     await waitForDemoTargets();
@@ -745,7 +797,10 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       title: "Prayer request submitted for review",
       date: "Today",
       actor: "Care Coordinator",
-      detail: prayerText.trim()
+      detail: prayerText.trim(),
+      visibility: "shared_with_partner",
+      sharingLevel: "Approved shared timeline after human review",
+      consentStatus: "documented"
     };
 
     setTimeline((items) => [newEvent, ...items]);
@@ -756,7 +811,7 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
 
   const resetNoteForm = () => {
     setNoteType(noteTypes[0]);
-    setNoteVisibility(noteVisibilityOptions[0]);
+    setNoteVisibility(noteVisibilityOptions[0].value);
     setNoteBody("");
     setNoteFollowUpNeeded(false);
   };
@@ -776,7 +831,10 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       title: `${noteType} added`,
       date: "Today",
       actor: "Care Coordinator",
-      detail: `${noteVisibility}. ${noteBody.trim()}${noteFollowUpNeeded ? " Follow-up flagged for care team review." : ""}`
+      detail: `${timelineVisibilityLabels[noteVisibility]}. ${noteBody.trim()}${noteFollowUpNeeded ? " Follow-up flagged for care team review." : ""}`,
+      visibility: noteVisibility,
+      sharingLevel: timelineVisibilityLabels[noteVisibility],
+      consentStatus: noteVisibility === "internal_only" || noteVisibility === "system_audit" ? "staff_review" : "documented"
     };
 
     setTimeline((items) => [newEvent, ...items]);
@@ -830,7 +888,10 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       title: `${visitType} scheduled`,
       date: "Today",
       actor: visitVisitor,
-      detail: `${resolvedDate} · ${resolvedWindow} · ${visitLocation.trim()}. ${visitNote.trim()}`
+      detail: `${resolvedDate} · ${resolvedWindow} · ${visitLocation.trim()}. ${visitNote.trim()}`,
+      visibility: "internal_only",
+      sharingLevel: "Facility care team",
+      consentStatus: "documented"
     };
 
     setTimeline((items) => [newEvent, ...items]);
@@ -880,7 +941,10 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       title: "Church contact prepared for human review",
       date: "Today",
       actor: "Care Coordinator",
-      detail: `${churchContactPurpose} · ${resolvedTarget} · Sharing level: ${churchSharingLevel}. ${churchContactNote.trim()}`
+      detail: `${churchContactPurpose} · ${resolvedTarget} · Sharing level: ${churchSharingLevel}. ${churchContactNote.trim()}`,
+      visibility: churchSharingLevel === "Staff-only draft / not shared yet" ? "internal_only" : "shared_with_partner",
+      sharingLevel: churchSharingLevel,
+      consentStatus: "documented"
     };
 
     setTimeline((items) => [newEvent, ...items]);
@@ -922,7 +986,10 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
       title: `${followUpType} follow-up set`,
       date: "Today",
       actor: followUpOwner,
-      detail: `Due ${followUpDueDate}. ${followUpNote.trim()}`
+      detail: `Due ${followUpDueDate}. ${followUpNote.trim()}`,
+      visibility: "internal_only",
+      sharingLevel: "Facility care team",
+      consentStatus: "documented"
     };
 
     setTimeline((items) => [newEvent, ...items]);
@@ -1029,19 +1096,35 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
           </section>
 
           <section data-demo-target="care-timeline" className="mt-5 rounded-[1.7rem] border border-[#d8d6d1] bg-[#fffdf9] p-6">
-            <div className="flex items-center justify-between gap-4">
-              <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Care Timeline</h3>
-              <p className="text-xs font-semibold text-[#65717a]">Newest first</p>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-[0.18em] text-[#4d5f6c]">Shared Care Timeline</h3>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-[#4b5b66]">One canonical care story stays attached to the request. The lens below filters details by role, organization membership, consent status, and sharing level.</p>
+              </div>
+              <p className="text-xs font-semibold text-[#65717a]">Newest first · {visibleTimeline.length} of {timeline.length} visible</p>
             </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              {timelineLensOptions.map((option) => (
+                <button key={option.id} type="button" onClick={() => setTimelineLens(option.id)} className={`rounded-2xl border p-4 text-left transition ${timelineLens === option.id ? "border-[#173b2d] bg-[#edf5ee] shadow-sm" : "border-[#e2dfd9] bg-white hover:border-[#b7d1c0]"}`}>
+                  <span className="text-xs font-black uppercase tracking-[0.14em] text-[#315f44]">{option.label}</span>
+                  <span className="mt-2 block text-xs leading-5 text-[#5e6a72]">{option.description}</span>
+                </button>
+              ))}
+            </div>
+            <p className="mt-4 rounded-2xl border border-[#dbe3dd] bg-[#f8fbf8] px-4 py-3 text-sm font-semibold text-[#315f44]">{timelineLensSummary[timelineLens]}</p>
             <div className="mt-5 space-y-4">
-              {timeline.map((item) => (
+              {visibleTimeline.map((item) => (
                 <article key={item.id} className="grid gap-4 rounded-2xl border border-[#e2dfd9] bg-white p-4 shadow-[0_10px_30px_rgba(30,41,59,0.05)] sm:grid-cols-[92px_1fr]">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#65717a]">{item.date}</p>
                   <div className="border-l-2 border-[#d8d6d1] pl-4">
-                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${eventStyles(item.type)}`}>{item.type}</span>
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${eventStyles(item.type)}`}>{item.type}</span>
+                      <span className="inline-flex rounded-full border border-[#d8d6d1] bg-[#fbf8f0] px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#65717a]">{timelineVisibilityLabels[item.visibility]}</span>
+                    </div>
                     <h4 className="mt-2 font-bold text-[#1e2b3f]">{item.title}</h4>
                     <p className="mt-1 text-xs font-bold text-[#5b4a83]">{item.actor}</p>
                     <p className="mt-1 text-sm leading-6 text-[#4b5b66]">{item.detail}</p>
+                    <p className="mt-2 text-xs font-semibold text-[#65717a]">Consent: {item.consentStatus.replace("_", " ")} · Sharing: {item.sharingLevel}</p>
                   </div>
                 </article>
               ))}
@@ -1215,11 +1298,12 @@ export function CareBinder({ autoStartDemo = false }: { autoStartDemo?: boolean 
               </div>
               <div>
                 <label className="block text-sm font-bold text-[#20372d]" htmlFor="note-visibility">Visibility</label>
-                <select id="note-visibility" value={noteVisibility} onChange={(event) => setNoteVisibility(event.target.value)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
+                <select id="note-visibility" value={noteVisibility} onChange={(event) => setNoteVisibility(event.target.value as TimelineEventVisibility)} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#20372d] outline-none ring-[#8aa363] focus:ring-2">
                   {noteVisibilityOptions.map((visibility) => (
-                    <option key={visibility} value={visibility}>{visibility}</option>
+                    <option key={visibility.value} value={visibility.value}>{visibility.label}</option>
                   ))}
                 </select>
+                <p className="mt-2 text-xs font-semibold text-[#6a765f]">{noteVisibilityOptions.find((option) => option.value === noteVisibility)?.help}</p>
               </div>
             </div>
 

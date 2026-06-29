@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { driver, type DriveStep } from "driver.js";
+import "driver.js/dist/driver.css";
 
 type DemoRequestPayload = {
   requesterName: string;
@@ -18,16 +20,144 @@ type DemoRequestPayload = {
   source: "requester-demo";
 };
 
+type RequesterTourStep = {
+  id: string;
+  target: string;
+  title: string;
+  description: string;
+};
+
 const careTypes = ["Prayer", "Visit", "Family support", "Pastoral follow-up", "Church connection", "Other"];
 const urgencyOptions = ["Today", "This week", "Not urgent", "Unsure"];
 const contactPreferences = ["Phone", "Email", "Text message", "Facility staff follow-up"];
 const demoStages = ["Requester preview", "Queue card", "Care team demo"];
 
+const requesterTourSteps: RequesterTourStep[] = [
+  {
+    id: "requester-demo-header",
+    target: '[data-demo-target="requester-demo-header"]',
+    title: "Requester-side preview",
+    description:
+      "This is the requester side of ChurchWork. It shows how a family member, resident, staff member, church member, or facility partner can prepare a care need for review."
+  },
+  {
+    id: "requester-demo-safety",
+    target: '[data-demo-target="requester-demo-safety"]',
+    title: "Demo-only guardrail",
+    description:
+      "This preview uses local page state only. It demonstrates the future flow without turning on live intake, accounts, or conversation features."
+  },
+  {
+    id: "requester-demo-hero",
+    target: '[data-demo-target="requester-demo-hero"]',
+    title: "The front door for care",
+    description:
+      "The requester experience is the compassionate front door. People do not need to know who to call. They provide enough context for a human care coordinator to review next steps."
+  },
+  {
+    id: "requester-demo-stages",
+    target: '[data-demo-target="requester-demo-stages"]',
+    title: "Three-part story",
+    description:
+      "The demo moves from requester preview, to a future queue card, to the care team demo. This keeps the product story simple for a facility walkthrough."
+  },
+  {
+    id: "requester-demo-flow",
+    target: '[data-demo-target="requester-demo-flow"]',
+    title: "Future platform flow",
+    description:
+      "Later, Supabase can turn this same intake shape into a reviewed care team queue item, then a Care Binder timeline action."
+  },
+  {
+    id: "requester-demo-form",
+    target: '[data-demo-target="requester-demo-form"]',
+    title: "Simple care request shape",
+    description:
+      "The sample form gathers the person, location, care type, urgency, requester, and context. It is intentionally simple so a care coordinator can review quickly."
+  },
+  {
+    id: "requester-demo-care-type",
+    target: '[data-demo-target="requester-demo-care-type"]',
+    title: "Template-friendly care type",
+    description:
+      "Care types map to reviewed templates and facility policy. This supports prayer, visits, family support, pastoral follow-up, and church connection without opening two-way chat."
+  },
+  {
+    id: "requester-demo-payload",
+    target: '[data-demo-target="requester-demo-payload"]',
+    title: "What the care team would receive",
+    description:
+      "The right side shows the future care-team-aligned shape. It is the bridge between a requester need and the Care Binder workflow."
+  },
+  {
+    id: "requester-demo-submit",
+    target: '[data-demo-target="requester-demo-submit"]',
+    title: "Preview the queue card",
+    description:
+      "Use this button to prepare a local preview card. After that, continue to the Care Binder demo to show how a care team reviews and acts."
+  }
+];
+
 const fieldClass =
   "mt-2 min-h-12 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-base text-[#20372d] outline-none ring-[#8aa363]/20 transition focus:border-[#8aa363] focus:ring-4";
 const labelClass = "block text-sm font-bold text-[#20372d]";
 
-export function RequestCareDemo() {
+type RequesterDemoDriver = ReturnType<typeof driver>;
+
+function createRequesterDriverSteps(): DriveStep[] {
+  return requesterTourSteps.map((step) => ({
+    element: step.target,
+    popover: {
+      title: step.title,
+      description: step.description,
+      side: "bottom",
+      align: "start"
+    }
+  }));
+}
+
+function findRequesterTourStep(element?: Element): RequesterTourStep | undefined {
+  if (!element) return undefined;
+
+  return requesterTourSteps.find((step) => {
+    try {
+      return element.matches(step.target);
+    } catch {
+      return false;
+    }
+  });
+}
+
+function canUseBrowserSpeech() {
+  return typeof window !== "undefined" && "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+}
+
+function chooseFriendlyVoice() {
+  if (!canUseBrowserSpeech()) return undefined;
+
+  const voices = window.speechSynthesis.getVoices();
+  return voices.find((voice) => /samantha|ava|jenny|aria|emma|natural|female|warm/i.test(`${voice.name} ${voice.voiceURI}`)) ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en")) ?? voices[0];
+}
+
+function stopRequesterNarration() {
+  if (canUseBrowserSpeech()) window.speechSynthesis.cancel();
+}
+
+function speakRequesterTourStep(step?: RequesterTourStep, isMuted = false) {
+  stopRequesterNarration();
+  if (!step || isMuted || !canUseBrowserSpeech()) return;
+
+  const utterance = new SpeechSynthesisUtterance(step.description);
+  utterance.rate = 0.94;
+  utterance.pitch = 1.02;
+  utterance.volume = 0.86;
+  const friendlyVoice = chooseFriendlyVoice();
+  if (friendlyVoice) utterance.voice = friendlyVoice;
+
+  window.speechSynthesis.speak(utterance);
+}
+
+export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boolean }) {
   const [recipientName, setRecipientName] = useState("Mary Johnson");
   const [relationship, setRelationship] = useState("Daughter");
   const [locationName, setLocationName] = useState("Bethesda Senior Living");
@@ -41,6 +171,10 @@ export function RequestCareDemo() {
     "Mom asked for prayer and a short visit this week. Family would appreciate a gentle follow-up after the visit."
   );
   const [submittedPayload, setSubmittedPayload] = useState<DemoRequestPayload | null>(null);
+  const [isVoiceMuted, setVoiceMuted] = useState(false);
+  const driverRef = useRef<RequesterDemoDriver | null>(null);
+  const activeTourStepRef = useRef<RequesterTourStep | undefined>(undefined);
+  const hasAutoStartedDemoRef = useRef(false);
 
   const previewPayload = useMemo<DemoRequestPayload>(
     () => ({
@@ -60,6 +194,54 @@ export function RequestCareDemo() {
     [careType, contactPreference, locationName, notes, recipientName, relationship, requesterContact, requesterName, roomOrUnit, urgency]
   );
 
+  const startGuidedDemo = useCallback(() => {
+    stopRequesterNarration();
+    driverRef.current?.destroy();
+    activeTourStepRef.current = undefined;
+
+    const tour = driver({
+      showProgress: true,
+      allowClose: true,
+      overlayOpacity: 0.55,
+      stagePadding: 8,
+      nextBtnText: "Next",
+      prevBtnText: "Back",
+      doneBtnText: "Done",
+      progressText: "Step {{current}} of {{total}}",
+      onHighlighted: (element?: Element) => {
+        const activeStep = findRequesterTourStep(element);
+        activeTourStepRef.current = activeStep;
+        speakRequesterTourStep(activeStep, isVoiceMuted);
+      },
+      onDestroyed: () => {
+        stopRequesterNarration();
+        driverRef.current = null;
+      },
+      steps: createRequesterDriverSteps()
+    });
+
+    driverRef.current = tour;
+    tour.drive();
+  }, [isVoiceMuted]);
+
+  useEffect(() => {
+    if (!autoStartDemo || hasAutoStartedDemoRef.current) return;
+
+    hasAutoStartedDemoRef.current = true;
+    const demoTimer = window.setTimeout(() => {
+      startGuidedDemo();
+    }, 500);
+
+    return () => window.clearTimeout(demoTimer);
+  }, [autoStartDemo, startGuidedDemo]);
+
+  useEffect(() => {
+    return () => {
+      stopRequesterNarration();
+      driverRef.current?.destroy();
+    };
+  }, []);
+
   function submitDemoRequest(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmittedPayload(previewPayload);
@@ -69,12 +251,22 @@ export function RequestCareDemo() {
     setSubmittedPayload(null);
   }
 
+  function replayNarration() {
+    speakRequesterTourStep(activeTourStepRef.current, isVoiceMuted);
+  }
+
+  function toggleVoice() {
+    const nextMuted = !isVoiceMuted;
+    setVoiceMuted(nextMuted);
+    if (nextMuted) stopRequesterNarration();
+  }
+
   const visiblePayload = submittedPayload ?? previewPayload;
 
   return (
     <main className="min-h-screen bg-[#f7f3ea] px-4 py-5 text-[#102b3a] sm:px-6 md:py-8">
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-col gap-4 rounded-[1.6rem] border border-[#d8d0c0] bg-[#0d2b3b] p-5 text-white shadow-xl md:rounded-[2rem] md:p-6 lg:flex-row lg:items-center lg:justify-between">
+        <header data-demo-target="requester-demo-header" className="flex flex-col gap-4 rounded-[1.6rem] border border-[#d8d0c0] bg-[#0d2b3b] p-5 text-white shadow-xl md:rounded-[2rem] md:p-6 lg:flex-row lg:items-center lg:justify-between">
           <Link href="/" className="flex items-center gap-3">
             <span className="text-4xl leading-none">🕊</span>
             <span>
@@ -85,6 +277,15 @@ export function RequestCareDemo() {
             </span>
           </Link>
           <div className="grid gap-3 sm:grid-cols-2 lg:flex lg:flex-wrap">
+            <button type="button" onClick={startGuidedDemo} className="inline-flex justify-center rounded-full bg-white px-5 py-3 text-sm font-black text-[#173b2d] shadow-lg hover:bg-[#f0f5e8]">
+              Start Guided Demo
+            </button>
+            <button type="button" onClick={toggleVoice} className="inline-flex justify-center rounded-full border border-white/35 px-5 py-3 text-sm font-black text-white hover:bg-white/10">
+              {isVoiceMuted ? "Voice Off" : "Voice On"}
+            </button>
+            <button type="button" onClick={replayNarration} className="inline-flex justify-center rounded-full border border-white/35 px-5 py-3 text-sm font-black text-white hover:bg-white/10">
+              Replay Voice
+            </button>
             <Link href="/care-binder?demo=true" className="inline-flex justify-center rounded-full border border-white/35 px-5 py-3 text-sm font-black text-white hover:bg-white/10">
               View Care Team Demo
             </Link>
@@ -94,13 +295,13 @@ export function RequestCareDemo() {
           </div>
         </header>
 
-        <section className="mt-5 rounded-[1.6rem] border border-[#ddb66c] bg-[#fff8ed] p-4 text-sm leading-7 text-[#6b5b45] shadow-sm md:mt-6 md:rounded-[2rem] md:p-5">
+        <section data-demo-target="requester-demo-safety" className="mt-5 rounded-[1.6rem] border border-[#ddb66c] bg-[#fff8ed] p-4 text-sm leading-7 text-[#6b5b45] shadow-sm md:mt-6 md:rounded-[2rem] md:p-5">
           <strong className="text-[#173b2d]">Demo only:</strong> this preview uses local page state only. It shows the future requester-to-care-team flow for pilot review.
         </section>
 
         <section className="mt-5 rounded-[1.6rem] border border-[#d8d0c0] bg-white/85 p-5 shadow-sm md:mt-6 md:rounded-[2rem] md:p-8">
           <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-            <div>
+            <div data-demo-target="requester-demo-hero">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Gated requester preview</p>
               <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight tracking-[-0.04em] text-[#102b3a] md:text-6xl">
                 Show how someone asks for spiritual care.
@@ -111,7 +312,7 @@ export function RequestCareDemo() {
               <DemoStepper />
             </div>
 
-            <aside className="rounded-[1.5rem] border border-[#d8d0c0] bg-[#173b2d] p-5 text-white shadow-lg md:rounded-[1.7rem] md:p-6">
+            <aside data-demo-target="requester-demo-flow" className="rounded-[1.5rem] border border-[#d8d0c0] bg-[#173b2d] p-5 text-white shadow-lg md:rounded-[1.7rem] md:p-6">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#c8d9b3]">Future platform flow</p>
               <div className="mt-5 space-y-3 text-sm font-bold">
                 <div className="rounded-2xl bg-white/10 p-4">Requester prepares care need</div>
@@ -169,7 +370,7 @@ export function RequestCareDemo() {
           </section>
         ) : (
           <section className="mt-5 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
-            <form onSubmit={submitDemoRequest} className="rounded-[1.6rem] border border-[#d8d0c0] bg-[#fbf8f0] p-5 shadow-sm md:rounded-[2rem] md:p-8">
+            <form data-demo-target="requester-demo-form" onSubmit={submitDemoRequest} className="rounded-[1.6rem] border border-[#d8d0c0] bg-[#fbf8f0] p-5 shadow-sm md:rounded-[2rem] md:p-8">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Demo intake preview</p>
               <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em] text-[#102b3a]">Prepare a sample spiritual care request</h2>
               <p className="mt-3 text-sm leading-7 text-[#5d6b62]">
@@ -193,7 +394,7 @@ export function RequestCareDemo() {
                   <label className={labelClass} htmlFor="room-or-unit">Room or unit</label>
                   <input id="room-or-unit" value={roomOrUnit} onChange={(event) => setRoomOrUnit(event.target.value)} className={fieldClass} />
                 </div>
-                <div>
+                <div data-demo-target="requester-demo-care-type">
                   <label className={labelClass} htmlFor="care-type">Type of care</label>
                   <select id="care-type" value={careType} onChange={(event) => setCareType(event.target.value)} className={fieldClass}>
                     {careTypes.map((option) => <option key={option}>{option}</option>)}
@@ -230,7 +431,7 @@ export function RequestCareDemo() {
               </div>
 
               <div className="mt-6 flex justify-end">
-                <button type="submit" className="w-full rounded-full bg-[#173b2d] px-7 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] sm:w-auto">
+                <button data-demo-target="requester-demo-submit" type="submit" className="w-full rounded-full bg-[#173b2d] px-7 py-3 text-sm font-black text-white shadow-md hover:bg-[#234b3b] sm:w-auto">
                   Preview Queue Card
                 </button>
               </div>
@@ -246,7 +447,7 @@ export function RequestCareDemo() {
 
 function DemoStepper() {
   return (
-    <div className="mt-6 grid gap-3 sm:grid-cols-3">
+    <div data-demo-target="requester-demo-stages" className="mt-6 grid gap-3 sm:grid-cols-3">
       {demoStages.map((stage, index) => (
         <div key={stage} className="rounded-2xl border border-[#d8d0c0] bg-[#fffaf2] p-4">
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#789052]">Step {index + 1}</p>
@@ -272,7 +473,7 @@ function PayloadPreview({ payload }: { payload: DemoRequestPayload }) {
   ];
 
   return (
-    <aside className="rounded-[1.6rem] border border-[#d8d0c0] bg-[#102b3a] p-5 text-white shadow-xl md:rounded-[2rem] md:p-8">
+    <aside data-demo-target="requester-demo-payload" className="rounded-[1.6rem] border border-[#d8d0c0] bg-[#102b3a] p-5 text-white shadow-xl md:rounded-[2rem] md:p-8">
       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Care-team aligned shape</p>
       <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">What the care team would receive</h2>
       <p className="mt-4 text-sm leading-7 text-[#d4dedc]">

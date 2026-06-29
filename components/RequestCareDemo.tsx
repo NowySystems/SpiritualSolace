@@ -9,6 +9,7 @@ type DemoRequestPayload = {
   requesterName: string;
   requesterContact: string;
   contactPreference: string;
+  requesterZip: string;
   recipientName: string;
   relationship: string;
   locationName: string;
@@ -30,7 +31,7 @@ type RequesterTourStep = {
 const careTypes = ["Prayer", "Visit", "Family support", "Pastoral follow-up", "Church connection", "Other"];
 const urgencyOptions = ["Today", "This week", "Not urgent", "Unsure"];
 const contactPreferences = ["Phone", "Email", "Text message", "Facility staff follow-up"];
-const demoStages = ["Requester preview", "Queue card", "Care team demo"];
+const demoStages = ["Requester information", "Care need", "Human-reviewed next step", "Care team demo"];
 
 const requesterTourSteps: RequesterTourStep[] = [
   {
@@ -73,7 +74,7 @@ const requesterTourSteps: RequesterTourStep[] = [
     target: '[data-demo-target="requester-demo-form"]',
     title: "Simple care request shape",
     description:
-      "The sample form gathers the person, location, care type, urgency, requester, and context. It is intentionally simple so a care coordinator can review quickly."
+      "Step 1 gathers a demo-only requester profile. The quick path asks for only contact essentials; the detailed path adds context a human reviewer can use later."
   },
   {
     id: "requester-demo-care-type",
@@ -167,6 +168,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
   const [requesterName, setRequesterName] = useState("Sarah Johnson");
   const [contactPreference, setContactPreference] = useState(contactPreferences[0]);
   const [requesterContact, setRequesterContact] = useState("Demo phone number");
+  const [requesterZip, setRequesterZip] = useState("38501");
   const [notes, setNotes] = useState(
     "Mom asked for prayer and a short visit this week. Family would appreciate a gentle follow-up after the visit."
   );
@@ -181,6 +183,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
       requesterName,
       requesterContact,
       contactPreference,
+      requesterZip,
       recipientName,
       relationship,
       locationName,
@@ -191,7 +194,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
       status: "demo-only",
       source: "requester-demo"
     }),
-    [careType, contactPreference, locationName, notes, recipientName, relationship, requesterContact, requesterName, roomOrUnit, urgency]
+    [careType, contactPreference, locationName, notes, recipientName, relationship, requesterContact, requesterName, requesterZip, roomOrUnit, urgency]
   );
 
   const startGuidedDemo = useCallback(() => {
@@ -296,7 +299,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
         </header>
 
         <section data-demo-target="requester-demo-safety" className="mt-5 rounded-[1.6rem] border border-[#ddb66c] bg-[#fff8ed] p-4 text-sm leading-7 text-[#6b5b45] shadow-sm md:mt-6 md:rounded-[2rem] md:p-5">
-          <strong className="text-[#173b2d]">Demo only:</strong> this preview uses local page state only. It shows the future requester-to-care-team flow for pilot review.
+          <strong className="text-[#173b2d]">Demo only:</strong> this preview uses local page state only. It does not call live APIs, create accounts, store requester profiles, auto-route to churches, or change any care team record.
         </section>
 
         <section className="mt-5 rounded-[1.6rem] border border-[#d8d0c0] bg-white/85 p-5 shadow-sm md:mt-6 md:rounded-[2rem] md:p-8">
@@ -307,7 +310,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
                 Show how someone asks for spiritual care.
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-8 text-[#4d5d55]">
-                This side of ChurchWork is the front door for families, residents, staff, church members, or facility partners. Tonight it is only a guided preview; later, Supabase can turn the same shape into a reviewed care team queue item.
+                This side of ChurchWork is the front door for families, residents, staff, church members, or facility partners. Tonight it is only a guided preview: requester information stays in local page state, the ZIP code is demo-only, and every next step still requires human review.
               </p>
               <DemoStepper />
             </div>
@@ -406,24 +409,51 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
                     {urgencyOptions.map((option) => <option key={option}>{option}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className={labelClass} htmlFor="requester-name">Requester name</label>
-                  <input id="requester-name" value={requesterName} onChange={(event) => setRequesterName(event.target.value)} className={fieldClass} required />
-                </div>
-                <div>
-                  <label className={labelClass} htmlFor="contact-preference">Preferred follow-up method</label>
-                  <select id="contact-preference" value={contactPreference} onChange={(event) => setContactPreference(event.target.value)} className={fieldClass}>
-                    {contactPreferences.map((option) => <option key={option}>{option}</option>)}
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className={labelClass} htmlFor="requester-contact">Demo contact detail</label>
-                  <input id="requester-contact" value={requesterContact} onChange={(event) => setRequesterContact(event.target.value)} className={fieldClass} required />
+                <div className="md:col-span-2 rounded-[1.5rem] border border-[#e2d7c5] bg-white p-5 shadow-sm">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Step 1 · Requester Information</p>
+                  <h3 className="mt-2 text-2xl font-bold tracking-[-0.03em] text-[#102b3a]">Choose the lightest safe profile.</h3>
+                  <p className="mt-3 text-sm leading-7 text-[#5d6b62]">
+                    Quick profile means name, contact preference, and a demo contact detail so a human reviewer knows who prepared the request. Detailed profile can later add ZIP-based partner context, but this MVP does not create accounts, store requester profiles, or auto-route anyone.
+                  </p>
+                  <div className="mt-5 grid gap-5 md:grid-cols-2">
+                    <div>
+                      <label className={labelClass} htmlFor="requester-name">Requester name</label>
+                      <input id="requester-name" value={requesterName} onChange={(event) => setRequesterName(event.target.value)} className={fieldClass} required />
+                    </div>
+                    <div>
+                      <label className={labelClass} htmlFor="contact-preference">Preferred follow-up method</label>
+                      <select id="contact-preference" value={contactPreference} onChange={(event) => setContactPreference(event.target.value)} className={fieldClass}>
+                        {contactPreferences.map((option) => <option key={option}>{option}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass} htmlFor="requester-contact">Demo contact detail</label>
+                      <input id="requester-contact" value={requesterContact} onChange={(event) => setRequesterContact(event.target.value)} className={fieldClass} required />
+                    </div>
+                    <div>
+                      <label className={labelClass} htmlFor="requester-zip">ZIP code</label>
+                      <input id="requester-zip" inputMode="numeric" maxLength={5} value={requesterZip} onChange={(event) => setRequesterZip(event.target.value)} className={fieldClass} aria-describedby="requester-zip-help" />
+                      <p id="requester-zip-help" className="mt-2 text-xs font-semibold leading-5 text-[#7b6b55]">Demo-only for future nearby partner lookup. No live API call and no saved profile.</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="md:col-span-2">
                   <label className={labelClass} htmlFor="notes">What is going on?</label>
                   <textarea id="notes" value={notes} onChange={(event) => setNotes(event.target.value)} rows={6} className={`${fieldClass} leading-6`} required />
                 </div>
+              </div>
+
+              <div className="mt-6 rounded-[1.5rem] border border-[#d8d0c0] bg-white p-5 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Suggested nearby partners</p>
+                    <h3 className="mt-2 text-xl font-bold text-[#102b3a]">Placeholder only</h3>
+                  </div>
+                  <span className="rounded-full bg-[#fff4df] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#76501a]">No routing</span>
+                </div>
+                <p className="mt-3 text-sm leading-7 text-[#5d6b62]">
+                  A future version may use ZIP {requesterZip || "—"} to help staff identify nearby churches or care partners. This demo does not call live directories, does not reveal partner availability, and does not automatically contact or route to any church.
+                </p>
               </div>
 
               <div className="mt-6 rounded-2xl border border-[#eadfce] bg-[#fff8ed] p-4 text-sm leading-6 text-[#6b5b45]">
@@ -447,7 +477,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
 
 function DemoStepper() {
   return (
-    <div data-demo-target="requester-demo-stages" className="mt-6 grid gap-3 sm:grid-cols-3">
+    <div data-demo-target="requester-demo-stages" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {demoStages.map((stage, index) => (
         <div key={stage} className="rounded-2xl border border-[#d8d0c0] bg-[#fffaf2] p-4">
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#789052]">Step {index + 1}</p>
@@ -468,6 +498,7 @@ function PayloadPreview({ payload }: { payload: DemoRequestPayload }) {
     ["requesterName", payload.requesterName],
     ["contactPreference", payload.contactPreference],
     ["requesterContact", payload.requesterContact],
+    ["requesterZip", `${payload.requesterZip || "Not provided"} (demo-only / no lookup)`],
     ["status", payload.status],
     ["source", payload.source]
   ];
@@ -488,7 +519,7 @@ function PayloadPreview({ payload }: { payload: DemoRequestPayload }) {
         ))}
       </div>
       <div className="mt-6 rounded-2xl border border-[#c8d9b3]/30 bg-[#c8d9b3]/10 p-4 text-sm leading-6 text-[#edf5e6]">
-        Later, Supabase should own persistence, routing, status changes, assignment, and audit history. This preview intentionally keeps everything local.
+        Later, Supabase should own approved persistence, routing, status changes, assignment, and audit history after governance review. This preview intentionally keeps everything local and performs no partner lookup.
       </div>
     </aside>
   );

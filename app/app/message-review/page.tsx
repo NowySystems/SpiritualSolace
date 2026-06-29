@@ -29,10 +29,10 @@ export default function MessageReviewPage() {
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.24em] text-[#7a4a08]">Approval decision</p>
                 <h1 className="mt-4 max-w-3xl font-serif text-5xl font-semibold leading-[0.98] tracking-[-0.055em] text-[#102b3a] lg:text-6xl">
-                  Should this message be delivered?
+                  Should this prepared template be delivered?
                 </h1>
                 <p className="mt-6 max-w-2xl text-base leading-8 text-[#4d6158]">
-                  Staff only needs to decide whether this responder message safely matches the original request. Everything else is supporting context.
+                  Staff only needs to decide whether this canned, facility-dependent response template safely matches the original request. The pilot does not support two-way conversation.
                 </p>
               </div>
 
@@ -40,8 +40,8 @@ export default function MessageReviewPage() {
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-[#6e7f67]">Decision controls</p>
                 <div className="mt-5 flex flex-col gap-3">
                   <button disabled className="rounded-full bg-[#92400e] px-5 py-4 text-sm font-black uppercase tracking-[0.12em] text-white shadow-md">Approve delivery</button>
-                  <button disabled className="rounded-full border border-[#cfc6b8] bg-white px-5 py-3 text-sm font-black text-[#102b3a]">Return for revision</button>
-                  <button disabled className="rounded-full border border-[#e6c7c1] bg-[#fff4f1] px-5 py-3 text-sm font-black text-[#8a4637]">Reject message</button>
+                  <button disabled className="rounded-full border border-[#cfc6b8] bg-white px-5 py-3 text-sm font-black text-[#102b3a]">Return to template</button>
+                  <button disabled className="rounded-full border border-[#e6c7c1] bg-[#fff4f1] px-5 py-3 text-sm font-black text-[#8a4637]">Reject template</button>
                 </div>
                 <p className="mt-5 text-xs leading-5 text-[#6d6357]">Demo actions are disabled, but the approval path is now the visual center of the screen.</p>
               </div>
@@ -61,7 +61,7 @@ export default function MessageReviewPage() {
             </div>
 
             <div className="rounded-[1.6rem] bg-[#0d2b3b] p-7 text-white shadow-[0_14px_34px_rgba(13,43,59,0.18)]">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9fb36b]">Responder message</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9fb36b]">Responder template</p>
               <p className="mt-5 font-serif text-3xl italic leading-10">“{currentMessage.body}”</p>
               <p className="mt-6 text-sm text-[#b8cac9]">Submitted by {currentResponder?.name ?? "Unknown responder"}</p>
               <div className="mt-6 flex flex-wrap gap-2">
@@ -97,7 +97,7 @@ export default function MessageReviewPage() {
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9fb36b]">Review queue</p>
               <div className="mt-5 border-y border-white/10 py-5">
                 <p className="text-5xl font-semibold tracking-[-0.06em]">{solaceMessages.filter((message) => message.status === "Needs Review").length}</p>
-                <p className="mt-1 text-sm font-semibold text-[#d7e7b7]">messages need review</p>
+                <p className="mt-1 text-sm font-semibold text-[#d7e7b7]">templates need review</p>
               </div>
               <div className="mt-4 space-y-3">
                 {reviewQueue.slice(0, 4).map((message) => {
@@ -115,14 +115,14 @@ export default function MessageReviewPage() {
             <section>
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#9fb36b]">Boundary principle</p>
               <p className="mt-4 font-serif text-2xl italic leading-9 text-[#dce8e6]">
-                The system prepares context. Staff makes the delivery decision.
+                The system prepares a one-way template. Staff makes the facility-dependent delivery decision.
               </p>
             </section>
 
             <section className="rounded-[1.5rem] border border-white/10 bg-white/7 p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9fb36b]">Experiment</p>
               <p className="mt-3 text-sm leading-6 text-[#dce8e6]">
-                Message Review now follows the same NS pattern as Care Desk V4: one dominant human decision with supporting context below.
+                Template Review follows the same NS pattern as Care Desk V4: one dominant human decision with supporting context below, without chat or messaging infrastructure.
               </p>
             </section>
           </div>

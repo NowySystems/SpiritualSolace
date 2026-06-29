@@ -2,15 +2,17 @@ import { CareBinder } from "@/components/CareBinder";
 import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
 
 type CareBinderRoutePageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     demo?: string;
-  };
+  }>;
 };
 
-export default function CareBinderRoutePage({ searchParams }: CareBinderRoutePageProps) {
+export default async function CareBinderRoutePage({ searchParams }: CareBinderRoutePageProps) {
+  const resolvedSearchParams = await searchParams;
+
   return (
     <ChurchWorkAccessGate>
-      <CareBinder autoStartDemo={searchParams?.demo === "true"} />
+      <CareBinder autoStartDemo={resolvedSearchParams?.demo === "true"} />
     </ChurchWorkAccessGate>
   );
 }

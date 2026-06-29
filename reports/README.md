@@ -8,15 +8,9 @@ This folder stores generated helper/staff markdown reports.
 - Individual helper commands are available in `package.json`.
 - Reports are read-only review artifacts for ChatGPT and owner review before any action.
 
- codex/plan-founder-command-dashboard-and-operator-guide
-## Current + Planned Report Outputs
+## Current Report Outputs
 
 Current active/reporting flow includes read-only helper outputs and summary reports.
-
-Planned additions in CRCF 3.4d/3.4e and future founder-command planning:
-
-=======
-## Current Report Outputs
 
 - `reports/public-quality-report.md`
 - `reports/ux-render-alignment-report.md`
@@ -26,21 +20,21 @@ Planned additions in CRCF 3.4d/3.4e and future founder-command planning:
 - `reports/pr-acceptance-report.md`
 - `reports/ci-source-of-truth-report.md`
 - `reports/visual-screenshot-report.md`
- main
 - `reports/competitive-intelligence-report.md`
 - `reports/opportunity-scout-report.md`
 - `reports/project-advisor-report.md`
- codex/plan-founder-command-dashboard-and-operator-guide
+- `reports/staff-summary-report.md`
+
+## Planned Report Outputs
+
+Planned additions in CRCF 3.4d/3.4e and future founder-command planning:
+
 - `reports/lesson-capture-report.md`
 - `reports/decision-log-report.md` (or `docs/DECISION_LOG.md`)
 - `reports/reusable-stack-report.md`
-- `reports/opportunity-scout-report.md`
 - `reports/founder-command-summary.md`
-=======
-- `reports/staff-summary-report.md`
 
 ## Helper Usefulness Principle
- main
 
 Every helper must answer:
 

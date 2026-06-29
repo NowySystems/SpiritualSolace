@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 const flow = [
-  { label: "Prayer", detail: "Capture care needs and prayer requests in a simple, review-first workflow." },
-  { label: "People", detail: "Keep the person, their care context, and church connection together." },
-  { label: "Care Team", detail: "Prepare visits, follow-ups, volunteer care, and church coordination without scattered notes." },
+  { label: "Request", detail: "Preview how a family member, resident, staff member, or church member prepares a spiritual care need." },
+  { label: "Queue", detail: "Show how that future request becomes a care team queue item for human review." },
+  { label: "Care Binder", detail: "Keep the person, their care context, and church connection together." },
   { label: "Timeline", detail: "Confirm each local care step before deciding what should happen next." }
 ];
 
@@ -23,6 +23,7 @@ export default function LandingPage() {
 
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
             <a href="#care-binder" className="hover:text-[#d7e7b7]">Care Binder</a>
+            <Link href="/request-care" className="hover:text-[#d7e7b7]">Requester Demo</Link>
             <a href="#flow" className="hover:text-[#d7e7b7]">Care Flow</a>
             <a href="#guardrails" className="hover:text-[#d7e7b7]">Guardrails</a>
             <a href="#pilot-contact" className="hover:text-[#d7e7b7]">Pilot Demo</a>
@@ -50,32 +51,35 @@ export default function LandingPage() {
           <div className="mx-auto flex min-h-[720px] max-w-7xl items-center px-6 pb-24 pt-32">
             <div className="max-w-3xl">
               <div className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#d7e7b7] shadow-sm backdrop-blur">
-                ChurchWork Care Binder
+                ChurchWork pilot preview
               </div>
               <h1 className="mt-5 font-serif text-5xl font-semibold leading-[1.05] tracking-[-0.04em] md:text-6xl lg:text-7xl">
                 Helping churches organize the work of caring for people.
               </h1>
               <p className="mt-7 max-w-2xl text-lg leading-8 text-[#e8efef]">
-                Coordinate prayer requests, visits, follow-ups, volunteer care, and church connections in one simple care workflow.
+                Coordinate spiritual care requests, visits, follow-ups, volunteer care, and church connections in one simple care workflow.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
+                <Link href="/request-care" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                  Preview Request Portal
+                </Link>
                 <Link href="/care-binder?demo=true" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
-                  See How It Works
+                  See Care Team Demo
                 </Link>
                 <a href="#pilot-contact" className="rounded-lg bg-[#86a45f] px-8 py-4 text-base font-bold text-white shadow-xl hover:bg-[#789752]">
                   Request Pilot Demo
                 </a>
-                <Link href="/care-binder" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
-                  Enter Care Binder
-                </Link>
               </div>
+              <p className="mt-5 max-w-2xl text-sm font-semibold leading-6 text-[#cbd8d7]">
+                Request Portal preview is gated and demo-only. It does not accept, store, route, or send real care requests.
+              </p>
             </div>
           </div>
         </section>
 
         <section id="flow" className="px-6 py-16">
           <div className="mx-auto max-w-7xl">
-            <h2 className="font-serif text-4xl font-semibold tracking-[-0.03em]">Spiritual care operations for churches, volunteers, and care teams.</h2>
+            <h2 className="font-serif text-4xl font-semibold tracking-[-0.03em]">One care coordination story from request to follow-up.</h2>
             <div className="mt-8 grid gap-4 md:grid-cols-4">
               {flow.map((step) => (
                 <article key={step.label} className="rounded-3xl border border-[#ded6c8] bg-white/70 p-6 shadow-sm">
@@ -90,9 +94,9 @@ export default function LandingPage() {
         <section id="guardrails" className="px-6 pb-10">
           <div className="mx-auto max-w-7xl rounded-[2rem] border border-[#d8d0c0] bg-[#173b2d] p-8 text-white shadow-xl">
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">MVP guardrails</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold">Local demo state first. Human review before anything external.</h2>
+            <h2 className="mt-3 font-serif text-3xl font-semibold">Gated demo state first. Human review before anything external.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              Working local actions include Send Prayer Request, Contact Church, Schedule Visit, Add Follow-Up, and Add Note. Assign Volunteer and Message Care Team remain scaffolded until human-reviewed external workflows are approved.
+              The Request Portal preview is demo-only and does not submit, store, email, or route requests. Working local Care Binder actions include Send Prayer Request, Contact Church, Schedule Visit, Add Follow-Up, and Add Note. Assign Volunteer and Message Care Team remain scaffolded until human-reviewed external workflows are approved.
             </p>
           </div>
         </section>
@@ -103,7 +107,7 @@ export default function LandingPage() {
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Pilot demo</p>
               <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.03em] text-[#102b3a]">Ready to review ChurchWork with your care team?</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#4d5d55]">
-                Requesting a pilot demo is a separate contact step and does not launch the guided Care Binder walkthrough.
+                Requesting a pilot demo is a separate contact step and does not launch the requester preview or guided Care Binder walkthrough.
               </p>
             </div>
             <a href="mailto:pilot@example.com?subject=ChurchWork%20Pilot%20Demo%20Request" className="inline-flex justify-center rounded-lg bg-[#0d2b3b] px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-[#173b2d]">

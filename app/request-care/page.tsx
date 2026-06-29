@@ -1,10 +1,18 @@
 import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
 import { RequestCareDemo } from "@/components/RequestCareDemo";
 
-export default function RequestCarePage() {
+type RequestCarePageProps = {
+  searchParams?: Promise<{
+    demo?: string;
+  }>;
+};
+
+export default async function RequestCarePage({ searchParams }: RequestCarePageProps) {
+  const resolvedSearchParams = await searchParams;
+
   return (
     <ChurchWorkAccessGate>
-      <RequestCareDemo />
+      <RequestCareDemo autoStartDemo={resolvedSearchParams?.demo === "true"} />
     </ChurchWorkAccessGate>
   );
 }

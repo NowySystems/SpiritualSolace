@@ -6,11 +6,15 @@ import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 
 type DemoRequestPayload = {
+  requesterProfileMode: string;
+  requesterRole: string;
   requesterName: string;
+  relationship: string;
   requesterContact: string;
   contactPreference: string;
+  requesterZip: string;
+  requesterAffiliation: string;
   recipientName: string;
-  relationship: string;
   locationName: string;
   roomOrUnit: string;
   careType: string;
@@ -27,10 +31,44 @@ type RequesterTourStep = {
   description: string;
 };
 
+type NearbyPartner = {
+  name: string;
+  type: string;
+  distance: string;
+  focus: string;
+  status: string;
+};
+
 const careTypes = ["Prayer", "Visit", "Family support", "Pastoral follow-up", "Church connection", "Other"];
 const urgencyOptions = ["Today", "This week", "Not urgent", "Unsure"];
 const contactPreferences = ["Phone", "Email", "Text message", "Facility staff follow-up"];
-const demoStages = ["Requester preview", "Queue card", "Care team demo"];
+const requesterProfileModes = ["Quick: name + relationship", "Detailed: contact, ZIP, affiliation, permissions"];
+const requesterRoles = ["Family member", "Resident", "Facility staff", "Church member", "Community partner", "Other"];
+const demoStages = ["Requester info", "Care need", "Nearby partners", "Queue card", "Care team demo"];
+
+const nearbyPartners: NearbyPartner[] = [
+  {
+    name: "Hope Baptist Church",
+    type: "Church partner",
+    distance: "1.8 mi",
+    focus: "Prayer support, brief visits",
+    status: "Suggested only"
+  },
+  {
+    name: "First Assembly Care Team",
+    type: "Ministry group",
+    distance: "2.4 mi",
+    focus: "Volunteer visits, family encouragement",
+    status: "Facility approval needed"
+  },
+  {
+    name: "Community Chaplain Network",
+    type: "Care group",
+    distance: "3.1 mi",
+    focus: "Pastoral follow-up, grief support",
+    status: "Future partner lookup"
+  }
+];
 
 const requesterTourSteps: RequesterTourStep[] = [
   {
@@ -57,9 +95,9 @@ const requesterTourSteps: RequesterTourStep[] = [
   {
     id: "requester-demo-stages",
     target: '[data-demo-target="requester-demo-stages"]',
-    title: "Three-part story",
+    title: "Requester information comes first",
     description:
-      "The demo moves from requester preview, to a future queue card, to the care team demo. This keeps the product story simple for a facility walkthrough."
+      "The first step is identifying who is making the request. ChurchWork can support a quick name-and-relationship flow or a deeper requester profile when a facility wants more context."
   },
   {
     id: "requester-demo-flow",
@@ -69,11 +107,18 @@ const requesterTourSteps: RequesterTourStep[] = [
       "Later, Supabase can turn this same intake shape into a reviewed care team queue item, then a Care Binder timeline action."
   },
   {
+    id: "requester-demo-profile",
+    target: '[data-demo-target="requester-demo-profile"]',
+    title: "Step 1: requester profile",
+    description:
+      "A requester profile can be lightweight or detailed. In this demo, it stays local and does not create an account, login, saved profile, inbox, or two-way conversation."
+  },
+  {
     id: "requester-demo-form",
     target: '[data-demo-target="requester-demo-form"]',
-    title: "Simple care request shape",
+    title: "Step 2: care need",
     description:
-      "The sample form gathers the person, location, care type, urgency, requester, and context. It is intentionally simple so a care coordinator can review quickly."
+      "After requester information, the form gathers the person, location, care type, urgency, and context so a facility care coordinator can review the next safe step."
   },
   {
     id: "requester-demo-care-type",
@@ -83,18 +128,25 @@ const requesterTourSteps: RequesterTourStep[] = [
       "Care types map to reviewed templates and facility policy. This supports prayer, visits, family support, pastoral follow-up, and church connection without opening two-way chat."
   },
   {
+    id: "requester-demo-partners",
+    target: '[data-demo-target="requester-demo-partners"]',
+    title: "Future ZIP-based partner suggestions",
+    description:
+      "ZIP code can eventually suggest nearby churches and care groups. This demo only shows a placeholder list; nothing is looked up, selected, routed, or sent."
+  },
+  {
     id: "requester-demo-payload",
     target: '[data-demo-target="requester-demo-payload"]',
     title: "What the care team would receive",
     description:
-      "The right side shows the future care-team-aligned shape. It is the bridge between a requester need and the Care Binder workflow."
+      "The right side shows the future care-team-aligned shape. It is the bridge between a requester need and the Facility and Partner views."
   },
   {
     id: "requester-demo-submit",
     target: '[data-demo-target="requester-demo-submit"]',
     title: "Preview the queue card",
     description:
-      "Use this button to prepare a local preview card. After that, continue to the Care Binder demo to show how a care team reviews and acts."
+      "Use this button to prepare a local preview card. After that, continue to the Care Team Workspace demo to show how facility and partner lenses review and act."
   }
 ];
 
@@ -158,15 +210,19 @@ function speakRequesterTourStep(step?: RequesterTourStep, isMuted = false) {
 }
 
 export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boolean }) {
-  const [recipientName, setRecipientName] = useState("Mary Johnson");
+  const [requesterProfileMode, setRequesterProfileMode] = useState(requesterProfileModes[0]);
+  const [requesterRole, setRequesterRole] = useState(requesterRoles[0]);
+  const [requesterName, setRequesterName] = useState("Sarah Johnson");
   const [relationship, setRelationship] = useState("Daughter");
+  const [contactPreference, setContactPreference] = useState(contactPreferences[0]);
+  const [requesterContact, setRequesterContact] = useState("Demo phone number");
+  const [requesterZip, setRequesterZip] = useState("38501");
+  const [requesterAffiliation, setRequesterAffiliation] = useState("No church affiliation provided yet");
+  const [recipientName, setRecipientName] = useState("Mary Johnson");
   const [locationName, setLocationName] = useState("Bethesda Senior Living");
   const [roomOrUnit, setRoomOrUnit] = useState("Room 214");
   const [careType, setCareType] = useState(careTypes[0]);
   const [urgency, setUrgency] = useState(urgencyOptions[0]);
-  const [requesterName, setRequesterName] = useState("Sarah Johnson");
-  const [contactPreference, setContactPreference] = useState(contactPreferences[0]);
-  const [requesterContact, setRequesterContact] = useState("Demo phone number");
   const [notes, setNotes] = useState(
     "Mom asked for prayer and a short visit this week. Family would appreciate a gentle follow-up after the visit."
   );
@@ -178,11 +234,15 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
 
   const previewPayload = useMemo<DemoRequestPayload>(
     () => ({
+      requesterProfileMode,
+      requesterRole,
       requesterName,
+      relationship,
       requesterContact,
       contactPreference,
+      requesterZip,
+      requesterAffiliation,
       recipientName,
-      relationship,
       locationName,
       roomOrUnit,
       careType,
@@ -191,7 +251,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
       status: "demo-only",
       source: "requester-demo"
     }),
-    [careType, contactPreference, locationName, notes, recipientName, relationship, requesterContact, requesterName, roomOrUnit, urgency]
+    [careType, contactPreference, locationName, notes, recipientName, relationship, requesterAffiliation, requesterContact, requesterName, requesterProfileMode, requesterRole, requesterZip, roomOrUnit, urgency]
   );
 
   const startGuidedDemo = useCallback(() => {
@@ -296,7 +356,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
         </header>
 
         <section data-demo-target="requester-demo-safety" className="mt-5 rounded-[1.6rem] border border-[#ddb66c] bg-[#fff8ed] p-4 text-sm leading-7 text-[#6b5b45] shadow-sm md:mt-6 md:rounded-[2rem] md:p-5">
-          <strong className="text-[#173b2d]">Demo only:</strong> this preview uses local page state only. It shows the future requester-to-care-team flow for pilot review.
+          <strong className="text-[#173b2d]">Demo only:</strong> this preview uses local page state only. It shows the future requester-to-care-team flow for pilot review. No requester account, saved profile, live lookup, routing, or two-way conversation is created.
         </section>
 
         <section className="mt-5 rounded-[1.6rem] border border-[#d8d0c0] bg-white/85 p-5 shadow-sm md:mt-6 md:rounded-[2rem] md:p-8">
@@ -304,10 +364,10 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
             <div data-demo-target="requester-demo-hero">
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Gated requester preview</p>
               <h1 className="mt-3 font-serif text-4xl font-semibold leading-tight tracking-[-0.04em] text-[#102b3a] md:text-6xl">
-                Show how someone asks for spiritual care.
+                Start with who is asking for care.
               </h1>
               <p className="mt-5 max-w-3xl text-base leading-8 text-[#4d5d55]">
-                This side of ChurchWork is the front door for families, residents, staff, church members, or facility partners. Tonight it is only a guided preview; later, Supabase can turn the same shape into a reviewed care team queue item.
+                ChurchWork can begin with a quick requester name and relationship, or a deeper requester profile when a facility wants contact preference, role, ZIP, affiliation, and follow-up permissions. Tonight it remains a guided preview only.
               </p>
               <DemoStepper />
             </div>
@@ -315,13 +375,15 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
             <aside data-demo-target="requester-demo-flow" className="rounded-[1.5rem] border border-[#d8d0c0] bg-[#173b2d] p-5 text-white shadow-lg md:rounded-[1.7rem] md:p-6">
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#c8d9b3]">Future platform flow</p>
               <div className="mt-5 space-y-3 text-sm font-bold">
-                <div className="rounded-2xl bg-white/10 p-4">Requester prepares care need</div>
+                <div className="rounded-2xl bg-white/10 p-4">Requester information first</div>
                 <div className="pl-4 text-[#c8d9b3]">↓</div>
-                <div className="rounded-2xl bg-white/10 p-4">Supabase intake record</div>
+                <div className="rounded-2xl bg-white/10 p-4">Care need prepared</div>
                 <div className="pl-4 text-[#c8d9b3]">↓</div>
-                <div className="rounded-2xl bg-white/10 p-4">Care Queue card</div>
+                <div className="rounded-2xl bg-white/10 p-4">ZIP suggests nearby partners</div>
                 <div className="pl-4 text-[#c8d9b3]">↓</div>
-                <div className="rounded-2xl bg-white/10 p-4">Care Binder timeline and actions</div>
+                <div className="rounded-2xl bg-white/10 p-4">Facility-reviewed queue card</div>
+                <div className="pl-4 text-[#c8d9b3]">↓</div>
+                <div className="rounded-2xl bg-white/10 p-4">Care Team Workspace lenses</div>
               </div>
             </aside>
           </div>
@@ -333,7 +395,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Demo confirmation</p>
               <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em] text-[#102b3a]">Preview queue card prepared</h2>
               <p className="mt-4 text-base leading-8 text-[#4d5d55]">
-                In the live ChurchWork workflow, this would be routed into the care team queue for human review. In this pilot preview, it stays on this page only.
+                In the live ChurchWork workflow, this would be routed into the facility-reviewed care team queue. In this pilot preview, it stays on this page only.
               </p>
 
               <div className="mt-6 rounded-[1.5rem] border border-[#d8d6d1] bg-[#f8fbf8] p-5">
@@ -354,6 +416,9 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
                 <p className="mt-4 text-xs font-bold text-[#65717a]">
                   Requested by {submittedPayload.requesterName} · {submittedPayload.relationship} · {submittedPayload.contactPreference}: {submittedPayload.requesterContact}
                 </p>
+                <p className="mt-2 text-xs font-bold text-[#65717a]">
+                  Requester profile: {submittedPayload.requesterProfileMode} · {submittedPayload.requesterRole} · ZIP {submittedPayload.requesterZip}
+                </p>
               </div>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -366,7 +431,10 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
               </div>
             </div>
 
-            <PayloadPreview payload={visiblePayload} />
+            <div className="space-y-6">
+              <NearbyPartners zip={visiblePayload.requesterZip} />
+              <PayloadPreview payload={visiblePayload} />
+            </div>
           </section>
         ) : (
           <section className="mt-5 grid gap-6 lg:grid-cols-[1fr_0.8fr]">
@@ -374,60 +442,96 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
               <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Demo intake preview</p>
               <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em] text-[#102b3a]">Prepare a sample spiritual care request</h2>
               <p className="mt-3 text-sm leading-7 text-[#5d6b62]">
-                These sample fields are intentionally simple. They collect just enough context for a human care coordinator to review the need and choose the next safe step.
+                The requester step comes first. A facility can allow quick requests with just a name and relationship, or collect a deeper requester profile before the care need is reviewed.
               </p>
 
-              <div className="mt-7 grid gap-5 md:grid-cols-2">
-                <div>
-                  <label className={labelClass} htmlFor="recipient-name">Who needs care?</label>
-                  <input id="recipient-name" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} className={fieldClass} required />
+              <section data-demo-target="requester-demo-profile" className="mt-7 rounded-[1.4rem] border border-[#d8d0c0] bg-white/80 p-5">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Step 1 · Requester information</p>
+                <h3 className="mt-2 text-2xl font-bold text-[#20372d]">Quick request or deeper profile</h3>
+                <p className="mt-2 text-sm leading-6 text-[#5d6b62]">
+                  This is not an account setup page yet. It shows that ChurchWork can start with only a name and relationship, or expand into a detailed requester profile when facility policy allows it.
+                </p>
+                <div className="mt-5 grid gap-5 md:grid-cols-2">
+                  <div className="md:col-span-2">
+                    <label className={labelClass} htmlFor="requester-profile-mode">Requester profile depth</label>
+                    <select id="requester-profile-mode" value={requesterProfileMode} onChange={(event) => setRequesterProfileMode(event.target.value)} className={fieldClass}>
+                      {requesterProfileModes.map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="requester-role">Requester role</label>
+                    <select id="requester-role" value={requesterRole} onChange={(event) => setRequesterRole(event.target.value)} className={fieldClass}>
+                      {requesterRoles.map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="requester-name">Requester name</label>
+                    <input id="requester-name" value={requesterName} onChange={(event) => setRequesterName(event.target.value)} className={fieldClass} required />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="relationship">Relationship to person needing care</label>
+                    <input id="relationship" value={relationship} onChange={(event) => setRelationship(event.target.value)} className={fieldClass} required />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="contact-preference">Preferred follow-up method</label>
+                    <select id="contact-preference" value={contactPreference} onChange={(event) => setContactPreference(event.target.value)} className={fieldClass}>
+                      {contactPreferences.map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="requester-contact">Demo contact detail</label>
+                    <input id="requester-contact" value={requesterContact} onChange={(event) => setRequesterContact(event.target.value)} className={fieldClass} required />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="requester-zip">ZIP for future nearby partner lookup</label>
+                    <input id="requester-zip" inputMode="numeric" value={requesterZip} onChange={(event) => setRequesterZip(event.target.value)} className={fieldClass} required />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass} htmlFor="requester-affiliation">Church, group, or facility affiliation</label>
+                    <input id="requester-affiliation" value={requesterAffiliation} onChange={(event) => setRequesterAffiliation(event.target.value)} className={fieldClass} />
+                  </div>
                 </div>
-                <div>
-                  <label className={labelClass} htmlFor="relationship">Relationship to requester</label>
-                  <input id="relationship" value={relationship} onChange={(event) => setRelationship(event.target.value)} className={fieldClass} required />
+                <div className="mt-5 rounded-2xl border border-[#eadfce] bg-[#fff8ed] p-4 text-sm leading-6 text-[#6b5b45]">
+                  Future profile depth is facility-dependent. This demo does not create a login, save a profile, expose request history, or open a message thread.
                 </div>
-                <div>
-                  <label className={labelClass} htmlFor="location-name">Facility or location</label>
-                  <input id="location-name" value={locationName} onChange={(event) => setLocationName(event.target.value)} className={fieldClass} required />
+              </section>
+
+              <section className="mt-7 rounded-[1.4rem] border border-[#d8d0c0] bg-[#fffaf2] p-5">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Step 2 · Care need</p>
+                <div className="mt-5 grid gap-5 md:grid-cols-2">
+                  <div>
+                    <label className={labelClass} htmlFor="recipient-name">Who needs care?</label>
+                    <input id="recipient-name" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} className={fieldClass} required />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="location-name">Facility or location</label>
+                    <input id="location-name" value={locationName} onChange={(event) => setLocationName(event.target.value)} className={fieldClass} required />
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="room-or-unit">Room or unit</label>
+                    <input id="room-or-unit" value={roomOrUnit} onChange={(event) => setRoomOrUnit(event.target.value)} className={fieldClass} />
+                  </div>
+                  <div data-demo-target="requester-demo-care-type">
+                    <label className={labelClass} htmlFor="care-type">Type of care</label>
+                    <select id="care-type" value={careType} onChange={(event) => setCareType(event.target.value)} className={fieldClass}>
+                      {careTypes.map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelClass} htmlFor="urgency">Urgency</label>
+                    <select id="urgency" value={urgency} onChange={(event) => setUrgency(event.target.value)} className={fieldClass}>
+                      {urgencyOptions.map((option) => <option key={option}>{option}</option>)}
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className={labelClass} htmlFor="notes">What is going on?</label>
+                    <textarea id="notes" value={notes} onChange={(event) => setNotes(event.target.value)} rows={6} className={`${fieldClass} leading-6`} required />
+                  </div>
                 </div>
-                <div>
-                  <label className={labelClass} htmlFor="room-or-unit">Room or unit</label>
-                  <input id="room-or-unit" value={roomOrUnit} onChange={(event) => setRoomOrUnit(event.target.value)} className={fieldClass} />
-                </div>
-                <div data-demo-target="requester-demo-care-type">
-                  <label className={labelClass} htmlFor="care-type">Type of care</label>
-                  <select id="care-type" value={careType} onChange={(event) => setCareType(event.target.value)} className={fieldClass}>
-                    {careTypes.map((option) => <option key={option}>{option}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass} htmlFor="urgency">Urgency</label>
-                  <select id="urgency" value={urgency} onChange={(event) => setUrgency(event.target.value)} className={fieldClass}>
-                    {urgencyOptions.map((option) => <option key={option}>{option}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className={labelClass} htmlFor="requester-name">Requester name</label>
-                  <input id="requester-name" value={requesterName} onChange={(event) => setRequesterName(event.target.value)} className={fieldClass} required />
-                </div>
-                <div>
-                  <label className={labelClass} htmlFor="contact-preference">Preferred follow-up method</label>
-                  <select id="contact-preference" value={contactPreference} onChange={(event) => setContactPreference(event.target.value)} className={fieldClass}>
-                    {contactPreferences.map((option) => <option key={option}>{option}</option>)}
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className={labelClass} htmlFor="requester-contact">Demo contact detail</label>
-                  <input id="requester-contact" value={requesterContact} onChange={(event) => setRequesterContact(event.target.value)} className={fieldClass} required />
-                </div>
-                <div className="md:col-span-2">
-                  <label className={labelClass} htmlFor="notes">What is going on?</label>
-                  <textarea id="notes" value={notes} onChange={(event) => setNotes(event.target.value)} rows={6} className={`${fieldClass} leading-6`} required />
-                </div>
-              </div>
+              </section>
 
               <div className="mt-6 rounded-2xl border border-[#eadfce] bg-[#fff8ed] p-4 text-sm leading-6 text-[#6b5b45]">
-                This button only prepares a local preview card. It does not change any real care team record.
+                This button only prepares a local preview card. It does not change any real care team record or send anything to a nearby church or group.
               </div>
 
               <div className="mt-6 flex justify-end">
@@ -437,7 +541,10 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
               </div>
             </form>
 
-            <PayloadPreview payload={visiblePayload} />
+            <div className="space-y-6">
+              <NearbyPartners zip={visiblePayload.requesterZip} />
+              <PayloadPreview payload={visiblePayload} />
+            </div>
           </section>
         )}
       </div>
@@ -447,7 +554,7 @@ export function RequestCareDemo({ autoStartDemo = false }: { autoStartDemo?: boo
 
 function DemoStepper() {
   return (
-    <div data-demo-target="requester-demo-stages" className="mt-6 grid gap-3 sm:grid-cols-3">
+    <div data-demo-target="requester-demo-stages" className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
       {demoStages.map((stage, index) => (
         <div key={stage} className="rounded-2xl border border-[#d8d0c0] bg-[#fffaf2] p-4">
           <p className="text-[11px] font-black uppercase tracking-[0.16em] text-[#789052]">Step {index + 1}</p>
@@ -458,16 +565,50 @@ function DemoStepper() {
   );
 }
 
+function NearbyPartners({ zip }: { zip: string }) {
+  return (
+    <aside data-demo-target="requester-demo-partners" className="rounded-[1.6rem] border border-[#d8d0c0] bg-white p-5 shadow-sm md:rounded-[2rem] md:p-6">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Future partner lookup</p>
+      <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#102b3a]">Suggested nearby churches & groups</h2>
+      <p className="mt-4 text-sm leading-7 text-[#4d5d55]">
+        ZIP {zip || "not provided"} would later drive a reviewed nearby partner search. This demo uses static examples only; no live lookup, auto-match, routing, or sharing happens here.
+      </p>
+      <div className="mt-5 space-y-3">
+        {nearbyPartners.map((partner) => (
+          <div key={partner.name} className="rounded-2xl border border-[#e5ddcf] bg-[#fbf8f0] p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-[#20372d]">{partner.name}</p>
+                <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#789052]">{partner.type} · {partner.distance}</p>
+              </div>
+              <span className="rounded-full bg-[#fff4df] px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] text-[#76501a]">{partner.status}</span>
+            </div>
+            <p className="mt-3 text-sm leading-6 text-[#5d6b62]">{partner.focus}</p>
+          </div>
+        ))}
+      </div>
+      <div className="mt-5 rounded-2xl border border-[#eadfce] bg-[#fff8ed] p-4 text-sm leading-6 text-[#6b5b45]">
+        Future rule: ChurchWork suggests nearby partners; the facility approves what is shared and whether a partner sees the request.
+      </div>
+    </aside>
+  );
+}
+
 function PayloadPreview({ payload }: { payload: DemoRequestPayload }) {
   const rows: Array<[string, string]> = [
+    ["requesterProfileMode", payload.requesterProfileMode],
+    ["requesterRole", payload.requesterRole],
+    ["requesterName", payload.requesterName],
+    ["relationship", payload.relationship],
+    ["contactPreference", payload.contactPreference],
+    ["requesterContact", payload.requesterContact],
+    ["requesterZip", payload.requesterZip],
+    ["requesterAffiliation", payload.requesterAffiliation || "Not provided"],
     ["recipientName", payload.recipientName],
     ["locationName", payload.locationName],
     ["roomOrUnit", payload.roomOrUnit || "Not provided"],
     ["careType", payload.careType],
     ["urgency", payload.urgency],
-    ["requesterName", payload.requesterName],
-    ["contactPreference", payload.contactPreference],
-    ["requesterContact", payload.requesterContact],
     ["status", payload.status],
     ["source", payload.source]
   ];
@@ -477,18 +618,18 @@ function PayloadPreview({ payload }: { payload: DemoRequestPayload }) {
       <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Care-team aligned shape</p>
       <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">What the care team would receive</h2>
       <p className="mt-4 text-sm leading-7 text-[#d4dedc]">
-        These demo fields mirror the future intake record that can become a reviewed care queue item, then a Care Binder timeline entry after human action.
+        These demo fields mirror the future intake record: requester information first, then the care need, then optional nearby partner suggestions after facility review.
       </p>
       <div className="mt-6 divide-y divide-white/10 rounded-2xl border border-white/15 bg-white/5">
         {rows.map(([label, value]) => (
-          <div key={label} className="grid gap-1 px-4 py-3 text-sm sm:grid-cols-[150px_1fr]">
+          <div key={label} className="grid gap-1 px-4 py-3 text-sm sm:grid-cols-[170px_1fr]">
             <span className="font-black text-[#c8d9b3]">{label}</span>
             <span className="text-[#eef5f2]">{value}</span>
           </div>
         ))}
       </div>
       <div className="mt-6 rounded-2xl border border-[#c8d9b3]/30 bg-[#c8d9b3]/10 p-4 text-sm leading-6 text-[#edf5e6]">
-        Later, Supabase should own persistence, routing, status changes, assignment, and audit history. This preview intentionally keeps everything local.
+        Later, Supabase should own requester profile depth, persistence, routing, status changes, assignment, audit history, and ZIP-based partner lookup. This preview intentionally keeps everything local.
       </div>
     </aside>
   );

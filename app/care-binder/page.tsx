@@ -1,4 +1,5 @@
 import { CareBinder } from "@/components/CareBinder";
+import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
 
 type CareBinderRoutePageProps = {
   searchParams?: {
@@ -7,5 +8,9 @@ type CareBinderRoutePageProps = {
 };
 
 export default function CareBinderRoutePage({ searchParams }: CareBinderRoutePageProps) {
-  return <CareBinder autoStartDemo={searchParams?.demo === "true"} />;
+  return (
+    <ChurchWorkAccessGate>
+      <CareBinder autoStartDemo={searchParams?.demo === "true"} />
+    </ChurchWorkAccessGate>
+  );
 }

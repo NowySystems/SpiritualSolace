@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type PilotWorkspaceShellProps = {
@@ -54,21 +55,21 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Pilot Safe v1</p>
         <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em]">Pilot foundation is gated.</h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[#4d5d55]">
-          {userEmail} has passed the first access layer. This shell confirms auth and required acknowledgments before care workflows are built.
+          {userEmail} has passed the first access layer. This shell now supports structured requester intake for Grandview facility review.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Requester path</p>
-            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Next: structured spiritual-care request only. No requester notes and no medical information.</p>
+            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: structured spiritual-care request only. No requester notes and no medical information.</p>
           </article>
           <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Facility path</p>
-            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Grandview users will review, prioritize, and coordinate non-medical spiritual-care requests.</p>
+            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Next: Grandview users will review, prioritize, and coordinate non-medical spiritual-care requests.</p>
           </article>
           <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Partner path</p>
-            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Hope Church users will see assigned partner-safe request context and log non-medical care actions.</p>
+            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Later: Hope Church users will see assigned partner-safe request context and log non-medical care actions.</p>
           </article>
         </div>
 
@@ -88,9 +89,11 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         </div>
 
         <div className="mt-8 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-          This shell is not the care workflow. Do not distribute access broadly until structured intake, role membership, RLS tests, and timeline visibility are complete.
+          Do not distribute access broadly until role membership, RLS tests, facility review, and timeline visibility are complete.
         </div>
       </section>
+
+      <StructuredRequesterIntake session={session} />
     </main>
   );
 }

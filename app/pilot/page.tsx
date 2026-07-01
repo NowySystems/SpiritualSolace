@@ -1,3 +1,5 @@
+"use client";
+
 import { PilotAuthGate } from "@/components/PilotAuthGate";
 import { PilotWorkspaceShell } from "@/components/PilotWorkspaceShell";
 import { PolicyAcceptanceGate } from "@/components/PolicyAcceptanceGate";

@@ -1,6 +1,5 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChurchWorkLogo } from "@/components/ChurchWorkLogo";
 
 const flow = [
   { label: "Owner View", detail: "See access, users, organizations, requests, and activity from one control layer." },
@@ -14,8 +13,16 @@ export function LandingPageV1() {
     <div className="min-h-screen bg-[#f7f3ea] text-[#102b3a]">
       <header className="absolute inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0d2b3b]/88 text-white backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <Link href="/" aria-label="ChurchWork home">
-            <ChurchWorkLogo tone="light" tagline="Controlled Team Workspace" markClassName="h-14 w-24" wordClassName="text-3xl" taglineClassName="text-xs" />
+          <Link href="/" aria-label="ChurchWork home" className="flex items-center gap-3">
+            <span className="inline-flex h-[4.6rem] w-[7.8rem] items-center justify-center rounded-2xl bg-white p-2 shadow-sm">
+              <Image src="/brand/churchwork-corner-logo.svg" alt="ChurchWork CW logo" width={720} height={431} className="h-full w-full object-contain" />
+            </span>
+            <span>
+              <span className="block font-serif text-3xl font-semibold leading-none tracking-[-0.04em] text-white">
+                Church<span className="text-[#3f806e]">Work</span>
+              </span>
+              <span className="mt-1 block text-xs font-medium tracking-wide text-[#d4dedc]">Controlled Team Workspace</span>
+            </span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
             <Link href="/pilot" className="hover:text-[#d7e7b7]">Pilot Access</Link>

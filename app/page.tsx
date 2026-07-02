@@ -19,15 +19,15 @@ export default function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
+            <Link href="/pilot" className="hover:text-[#d7e7b7]">Pilot Access</Link>
             <a href="#care-binder" className="hover:text-[#d7e7b7]">Care Team Workspace</a>
             <Link href="/request-care?demo=true" className="hover:text-[#d7e7b7]">Intake Preview</Link>
             <a href="#flow" className="hover:text-[#d7e7b7]">Role Views</a>
             <a href="#guardrails" className="hover:text-[#d7e7b7]">Guardrails</a>
-            <a href="#pilot-contact" className="hover:text-[#d7e7b7]">Pilot Demo</a>
           </nav>
 
-          <Link href="/care-binder" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
-            Enter Workspace
+          <Link href="/pilot" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
+            Open Pilot
           </Link>
         </div>
       </header>
@@ -48,7 +48,7 @@ export default function LandingPage() {
           <div className="mx-auto flex min-h-[720px] max-w-7xl items-center px-6 pb-24 pt-32">
             <div className="max-w-3xl">
               <div className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#d7e7b7] shadow-sm backdrop-blur">
-                ChurchWork pilot preview
+                ChurchWork pilot access
               </div>
               <h1 className="mt-5 font-serif text-5xl font-semibold leading-[1.05] tracking-[-0.04em] md:text-6xl lg:text-7xl">
                 One controlled workspace for facility and partner care teams.
@@ -57,18 +57,18 @@ export default function LandingPage() {
                 ChurchWork stays in one app on the same Care Binder foundation: beta approval opens the door, organization membership decides what someone can see, and role determines which consent-aware actions they can take.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link href="/request-care?demo=true" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                <Link href="/pilot" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                  Open Pilot Access
+                </Link>
+                <Link href="/request-care?demo=true" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
                   Preview Intake
                 </Link>
                 <Link href="/care-binder?demo=true" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
                   See Workspace Demo
                 </Link>
-                <a href="#pilot-contact" className="rounded-lg bg-[#86a45f] px-8 py-4 text-base font-bold text-white shadow-xl hover:bg-[#789752]">
-                  Request Pilot Demo
-                </a>
               </div>
               <p className="mt-5 max-w-2xl text-sm font-semibold leading-6 text-[#cbd8d7]">
-                The pilot preview is gated and demo-only. It is one controlled workspace, does not submit or send real requests, and keeps external actions human-reviewed, template-based, facility-dependent, consent-aware, and one-way.
+                Live pilot access starts here. The secured pilot path requires sign-in and policy acceptance before structured Grandview intake. Public demo paths remain preview-only.
               </p>
             </div>
           </div>
@@ -93,7 +93,7 @@ export default function LandingPage() {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">MVP guardrails</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold">Controlled beta access first. Human review before anything external.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              ChurchWork should not split into separate facility and church/partner apps yet. The MVP remains one Care Team Workspace with Owner View, Facility View, and Partner View layered over the same demo-safe Care Binder foundation. Current local demo actions prepare templates or local records only; no real request submission, storage, outreach, messaging infrastructure, or two-way conversation is added.
+              ChurchWork should not split into separate facility and church/partner apps yet. The MVP remains one Care Team Workspace with Owner View, Facility View, and Partner View layered over the same Care Binder foundation. Live pilot access is gated, structured, non-medical, and policy-aware. Public demo actions remain preview-only.
             </p>
           </div>
         </section>
@@ -101,15 +101,20 @@ export default function LandingPage() {
         <section id="pilot-contact" className="px-6 pb-20">
           <div className="mx-auto flex max-w-7xl flex-col gap-5 rounded-[2rem] border border-[#d8d0c0] bg-white/75 p-8 shadow-sm md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Pilot demo</p>
-              <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.03em] text-[#102b3a]">Ready to review the Care Team Workspace?</h2>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Pilot access</p>
+              <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.03em] text-[#102b3a]">Ready to enter the secured pilot path?</h2>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[#4d5d55]">
-                Requesting a pilot demo is a separate contact step and does not launch beta access, intake preview, or the guided Care Binder walkthrough.
+                Open pilot access directly from the landing page. No typing hidden routes, no making people hunt for the right URL.
               </p>
             </div>
-            <a href="mailto:pilot@example.com?subject=ChurchWork%20Pilot%20Demo%20Request" className="inline-flex justify-center rounded-lg bg-[#0d2b3b] px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-[#173b2d]">
-              Email Pilot Request
-            </a>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/pilot" className="inline-flex justify-center rounded-lg bg-[#86a45f] px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-[#789752]">
+                Open Pilot Access
+              </Link>
+              <a href="mailto:pilot@example.com?subject=ChurchWork%20Pilot%20Demo%20Request" className="inline-flex justify-center rounded-lg bg-[#0d2b3b] px-8 py-4 text-base font-bold text-white shadow-lg hover:bg-[#173b2d]">
+                Email Pilot Request
+              </a>
+            </div>
           </div>
         </section>
       </main>

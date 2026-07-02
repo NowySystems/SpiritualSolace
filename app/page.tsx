@@ -1,5 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ChurchWorkLogo, ChurchWorkMark } from "@/components/ChurchWorkLogo";
+import { ChurchWorkLogo } from "@/components/ChurchWorkLogo";
 
 const flow = [
   { label: "Owner View", detail: "Approve beta users, verify access, assign organizations, and prepare for future facility/church pairings." },
@@ -14,7 +15,7 @@ export default function LandingPage() {
       <header className="absolute inset-x-0 top-0 z-50 border-b border-white/10 bg-[#0d2b3b]/88 text-white backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link href="/" className="flex items-center gap-3" aria-label="ChurchWork home">
-            <ChurchWorkLogo tone="light" tagline="Controlled Care Team Workspace" markClassName="h-10 w-10" />
+            <ChurchWorkLogo tone="light" tagline="Controlled Care Team Workspace" markClassName="h-14 w-14" wordClassName="text-4xl" taglineClassName="text-sm" />
           </Link>
 
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
@@ -33,14 +34,18 @@ export default function LandingPage() {
 
       <main>
         <section id="care-binder" className="relative isolate min-h-[720px] overflow-hidden bg-[#0d2b3b] text-white">
-          <div className="absolute inset-y-0 right-[-7rem] top-1/2 z-0 hidden w-[42rem] -translate-y-1/2 rounded-[3rem] border border-white/10 bg-white/[0.06] p-10 opacity-85 shadow-[0_32px_90px_rgba(0,0,0,0.25)] backdrop-blur-sm lg:block" aria-hidden="true">
-            <ChurchWorkMark className="w-full" heartFill="#0d2b3b" title="ChurchWork decorative mark" />
-          </div>
+          <Image
+            src="/brand/churchwork-hero-dove.png"
+            alt="ChurchWork hero dove"
+            fill
+            priority
+            className="-z-30 object-cover object-[74%_center] opacity-90 md:object-[78%_center]"
+          />
           <div className="absolute inset-0 -z-20 bg-[linear-gradient(103deg,rgba(8,31,45,0.98)_0%,rgba(8,31,45,0.9)_42%,rgba(8,31,45,0.35)_72%,rgba(8,31,45,0.82)_100%)]" aria-hidden="true" />
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_16%_24%,rgba(255,255,255,0.18),transparent_36%),radial-gradient(circle_at_80%_12%,rgba(159,179,107,0.22),transparent_32%)]" aria-hidden="true" />
           <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-b from-transparent to-[#f7f3ea]" aria-hidden="true" />
 
-          <div className="relative z-10 mx-auto flex min-h-[720px] max-w-7xl items-center px-6 pb-24 pt-32">
+          <div className="mx-auto flex min-h-[720px] max-w-7xl items-center px-6 pb-24 pt-32">
             <div className="max-w-3xl">
               <div className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#d7e7b7] shadow-sm backdrop-blur">
                 ChurchWork pilot preview

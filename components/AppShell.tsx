@@ -14,7 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="border-b border-[#ddd8cd] bg-[#f7f2e8]/95 lg:fixed lg:inset-y-0 lg:w-80 lg:border-b-0 lg:border-r">
         <div className="flex h-full flex-col gap-6 p-6 lg:p-7">
           <div className="rounded-3xl border border-[#e2dbcf] bg-white/70 p-5 shadow-[0_8px_30px_rgba(77,94,86,0.08)]">
-            <ChurchWorkLogo tagline="Demo Prototype" markClassName="h-16 w-16" wordClassName="text-4xl" taglineClassName="text-sm" />
+            <ChurchWorkLogo tagline="Demo Prototype" markClassName="h-16 w-28" wordClassName="text-4xl" taglineClassName="text-sm" />
             <p className="mt-4 text-sm leading-relaxed text-[#4c5e56]">
               Church care workflow for prayer requests, visits, follow-ups, review, and care records.
             </p>
@@ -67,7 +67,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-10 border-b border-[#ddd8cd] bg-[#f9f5ec]/95 px-6 py-4 backdrop-blur lg:px-8">
           <div className="flex flex-col gap-3 text-sm text-[#4f6058] md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
-              <ChurchWorkLogo variant="mark" markClassName="h-10 w-10" />
+              <ChurchWorkLogo variant="mark" markClassName="h-11 w-20" />
               <p className="leading-relaxed">ChurchWork demo shell · visual prototype only · no external actions · no real patient data</p>
             </div>
             <p className="text-xs font-medium tracking-[0.02em] text-[#6b7a74]">Built by Nowy Systems · Demo Prototype</p>

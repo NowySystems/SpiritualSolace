@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ChurchWorkDoveHero } from "@/components/ChurchWorkDoveHero";
 import { ChurchWorkLogo } from "@/components/ChurchWorkLogo";
 
 const flow = [
@@ -31,13 +31,14 @@ export function LandingPageV1() {
 
       <main>
         <section id="workspace" className="relative isolate min-h-[720px] overflow-hidden bg-[#0d2b3b] text-white">
-          <div className="absolute inset-y-0 right-[-6rem] top-1/2 z-0 hidden w-[52rem] -translate-y-1/2 opacity-95 lg:block" aria-hidden="true">
-            <ChurchWorkDoveHero className="h-full w-full" title="ChurchWork dove hero" />
-          </div>
-          <div className="absolute right-8 top-28 z-0 hidden rounded-3xl border border-white/10 bg-white/10 p-4 shadow-2xl backdrop-blur-md xl:block" aria-hidden="true">
-            <ChurchWorkLogo tone="light" variant="mark" markClassName="h-14 w-24" />
-          </div>
-          <div className="absolute inset-0 -z-20 bg-[linear-gradient(103deg,rgba(8,31,45,0.98)_0%,rgba(8,31,45,0.9)_42%,rgba(8,31,45,0.42)_72%,rgba(8,31,45,0.82)_100%)]" aria-hidden="true" />
+          <Image
+            src="/brand/churchwork-hero-dove.png"
+            alt="ChurchWork hero dove"
+            fill
+            priority
+            className="-z-30 object-cover object-[74%_center] opacity-90 md:object-[78%_center]"
+          />
+          <div className="absolute inset-0 -z-20 bg-[linear-gradient(103deg,rgba(8,31,45,0.98)_0%,rgba(8,31,45,0.9)_42%,rgba(8,31,45,0.35)_72%,rgba(8,31,45,0.82)_100%)]" aria-hidden="true" />
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_16%_24%,rgba(255,255,255,0.18),transparent_36%),radial-gradient(circle_at_80%_12%,rgba(159,179,107,0.22),transparent_32%)]" aria-hidden="true" />
           <div className="absolute inset-x-0 bottom-0 h-36 bg-gradient-to-b from-transparent to-[#f7f3ea]" aria-hidden="true" />
           <div className="relative z-10 mx-auto flex min-h-[720px] max-w-7xl items-center px-6 pb-24 pt-32">

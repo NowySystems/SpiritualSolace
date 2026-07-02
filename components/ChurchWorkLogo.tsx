@@ -7,12 +7,14 @@ type ChurchWorkMarkProps = {
 type ChurchWorkLogoProps = {
   className?: string;
   markClassName?: string;
+  wordClassName?: string;
+  taglineClassName?: string;
   tagline?: string;
   tone?: "light" | "dark";
   variant?: "lockup" | "mark";
 };
 
-export function ChurchWorkMark({ className = "h-12 w-12", heartFill = "#fffdf9", title = "ChurchWork" }: ChurchWorkMarkProps) {
+export function ChurchWorkMark({ className = "h-16 w-16", heartFill = "#fffdf9", title = "ChurchWork" }: ChurchWorkMarkProps) {
   return (
     <svg viewBox="0 0 160 120" role="img" aria-label={title} className={className}>
       <path
@@ -42,7 +44,9 @@ export function ChurchWorkMark({ className = "h-12 w-12", heartFill = "#fffdf9",
 
 export function ChurchWorkLogo({
   className = "",
-  markClassName = "h-12 w-12",
+  markClassName = "h-14 w-14",
+  wordClassName = "text-3xl",
+  taglineClassName = "text-xs",
   tagline,
   tone = "dark",
   variant = "lockup"
@@ -53,7 +57,7 @@ export function ChurchWorkLogo({
 
   if (variant === "mark") {
     return (
-      <span className={`inline-flex items-center justify-center rounded-full border ${badgeClass} p-1.5 shadow-sm ${className}`}>
+      <span className={`inline-flex items-center justify-center rounded-full border ${badgeClass} p-2 shadow-sm ${className}`}>
         <ChurchWorkMark className={markClassName} />
       </span>
     );
@@ -61,14 +65,14 @@ export function ChurchWorkLogo({
 
   return (
     <span className={`inline-flex items-center gap-3 ${className}`}>
-      <span className={`inline-flex items-center justify-center rounded-full border ${badgeClass} p-1.5 shadow-sm`}>
+      <span className={`inline-flex items-center justify-center rounded-full border ${badgeClass} p-2 shadow-sm`}>
         <ChurchWorkMark className={markClassName} />
       </span>
       <span>
-        <span className={`block font-serif text-3xl font-semibold leading-none tracking-[-0.04em] ${wordColor}`}>
+        <span className={`block font-serif ${wordClassName} font-semibold leading-none tracking-[-0.04em] ${wordColor}`}>
           Church<span className="text-[#3f806e]">Work</span>
         </span>
-        {tagline ? <span className={`mt-1 block text-xs font-medium tracking-wide ${taglineColor}`}>{tagline}</span> : null}
+        {tagline ? <span className={`mt-1 block ${taglineClassName} font-medium tracking-wide ${taglineColor}`}>{tagline}</span> : null}
       </span>
     </span>
   );

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { FacilitySignupCard } from "@/components/FacilitySignupCard";
+import { FacilityUserManagementCard } from "@/components/FacilityUserManagementCard";
 import { OwnerAdminAccessCenter } from "@/components/OwnerAdminAccessCenter";
 import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -57,7 +58,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Pilot Safe v1</p>
         <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em]">Pilot foundation is gated.</h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[#4d5d55]">
-          {userEmail} has passed the first access layer. ChurchWork now supports requester intake, owner/admin oversight, and facility self-signup for the first Facility Admin.
+          {userEmail} has passed the first access layer. ChurchWork now supports requester intake, owner/admin oversight, facility self-signup, and delegated facility user management.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-4">
@@ -71,7 +72,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
           </article>
           <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Facility path</p>
-            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Starting now: create a facility workspace and make the first signed-in user the Facility Admin.</p>
+            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: create a facility workspace and manage facility users inside that organization.</p>
           </article>
           <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Partner path</p>
@@ -101,6 +102,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
 
       <OwnerAdminAccessCenter session={session} />
       <FacilitySignupCard session={session} />
+      <FacilityUserManagementCard session={session} />
       <StructuredRequesterIntake session={session} />
     </main>
   );

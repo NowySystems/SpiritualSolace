@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChurchWorkLogo } from "@/components/ChurchWorkLogo";
 import { navigationGroups, saveState } from "@/lib/app-shell-config";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -13,13 +14,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <aside className="border-b border-[#ddd8cd] bg-[#f7f2e8]/95 lg:fixed lg:inset-y-0 lg:w-80 lg:border-b-0 lg:border-r">
         <div className="flex h-full flex-col gap-6 p-6 lg:p-7">
           <div className="rounded-3xl border border-[#e2dbcf] bg-white/70 p-5 shadow-[0_8px_30px_rgba(77,94,86,0.08)]">
-            <div className="flex items-start gap-3">
-              <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#d6d0c3] bg-[#f1ece3] text-xs font-semibold tracking-[0.16em] text-[#50625b]">CW</span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#5f746d]">Demo Prototype</p>
-                <h1 className="mt-1 text-2xl font-semibold leading-tight text-[#1f3442]">ChurchWork</h1>
-              </div>
-            </div>
+            <ChurchWorkLogo tagline="Demo Prototype" markClassName="h-11 w-11" />
             <p className="mt-4 text-sm leading-relaxed text-[#4c5e56]">
               Church care workflow for prayer requests, visits, follow-ups, review, and care records.
             </p>
@@ -70,8 +65,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="flex min-h-screen flex-1 flex-col lg:pl-80">
         <header className="sticky top-0 z-10 border-b border-[#ddd8cd] bg-[#f9f5ec]/95 px-6 py-4 backdrop-blur lg:px-8">
-          <div className="flex flex-col gap-1.5 text-sm text-[#4f6058] md:flex-row md:items-center md:justify-between">
-            <p className="leading-relaxed">ChurchWork demo shell · visual prototype only · no external actions · no real patient data</p>
+          <div className="flex flex-col gap-3 text-sm text-[#4f6058] md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <ChurchWorkLogo variant="mark" markClassName="h-8 w-8" />
+              <p className="leading-relaxed">ChurchWork demo shell · visual prototype only · no external actions · no real patient data</p>
+            </div>
             <p className="text-xs font-medium tracking-[0.02em] text-[#6b7a74]">Built by Nowy Systems · Demo Prototype</p>
           </div>
         </header>

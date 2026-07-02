@@ -66,6 +66,15 @@ function formatDate(value: string) {
   }).format(new Date(value));
 }
 
+function formatSystemLabel(value: string | null | undefined) {
+  if (!value) return "";
+  return value
+    .split("_")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function FacilityUserManagementCard({ session }: FacilityUserManagementCardProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [snapshot, setSnapshot] = useState<FacilityAdminSnapshot | null>(null);
@@ -132,7 +141,7 @@ export function FacilityUserManagementCard({ session }: FacilityUserManagementCa
 
     const result = data as { mode?: string; status?: string; email?: string; role?: string } | null;
     if (result?.mode === "invite") {
-      setStatus(`Invite saved for ${result.email}. They need to sign up with that email to claim ${result.role}.`);
+      setStatus(`Invite saved for ${result.email}. They need to sign up with that email to claim ${formatSystemLabel(result.role)}.`);
     } else {
       setStatus(`Facility role updated for ${result?.email ?? email}.`);
     }
@@ -195,7 +204,7 @@ export function FacilityUserManagementCard({ session }: FacilityUserManagementCa
         <div className="mt-6 rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Selected facility</p>
           <p className="mt-2 text-xl font-black text-[#173b2d]">{selectedFacility.name}</p>
-          <p className="mt-1 text-sm text-[#4d5d55]">{selectedFacility.slug} · {selectedFacility.status}</p>
+          <p className="mt-1 text-sm text-[#4d5d55]">{selectedFacility.slug} · {formatSystemLabel(selectedFacility.status)}</p>
         </div>
       ) : null}
 
@@ -257,9 +266,9 @@ export function FacilityUserManagementCard({ session }: FacilityUserManagementCa
               <article key={member.membership_id} className="rounded-xl border border-[#d8d0c0] bg-white p-4 text-sm">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <p className="font-black text-[#173b2d]">{member.email ?? "No email"}</p>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#789052]">{member.status}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#789052]">{formatSystemLabel(member.status)}</p>
                 </div>
-                <p className="mt-1 text-[#4d5d55]">{member.role} · added {formatDate(member.created_at)}</p>
+                <p className="mt-1 text-[#4d5d55]">{formatSystemLabel(member.role)} · added {formatDate(member.created_at)}</p>
               </article>
             )) : (
               <p className="text-sm text-[#4d5d55]">No facility users yet.</p>
@@ -274,9 +283,9 @@ export function FacilityUserManagementCard({ session }: FacilityUserManagementCa
               <article key={invite.invite_id} className="rounded-xl border border-[#d8d0c0] bg-white p-4 text-sm">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <p className="font-black text-[#173b2d]">{invite.email}</p>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#789052]">{invite.status}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#789052]">{formatSystemLabel(invite.status)}</p>
                 </div>
-                <p className="mt-1 text-[#4d5d55]">{invite.role} · saved {formatDate(invite.created_at)}</p>
+                <p className="mt-1 text-[#4d5d55]">{formatSystemLabel(invite.role)} · saved {formatDate(invite.created_at)}</p>
               </article>
             )) : (
               <p className="text-sm text-[#4d5d55]">No saved invites yet.</p>

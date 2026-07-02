@@ -9,14 +9,18 @@ type PilotAuthGateProps = {
   children: (session: Session) => ReactNode;
 };
 
+type AuthMode = "sign-in" | "sign-up" | "forgot-password";
+
 export function PilotAuthGate({ children }: PilotAuthGateProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [mode, setMode] = useState<AuthMode>("sign-in");
   const [status, setStatus] = useState("Checking session...");
   const [isBusy, setIsBusy] = useState(false);
+
+  const isPasswordMode = mode !== "forgot-password";
 
   useEffect(() => {
     let isMounted = true;
@@ -41,6 +45,23 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsBusy(true);
+
+    if (mode === "forgot-password") {
+      setStatus("Sending password reset email...");
+      const redirectTo = `${window.location.origin}/pilot/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+
+      if (error) {
+        setStatus(error.message);
+        setIsBusy(false);
+        return;
+      }
+
+      setStatus("Check your email for the password reset link.");
+      setIsBusy(false);
+      return;
+    }
+
     setStatus(mode === "sign-in" ? "Signing in..." : "Creating account...");
 
     const action = mode === "sign-in" ? supabase.auth.signInWithPassword : supabase.auth.signUp;
@@ -68,6 +89,12 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
     setSession(null);
     setStatus("Signed out.");
     setIsBusy(false);
+  }
+
+  function submitLabel() {
+    if (isBusy) return "Working...";
+    if (mode === "forgot-password") return "Send password reset link";
+    return mode === "sign-in" ? "Sign in" : "Create pilot account";
   }
 
   if (session) {
@@ -101,9 +128,13 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
     <main className="flex min-h-screen items-center justify-center bg-[#f7f3ea] px-6 py-12 text-[#102b3a]">
       <section className="w-full max-w-xl rounded-[2rem] border border-[#d8d0c0] bg-white p-8 shadow-xl">
         <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">ChurchWork Pilot</p>
-        <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em]">Pilot sign in</h1>
+        <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em]">
+          {mode === "forgot-password" ? "Reset password" : "Pilot sign in"}
+        </h1>
         <p className="mt-4 text-sm leading-7 text-[#4d5d55]">
-          Use a named pilot account. Do not share logins. ChurchWork pilot access is for approved spiritual-care coordination only.
+          {mode === "forgot-password"
+            ? "Enter the email for your pilot account. ChurchWork will send a secure password reset link."
+            : "Use a named pilot account. Do not share logins. ChurchWork pilot access is for approved spiritual-care coordination only."}
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -119,18 +150,25 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
             />
           </label>
 
-          <label className="block text-sm font-bold text-[#173b2d]">
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={8}
-              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-              className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
-            />
-          </label>
+          {isPasswordMode ? (
+            <label className="block text-sm font-bold text-[#173b2d]">
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                minLength={8}
+                autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+                className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
+              />
+              {mode === "sign-up" ? (
+                <span className="mt-2 block text-xs leading-5 text-[#4d5d55]">
+                  Use at least 8 characters. A longer passphrase with a mix of letters, numbers, and symbols is better.
+                </span>
+              ) : null}
+            </label>
+          ) : null}
 
           <div className="rounded-xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm leading-6 text-[#5f4b1f]">
             This pilot is not for emergencies, medical records, diagnosis, symptoms, medication, treatment details, chart notes, clinical instructions, or insurance information.
@@ -141,18 +179,27 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
             disabled={isBusy}
             className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-bold text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60"
           >
-            {isBusy ? "Working..." : mode === "sign-in" ? "Sign in" : "Create pilot account"}
+            {submitLabel()}
           </button>
         </form>
 
         <div className="mt-5 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
-            className="font-bold text-[#173b2d] underline-offset-4 hover:underline"
-          >
-            {mode === "sign-in" ? "Need an account? Create one" : "Already have an account? Sign in"}
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")}
+              className="text-left font-bold text-[#173b2d] underline-offset-4 hover:underline"
+            >
+              {mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "forgot-password" ? "sign-in" : "forgot-password")}
+              className="text-left font-bold text-[#173b2d] underline-offset-4 hover:underline"
+            >
+              {mode === "forgot-password" ? "Back to sign in" : "Forgot password?"}
+            </button>
+          </div>
           <p className="font-semibold text-[#4d5d55]">{status}</p>
         </div>
       </section>

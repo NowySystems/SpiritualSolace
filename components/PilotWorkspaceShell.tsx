@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { OwnerAdminAccessCenter } from "@/components/OwnerAdminAccessCenter";
 import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
@@ -55,10 +56,14 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Pilot Safe v1</p>
         <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em]">Pilot foundation is gated.</h2>
         <p className="mt-4 max-w-3xl text-sm leading-7 text-[#4d5d55]">
-          {userEmail} has passed the first access layer. This shell now supports structured requester intake for Grandview facility review.
+          {userEmail} has passed the first access layer. ChurchWork now checks roles before expanding into owner/admin, facility, partner, and requester workspaces.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-4">
+          <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Owner/Admin</p>
+            <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active for Cole and Sam: view users, buckets, requests, and timeline activity.</p>
+          </article>
           <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Requester path</p>
             <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: structured spiritual-care request only. No requester notes and no medical information.</p>
@@ -89,10 +94,11 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         </div>
 
         <div className="mt-8 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-          Do not distribute access broadly until role membership, RLS tests, facility review, and timeline visibility are complete.
+          Do not distribute access broadly until role membership, RLS tests, facility review, partner assignment, and timeline visibility are complete.
         </div>
       </section>
 
+      <OwnerAdminAccessCenter session={session} />
       <StructuredRequesterIntake session={session} />
     </main>
   );

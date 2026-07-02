@@ -14,35 +14,7 @@ type ChurchWorkLogoProps = {
 };
 
 export function ChurchWorkMark({ className = "h-16 w-28", title = "ChurchWork" }: ChurchWorkMarkProps) {
-  return (
-    <svg viewBox="0 0 260 120" role="img" aria-label={title} className={className}>
-      <path
-        d="M79 13C49.2 13 25 37.2 25 67s24.2 54 54 54"
-        fill="none"
-        stroke="#0D2B3B"
-        strokeLinecap="round"
-        strokeWidth="14"
-      />
-      <circle cx="71" cy="42" r="10.5" fill="#0D2B3B" />
-      <circle cx="109" cy="42" r="10.5" fill="#3F806E" />
-      <path
-        d="M52 98c-2.5-20.7 5.4-36.6 22.7-45.4 11 7.5 18.7 17.3 22.7 29.6-11.5 16.5-26.7 21.8-45.4 15.8Z"
-        fill="#0D2B3B"
-      />
-      <path
-        d="M91.5 83c5.8-14 15.2-24.3 28.1-30.8 15.9 9.2 23 25.4 20.4 46.7-20.2 7.3-36.4 2-48.5-15.9Z"
-        fill="#3F806E"
-      />
-      <path
-        d="M96 84.7c-12.5-14.8-24.2-18.6-34-10.1-10.8 9.3-1.4 27.4 34 42.6 35.4-15.2 44.8-33.3 34-42.6-9.8-8.5-21.5-4.7-34 10.1Z"
-        fill="#fffdf9"
-      />
-      <path
-        d="M140 48h16l17 45 18-45h15l18 45 17-45h15l-26 64h-14l-18-43-18 43h-14L140 48Z"
-        fill="#3F806E"
-      />
-    </svg>
-  );
+  return <img src="/brand/churchwork-corner-logo.svg" alt={title} className={`object-contain ${className}`} />;
 }
 
 export function ChurchWorkLogo({

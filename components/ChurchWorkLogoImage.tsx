@@ -1,0 +1,1 @@
+export function ChurchWorkLogoImage({ className = 'h-full w-full object-contain', alt = 'ChurchWork logo' }) { return <img src='/brand/churchwork-logo-web-600w.png' alt={alt} className={className} />; }

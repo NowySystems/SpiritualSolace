@@ -12,29 +12,52 @@ function isVisible(element: Element) {
 }
 
 function findActiveDemoTarget() {
-  const candidates = Array.from(document.querySelectorAll<HTMLElement>('[class*="ring-[#cbbbea]"]')).filter(isVisible);
-  if (!candidates.length) return null;
+  const explicitTargets = Array.from(document.querySelectorAll<HTMLElement>('[data-demo-field-active="true"], [data-demo-active="true"]')).filter(isVisible);
+  if (explicitTargets.length) return explicitTargets[0];
 
-  const activeField = candidates.find((element) => element.tagName.toLowerCase() === "label");
-  if (activeField) return activeField;
+  const highlightedTargets = Array.from(document.querySelectorAll<HTMLElement>('.churchwork-demo-active, [class*="ring-[#cbbbea]"], [class*="ring-[#d8c5ff]"]')).filter(isVisible);
+  return highlightedTargets[0] ?? null;
+}
 
-  return candidates[candidates.length - 1];
+function scrollContainingPanels(target: HTMLElement) {
+  let parent = target.parentElement;
+
+  while (parent && parent !== document.body) {
+    const style = window.getComputedStyle(parent);
+    const canScroll = /(auto|scroll)/.test(`${style.overflow}${style.overflowY}${style.overflowX}`);
+
+    if (canScroll && parent.scrollHeight > parent.clientHeight) {
+      const parentRect = parent.getBoundingClientRect();
+      const targetRect = target.getBoundingClientRect();
+      const nextTop = parent.scrollTop + targetRect.top - parentRect.top - 24;
+      parent.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+    }
+
+    parent = parent.parentElement;
+  }
 }
 
 export function ChurchWorkDemoAutoScroll({ children }: ChurchWorkDemoAutoScrollProps) {
   useEffect(() => {
     let timer: number | undefined;
-    let lastTarget: Element | null = null;
+    let lastSignature = "";
 
     function scrollToActiveTarget() {
       window.clearTimeout(timer);
       timer = window.setTimeout(() => {
         const target = findActiveDemoTarget();
-        if (!target || target === lastTarget) return;
+        if (!target) return;
 
-        lastTarget = target;
-        target.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
-      }, 90);
+        const rect = target.getBoundingClientRect();
+        const signature = `${target.tagName}:${target.textContent?.slice(0, 42)}:${Math.round(rect.top)}:${Math.round(rect.left)}`;
+        if (signature === lastSignature) return;
+        lastSignature = signature;
+
+        scrollContainingPanels(target);
+
+        const targetTop = window.scrollY + target.getBoundingClientRect().top - 130;
+        window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
+      }, 120);
     }
 
     const observer = new MutationObserver(scrollToActiveTarget);
@@ -42,7 +65,7 @@ export function ChurchWorkDemoAutoScroll({ children }: ChurchWorkDemoAutoScrollP
       subtree: true,
       attributes: true,
       childList: true,
-      attributeFilter: ["class", "aria-live"]
+      attributeFilter: ["class", "data-demo-active", "data-demo-field-active", "aria-live"]
     });
 
     scrollToActiveTarget();

@@ -1,11 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { FormEvent, useCallback, useMemo, useState } from "react";
 import { driver, type DriveStep } from "driver.js";
 import "driver.js/dist/driver.css";
 
 type PortalKind = "requester" | "facility" | "partner";
+type FieldType = "text" | "textarea" | "select" | "date" | "checkbox";
+
+type TimelineTone = "teal" | "gold" | "blue" | "green" | "clay" | "stone";
 
 type TimelineEvent = {
   id: string;
@@ -16,12 +19,33 @@ type TimelineEvent = {
   detail: string;
   actor: string;
   badge: string;
-  tone: "teal" | "gold" | "blue" | "green" | "clay" | "stone";
+  tone: TimelineTone;
   requesterVisible: boolean;
   partnerVisible: boolean;
 };
 
-type PortalAction = { label: string; detail: string; eventTitle: string; eventDetail: string; tone: TimelineEvent["tone"] };
+type ActionField = {
+  name: string;
+  label: string;
+  type: FieldType;
+  options?: string[];
+  defaultValue?: string;
+  required?: boolean;
+};
+
+type PortalAction = {
+  id: string;
+  label: string;
+  detail: string;
+  eventTitle: string;
+  eventDetail: string;
+  submitLabel: string;
+  statusAfter: string;
+  tone: TimelineTone;
+  requesterVisible: boolean;
+  partnerVisible: boolean;
+  fields: ActionField[];
+};
 
 type PortalCopy = {
   eyebrow: string;
@@ -39,23 +63,24 @@ type PortalCopy = {
   infoCards: { title: string; body: string; footer: string }[];
   actionsTitle: string;
   actions: PortalAction[];
+  visibilitySummary: string;
 };
 
 type ChurchWorkPortalDashboardProps = {
   portal: PortalKind;
 };
 
-const roleLinks: { id: PortalKind; label: string; href: string }[] = [
-  { id: "requester", label: "Requester Portal", href: "/requester-portal" },
-  { id: "facility", label: "Facility Portal", href: "/facility-portal" },
-  { id: "partner", label: "Partner Portal", href: "/partner-portal" }
-];
+const portalNames: Record<PortalKind, string> = {
+  requester: "Requester Portal",
+  facility: "Facility Portal",
+  partner: "Partner Portal"
+};
 
 const portalCopy: Record<PortalKind, PortalCopy> = {
   requester: {
     eyebrow: "Requester access",
     title: "My Care Request Workspace",
-    subtitle: "A simple view of the request, the next step, and approved updates.",
+    subtitle: "Submit a care request, see the next step, and follow approved updates.",
     accountName: "Sarah K. (Daughter)",
     accountRole: "Requester",
     primaryCardTitle: "Jane Doe",
@@ -76,11 +101,89 @@ const portalCopy: Record<PortalKind, PortalCopy> = {
       { title: "Consent & Privacy", body: "Only approved request updates are visible here. Facility notes and partner-only notes stay hidden.", footer: "Consent Confirmed" }
     ],
     actionsTitle: "Requester Actions",
+    visibilitySummary: "Requester view shows approved status updates, consent summary, next steps, and family-safe timeline entries only.",
     actions: [
-      { label: "Send Message", detail: "Message the care team securely", eventTitle: "Requester message sent", eventDetail: "Sarah asked the care team for a short status update.", tone: "blue" },
-      { label: "Request Follow-up", detail: "Ask for an update or next touch", eventTitle: "Follow-up requested", eventDetail: "Requester asked for a follow-up after the next care team review.", tone: "gold" },
-      { label: "Update Contact Preference", detail: "Choose how updates should arrive", eventTitle: "Contact preference updated", eventDetail: "Requester updated preferred contact method to text messages.", tone: "teal" },
-      { label: "Review Consent", detail: "View consent and privacy summary", eventTitle: "Consent summary reviewed", eventDetail: "Requester reviewed the current consent and privacy settings.", tone: "green" }
+      {
+        id: "requester-submit-care-request",
+        label: "Submit Care Request",
+        detail: "Create or update the active request",
+        eventTitle: "Care request submitted",
+        eventDetail: "Requester submitted a structured spiritual-care request.",
+        submitLabel: "Submit request",
+        statusAfter: "Submitted",
+        tone: "green",
+        requesterVisible: true,
+        partnerVisible: false,
+        fields: [
+          { name: "residentName", label: "Resident or person name", type: "text", defaultValue: "Jane Doe", required: true },
+          { name: "requesterName", label: "Your name", type: "text", defaultValue: "Sarah K.", required: true },
+          { name: "relationship", label: "Relationship", type: "select", options: ["Daughter", "Son", "Spouse", "Friend", "Resident", "Facility staff"], defaultValue: "Daughter", required: true },
+          { name: "requestType", label: "Request type", type: "select", options: ["Family Encouragement & Prayer Support", "Pastoral Visit", "Prayer Support", "Church Connection", "Facility Follow-up"], defaultValue: "Family Encouragement & Prayer Support", required: true },
+          { name: "contactPreference", label: "Contact preference", type: "select", options: ["Text messages", "Phone call", "Email"], defaultValue: "Text messages", required: true },
+          { name: "acknowledgeNoMedical", label: "I understand this request is for spiritual-care coordination only and does not include medical details.", type: "checkbox", required: true }
+        ]
+      },
+      {
+        id: "requester-send-message",
+        label: "Send Message",
+        detail: "Message the care team securely",
+        eventTitle: "Requester message sent",
+        eventDetail: "Requester sent a message to the care team.",
+        submitLabel: "Send message",
+        statusAfter: "Message Sent",
+        tone: "blue",
+        requesterVisible: true,
+        partnerVisible: false,
+        fields: [
+          { name: "message", label: "Message to care team", type: "textarea", defaultValue: "Could you let me know when the next visit is confirmed?", required: true }
+        ]
+      },
+      {
+        id: "requester-follow-up",
+        label: "Request Follow-up",
+        detail: "Ask for an update or next touch",
+        eventTitle: "Follow-up requested",
+        eventDetail: "Requester asked for a follow-up after the next care team review.",
+        submitLabel: "Request follow-up",
+        statusAfter: "Follow-up Requested",
+        tone: "gold",
+        requesterVisible: true,
+        partnerVisible: false,
+        fields: [
+          { name: "followUpReason", label: "Follow-up reason", type: "select", options: ["Visit timing", "Consent question", "Care team update", "Contact preference"], defaultValue: "Visit timing", required: true },
+          { name: "note", label: "Brief note", type: "textarea", defaultValue: "Please send an update when the visit time is set.", required: true }
+        ]
+      },
+      {
+        id: "requester-contact-preference",
+        label: "Update Contact Preference",
+        detail: "Choose how updates should arrive",
+        eventTitle: "Contact preference updated",
+        eventDetail: "Requester updated how care updates should be delivered.",
+        submitLabel: "Save preference",
+        statusAfter: "Preference Updated",
+        tone: "teal",
+        requesterVisible: true,
+        partnerVisible: false,
+        fields: [
+          { name: "contactPreference", label: "Preferred update method", type: "select", options: ["Text messages", "Phone call", "Email"], defaultValue: "Text messages", required: true }
+        ]
+      },
+      {
+        id: "requester-review-consent",
+        label: "Review Consent",
+        detail: "Confirm the privacy summary was reviewed",
+        eventTitle: "Consent summary reviewed",
+        eventDetail: "Requester reviewed the current consent and privacy settings.",
+        submitLabel: "Mark reviewed",
+        statusAfter: "Consent Reviewed",
+        tone: "green",
+        requesterVisible: true,
+        partnerVisible: false,
+        fields: [
+          { name: "consentReviewed", label: "I reviewed the consent and privacy summary for this request.", type: "checkbox", required: true }
+        ]
+      }
     ]
   },
   facility: {
@@ -107,12 +210,107 @@ const portalCopy: Record<PortalKind, PortalCopy> = {
       { title: "Upcoming Visit", body: "Visit with care partner is scheduled for tomorrow at 11:00 AM in Room 214B.", footer: "Scheduled" }
     ],
     actionsTitle: "Facility Actions",
+    visibilitySummary: "Facility view shows full facility workflow, consent status, internal notes, partner sharing, family updates, and the complete case timeline.",
     actions: [
-      { label: "Confirm Consent", detail: "Review resident/family sharing permissions", eventTitle: "Consent confirmed by facility", eventDetail: "Facility confirmed the request can be shared with approved partners.", tone: "green" },
-      { label: "Schedule Visit", detail: "Set or update a care visit", eventTitle: "Visit scheduled", eventDetail: "Facility scheduled a care partner visit for tomorrow at 11:00 AM.", tone: "teal" },
-      { label: "Add Internal Note", detail: "Facility-only note", eventTitle: "Internal facility note added", eventDetail: "Facility added a private note for care coordination review.", tone: "gold" },
-      { label: "Share With Partner", detail: "Approve limited partner visibility", eventTitle: "Request shared with partner", eventDetail: "Facility shared the approved summary with Morning Pointe Church.", tone: "blue" },
-      { label: "Send Family Update", detail: "Approved update to requester", eventTitle: "Family update sent", eventDetail: "Facility sent an approved status update to Grace Allen.", tone: "teal" }
+      {
+        id: "facility-review-request",
+        label: "Review New Request",
+        detail: "Accept the request into facility workflow",
+        eventTitle: "Request reviewed by facility",
+        eventDetail: "Facility reviewed the new spiritual-care request and opened the facility workflow.",
+        submitLabel: "Complete review",
+        statusAfter: "Facility Reviewed",
+        tone: "blue",
+        requesterVisible: true,
+        partnerVisible: false,
+        fields: [
+          { name: "residentName", label: "Resident name", type: "text", defaultValue: "Evelyn Allen", required: true },
+          { name: "room", label: "Room", type: "text", defaultValue: "214B", required: true },
+          { name: "requestType", label: "Request type", type: "select", options: ["Prayer Support", "Senior Care & Companionship", "Pastoral Visit", "Family Encouragement"], defaultValue: "Senior Care & Companionship", required: true }
+        ]
+      },
+      {
+        id: "facility-confirm-consent",
+        label: "Confirm Consent",
+        detail: "Review resident/family sharing permissions",
+        eventTitle: "Consent confirmed by facility",
+        eventDetail: "Facility confirmed the request can be shared with approved partners.",
+        submitLabel: "Confirm consent",
+        statusAfter: "Consent Confirmed",
+        tone: "green",
+        requesterVisible: true,
+        partnerVisible: true,
+        fields: [
+          { name: "visibilityLevel", label: "Visibility level", type: "select", options: ["Requester + approved partner", "Requester only", "Facility only"], defaultValue: "Requester + approved partner", required: true },
+          { name: "consentSource", label: "Consent source", type: "select", options: ["Resident", "POA / family contact", "Facility reviewer"], defaultValue: "POA / family contact", required: true },
+          { name: "confirmed", label: "Consent was reviewed and documented before sharing.", type: "checkbox", required: true }
+        ]
+      },
+      {
+        id: "facility-schedule-visit",
+        label: "Schedule Visit",
+        detail: "Set or update a care visit",
+        eventTitle: "Visit scheduled",
+        eventDetail: "Facility scheduled a care partner visit.",
+        submitLabel: "Schedule visit",
+        statusAfter: "Visit Scheduled",
+        tone: "teal",
+        requesterVisible: true,
+        partnerVisible: true,
+        fields: [
+          { name: "visitDate", label: "Visit date", type: "date", defaultValue: "2026-07-15", required: true },
+          { name: "visitWindow", label: "Visit window", type: "select", options: ["Morning", "Afternoon", "Evening"], defaultValue: "Morning", required: true },
+          { name: "visitor", label: "Visitor or team", type: "text", defaultValue: "Morning Pointe Church care team", required: true },
+          { name: "location", label: "Location", type: "text", defaultValue: "Room 214B", required: true }
+        ]
+      },
+      {
+        id: "facility-add-note",
+        label: "Add Internal Note",
+        detail: "Facility-only note",
+        eventTitle: "Internal facility note added",
+        eventDetail: "Facility added a private note for care coordination review.",
+        submitLabel: "Save internal note",
+        statusAfter: "Internal Note Added",
+        tone: "gold",
+        requesterVisible: false,
+        partnerVisible: false,
+        fields: [
+          { name: "note", label: "Internal facility note", type: "textarea", defaultValue: "Resident prefers morning visits and short encouragement-focused conversations.", required: true }
+        ]
+      },
+      {
+        id: "facility-share-partner",
+        label: "Share With Partner",
+        detail: "Approve limited partner visibility",
+        eventTitle: "Request shared with partner",
+        eventDetail: "Facility shared the approved summary with the selected partner.",
+        submitLabel: "Share approved summary",
+        statusAfter: "Shared With Partner",
+        tone: "blue",
+        requesterVisible: true,
+        partnerVisible: true,
+        fields: [
+          { name: "partner", label: "Approved partner", type: "select", options: ["Morning Pointe Church", "Grace Community Church", "First Assembly Care Team"], defaultValue: "Morning Pointe Church", required: true },
+          { name: "sharingLevel", label: "Sharing level", type: "select", options: ["Limited spiritual-care summary", "Visit details only", "Prayer request only"], defaultValue: "Limited spiritual-care summary", required: true },
+          { name: "approved", label: "I confirm this sharing level is approved for this partner.", type: "checkbox", required: true }
+        ]
+      },
+      {
+        id: "facility-family-update",
+        label: "Send Family Update",
+        detail: "Approved update to requester",
+        eventTitle: "Family update sent",
+        eventDetail: "Facility sent an approved status update to the requester.",
+        submitLabel: "Send update",
+        statusAfter: "Family Updated",
+        tone: "teal",
+        requesterVisible: true,
+        partnerVisible: false,
+        fields: [
+          { name: "update", label: "Family-safe update", type: "textarea", defaultValue: "The request has been reviewed. A visit is being scheduled and we will share the confirmed time once available.", required: true }
+        ]
+      }
     ]
   },
   partner: {
@@ -139,12 +337,88 @@ const portalCopy: Record<PortalKind, PortalCopy> = {
       { title: "Sharing Rules", body: "No medical details, diagnoses, financial information, or unrelated resident details can be shared.", footer: "Human Reviewed" }
     ],
     actionsTitle: "Partner Actions",
+    visibilitySummary: "Partner view shows approved assignments, approved request details, partner-visible timeline entries, and report-back actions only.",
     actions: [
-      { label: "Accept Assignment", detail: "Take responsibility for this care action", eventTitle: "Assignment accepted", eventDetail: "Partner accepted responsibility for the approved care assignment.", tone: "green" },
-      { label: "Confirm Visit", detail: "Schedule or confirm visit timing", eventTitle: "Partner visit confirmed", eventDetail: "Partner confirmed the planned visit time with the facility.", tone: "teal" },
-      { label: "Send Update to Facility", detail: "Report back after action", eventTitle: "Partner update sent", eventDetail: "Partner shared a visit update back to the facility.", tone: "blue" },
-      { label: "Log Completed Visit", detail: "Record completed partner care", eventTitle: "Partner visit completed", eventDetail: "Partner logged the completed spiritual-care visit.", tone: "green" },
-      { label: "Request Clarification", detail: "Ask facility a question", eventTitle: "Clarification requested", eventDetail: "Partner asked the facility for clarification before taking the next step.", tone: "gold" }
+      {
+        id: "partner-accept-assignment",
+        label: "Accept Assignment",
+        detail: "Take responsibility for this care action",
+        eventTitle: "Assignment accepted",
+        eventDetail: "Partner accepted responsibility for the approved care assignment.",
+        submitLabel: "Accept assignment",
+        statusAfter: "Assignment Accepted",
+        tone: "green",
+        requesterVisible: false,
+        partnerVisible: true,
+        fields: [
+          { name: "partnerLead", label: "Partner lead", type: "text", defaultValue: "Michael Torres", required: true },
+          { name: "assignmentScope", label: "Assignment scope", type: "select", options: ["Prayer support", "Visit and prayer support", "Family encouragement", "Church connection"], defaultValue: "Visit and prayer support", required: true },
+          { name: "accepted", label: "I accept this assignment for the partner team.", type: "checkbox", required: true }
+        ]
+      },
+      {
+        id: "partner-confirm-visit",
+        label: "Confirm Visit",
+        detail: "Schedule or confirm visit timing",
+        eventTitle: "Partner visit confirmed",
+        eventDetail: "Partner confirmed the planned visit time with the facility.",
+        submitLabel: "Confirm visit",
+        statusAfter: "Visit Confirmed",
+        tone: "teal",
+        requesterVisible: true,
+        partnerVisible: true,
+        fields: [
+          { name: "visitDate", label: "Visit date", type: "date", defaultValue: "2026-07-15", required: true },
+          { name: "visitWindow", label: "Visit window", type: "select", options: ["Morning", "Afternoon", "Evening"], defaultValue: "Morning", required: true },
+          { name: "visitor", label: "Visitor", type: "text", defaultValue: "Michael Torres", required: true }
+        ]
+      },
+      {
+        id: "partner-send-update",
+        label: "Send Update to Facility",
+        detail: "Report back after action",
+        eventTitle: "Partner update sent",
+        eventDetail: "Partner shared a care update back to the facility.",
+        submitLabel: "Send update",
+        statusAfter: "Update Sent",
+        tone: "blue",
+        requesterVisible: false,
+        partnerVisible: true,
+        fields: [
+          { name: "update", label: "Facility update", type: "textarea", defaultValue: "Visit is confirmed. Partner team will report back after the visit is complete.", required: true }
+        ]
+      },
+      {
+        id: "partner-log-visit",
+        label: "Log Completed Visit",
+        detail: "Record completed partner care",
+        eventTitle: "Partner visit completed",
+        eventDetail: "Partner logged the completed spiritual-care visit.",
+        submitLabel: "Log visit",
+        statusAfter: "Visit Completed",
+        tone: "green",
+        requesterVisible: true,
+        partnerVisible: true,
+        fields: [
+          { name: "visitSummary", label: "Visit summary", type: "textarea", defaultValue: "Short encouragement visit completed. Prayer support offered. No medical details were discussed or recorded.", required: true },
+          { name: "shareWithFacility", label: "Share this completed-visit update with the facility.", type: "checkbox", required: true }
+        ]
+      },
+      {
+        id: "partner-clarification",
+        label: "Request Clarification",
+        detail: "Ask facility a question",
+        eventTitle: "Clarification requested",
+        eventDetail: "Partner asked the facility for clarification before taking the next step.",
+        submitLabel: "Request clarification",
+        statusAfter: "Clarification Requested",
+        tone: "gold",
+        requesterVisible: false,
+        partnerVisible: true,
+        fields: [
+          { name: "question", label: "Question for facility", type: "textarea", defaultValue: "Please confirm whether a morning visit is still preferred for this resident.", required: true }
+        ]
+      }
     ]
   }
 };
@@ -217,8 +491,8 @@ const initialTimeline: TimelineEvent[] = [
   }
 ];
 
-function badgeClasses(tone: TimelineEvent["tone"]) {
-  const tones: Record<TimelineEvent["tone"], string> = {
+function badgeClasses(tone: TimelineTone) {
+  const tones: Record<TimelineTone, string> = {
     teal: "border-[#9fc6bd] bg-[#edf7f5] text-[#275d55]",
     gold: "border-[#e5c071] bg-[#fff7e6] text-[#76551c]",
     blue: "border-[#b5c8d4] bg-[#eef4f7] text-[#385d70]",
@@ -236,6 +510,22 @@ function visibleForPortal(event: TimelineEvent, portal: PortalKind) {
   return event.requesterVisible;
 }
 
+function fieldValue(formData: FormData, field: ActionField) {
+  const value = formData.get(field.name);
+  if (field.type === "checkbox") return value ? "Confirmed" : "Not confirmed";
+  return String(value ?? field.defaultValue ?? "").trim();
+}
+
+function buildEventDetail(action: PortalAction, formData: FormData) {
+  const details = action.fields
+    .filter((field) => field.type !== "checkbox")
+    .map((field) => `${field.label}: ${fieldValue(formData, field)}`)
+    .filter((line) => !line.endsWith(": "));
+
+  if (!details.length) return action.eventDetail;
+  return `${action.eventDetail} ${details.join(" · ")}.`;
+}
+
 function portalDemoSteps(portal: PortalKind, copy: PortalCopy): DriveStep[] {
   const portalLabel = portal === "requester" ? "requester" : portal === "facility" ? "facility" : "partner";
 
@@ -243,8 +533,8 @@ function portalDemoSteps(portal: PortalKind, copy: PortalCopy): DriveStep[] {
     {
       element: '[data-portal-demo="portal-title"]',
       popover: {
-        title: `${copy.title}`,
-        description: `This is the ${portalLabel} portal. It is intentionally one focused dashboard, not a full admin maze.`,
+        title: copy.title,
+        description: `This is the ${portalLabel} portal. It is one focused dashboard with no permanent left-side admin navigation.`,
         side: "bottom",
         align: "start"
       }
@@ -253,7 +543,7 @@ function portalDemoSteps(portal: PortalKind, copy: PortalCopy): DriveStep[] {
       element: '[data-portal-demo="context-panel"]',
       popover: {
         title: copy.contextTitle,
-        description: "This panel keeps the current request, queue, or assignments close without adding a permanent left-side dashboard.",
+        description: "This panel keeps the current request, queue, or assignments close while the rest of the page stays focused on care work.",
         side: "right",
         align: "start"
       }
@@ -270,8 +560,8 @@ function portalDemoSteps(portal: PortalKind, copy: PortalCopy): DriveStep[] {
     {
       element: '[data-portal-demo="info-cards"]',
       popover: {
-        title: "Only the useful details",
-        description: "Each portal shows the few cards this user type needs. Requesters, facilities, and partners do not need the same detail level.",
+        title: "Useful details only",
+        description: "Each portal shows the detail level that role actually needs. Requesters, facilities, and partners do not need the same information.",
         side: "bottom",
         align: "start"
       }
@@ -289,16 +579,16 @@ function portalDemoSteps(portal: PortalKind, copy: PortalCopy): DriveStep[] {
       element: '[data-portal-demo="actions"]',
       popover: {
         title: copy.actionsTitle,
-        description: "These are the only action buttons this portal needs right now. Clicking one records a demo event in the timeline.",
+        description: "These actions open real forms and add events to the timeline. The buttons are limited to what this role needs.",
         side: "left",
         align: "start"
       }
     },
     {
-      element: '[data-portal-demo="guardrail"]',
+      element: '[data-portal-demo="visibility"]',
       popover: {
-        title: "Role-safe guardrail",
-        description: "This reminder reinforces that each portal is filtered by role, consent, and sharing rules.",
+        title: "Access and visibility",
+        description: "This summary explains what this portal can see. It is the rule that keeps the three portals separated.",
         side: "left",
         align: "start"
       }
@@ -306,8 +596,41 @@ function portalDemoSteps(portal: PortalKind, copy: PortalCopy): DriveStep[] {
   ];
 }
 
+function renderField(field: ActionField) {
+  if (field.type === "checkbox") {
+    return (
+      <label key={field.name} className="flex gap-3 rounded-2xl border border-[#d8d0c0] bg-[#fff8e7] p-4 text-sm font-bold leading-6 text-[#5f4b1f]">
+        <input name={field.name} type="checkbox" required={field.required} className="mt-1 h-5 w-5" />
+        <span>{field.label}</span>
+      </label>
+    );
+  }
+
+  return (
+    <label key={field.name} className="block text-sm font-bold text-[#173b2d]">
+      {field.label}
+      {field.type === "textarea" ? (
+        <textarea name={field.name} required={field.required} defaultValue={field.defaultValue} rows={4} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm leading-6 text-[#102b3a] outline-none ring-[#86a45f]/25 focus:border-[#86a45f] focus:ring-4" />
+      ) : field.type === "select" ? (
+        <select name={field.name} required={field.required} defaultValue={field.defaultValue} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#102b3a] outline-none ring-[#86a45f]/25 focus:border-[#86a45f] focus:ring-4">
+          {(field.options ?? []).map((option) => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      ) : (
+        <input name={field.name} type={field.type} required={field.required} defaultValue={field.defaultValue} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#102b3a] outline-none ring-[#86a45f]/25 focus:border-[#86a45f] focus:ring-4" />
+      )}
+    </label>
+  );
+}
+
 export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardProps) {
   const [timeline, setTimeline] = useState(initialTimeline);
+  const [activeAction, setActiveAction] = useState<PortalAction | null>(null);
+  const [statusLabel, setStatusLabel] = useState(portalCopy[portal].statusLabel);
+  const [subjectName, setSubjectName] = useState(portalCopy[portal].primaryCardTitle);
+  const [subjectMeta, setSubjectMeta] = useState(portalCopy[portal].primaryCardMeta);
+  const [subjectDetail, setSubjectDetail] = useState(portalCopy[portal].primaryCardDetail);
   const copy = portalCopy[portal];
   const visibleTimeline = useMemo(() => timeline.filter((event) => visibleForPortal(event, portal)), [timeline, portal]);
 
@@ -327,22 +650,37 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
     demo.drive();
   }, [copy, portal]);
 
-  function recordAction(action: PortalAction) {
+  function handleActionSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!activeAction) return;
+
+    const formData = new FormData(event.currentTarget);
     const newEvent: TimelineEvent = {
-      id: `${portal}-${Date.now()}`,
+      id: `${portal}-${activeAction.id}-${Date.now()}`,
       date: "Today",
       time: "Now",
       type: "ACTION",
-      title: action.eventTitle,
-      detail: action.eventDetail,
+      title: activeAction.eventTitle,
+      detail: buildEventDetail(activeAction, formData),
       actor: copy.accountName,
-      badge: action.label,
-      tone: action.tone,
-      requesterVisible: portal === "requester" || portal === "facility",
-      partnerVisible: portal === "partner" || action.label.includes("Partner") || action.label.includes("Assignment")
+      badge: activeAction.label,
+      tone: activeAction.tone,
+      requesterVisible: activeAction.requesterVisible,
+      partnerVisible: activeAction.partnerVisible
     };
 
+    if (activeAction.id === "requester-submit-care-request") {
+      const residentName = String(formData.get("residentName") ?? "Jane Doe").trim();
+      const relationship = String(formData.get("relationship") ?? "Requester").trim();
+      const requestType = String(formData.get("requestType") ?? "Spiritual-care request").trim();
+      setSubjectName(residentName || "Jane Doe");
+      setSubjectMeta(`${requestType} · Requested by ${relationship}`);
+      setSubjectDetail("Structured spiritual-care request submitted through the requester portal. The facility will review consent, visibility, and the next safe care step.");
+    }
+
+    setStatusLabel(activeAction.statusAfter);
     setTimeline((items) => [newEvent, ...items]);
+    setActiveAction(null);
   }
 
   return (
@@ -355,24 +693,15 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
             </span>
             <span>
               <span className="block font-serif text-2xl font-semibold tracking-[-0.04em]">Church<span className="text-[#3f806e]">Work</span></span>
-              <span className="block text-xs font-bold text-[#d4dedc]">Pilot V1</span>
+              <span className="block text-xs font-bold text-[#d4dedc]">{portalNames[portal]}</span>
             </span>
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-[0.12em]">
-            {roleLinks.map((role) => (
-              <Link
-                key={role.id}
-                href={role.href}
-                className={`rounded-full border px-4 py-2 transition ${portal === role.id ? "border-[#86a45f] bg-[#173b2d] text-[#d7e7b7]" : "border-white/10 bg-white/5 text-[#d4dedc] hover:bg-white/10"}`}
-              >
-                {role.label}
-              </Link>
-            ))}
-          </nav>
+          <div className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-[#edf5e6]">
+            Role-safe timeline · human-reviewed sharing · English guided demo
+          </div>
 
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-[#edf5e6]">Same app · role-safe timeline · human-reviewed sharing</span>
             <button type="button" onClick={startGuidedDemo} className="rounded-full bg-[#cbbbea] px-4 py-2 text-xs font-black text-[#16243a] shadow-sm hover:bg-[#d8cff1]">
               Start Guided Demo
             </button>
@@ -393,7 +722,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
           </div>
           <div className="rounded-2xl border border-[#d8d0c0] bg-white/85 px-5 py-4 shadow-sm">
             <p className="text-xs font-black uppercase tracking-[0.16em] text-[#789052]">Current status</p>
-            <p className="mt-1 text-lg font-black text-[#102b3a]">{copy.statusLabel}</p>
+            <p className="mt-1 text-lg font-black text-[#102b3a]">{statusLabel}</p>
           </div>
         </div>
 
@@ -427,13 +756,13 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf2ed] text-lg font-black text-[#173b2d]">{copy.primaryCardTitle.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#eaf2ed] text-lg font-black text-[#173b2d]">{subjectName.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>
                     <div>
-                      <h2 className="font-serif text-3xl font-semibold tracking-[-0.04em] text-[#102b3a]">{copy.primaryCardTitle}</h2>
-                      <p className="mt-1 text-sm font-bold text-[#4d5d55]">{copy.primaryCardMeta}</p>
+                      <h2 className="font-serif text-3xl font-semibold tracking-[-0.04em] text-[#102b3a]">{subjectName}</h2>
+                      <p className="mt-1 text-sm font-bold text-[#4d5d55]">{subjectMeta}</p>
                     </div>
                   </div>
-                  <p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-[#4d5d55]">{copy.primaryCardDetail}</p>
+                  <p className="mt-5 max-w-3xl text-sm font-semibold leading-7 text-[#4d5d55]">{subjectDetail}</p>
                 </div>
                 <div className="rounded-2xl border border-[#d7cdeb] bg-[#f4effc] p-5 lg:w-80">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#5b4a83]">What should happen next?</p>
@@ -485,13 +814,13 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
           <aside className="space-y-5">
             <section data-portal-demo="actions" className="rounded-[1.7rem] border border-[#d8d0c0] bg-white/95 p-5 shadow-sm">
               <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#173b2d]">{copy.actionsTitle}</h2>
-              <p className="mt-2 text-xs font-semibold leading-5 text-[#4d5d55]">Only the actions this portal actually needs are shown here.</p>
+              <p className="mt-2 text-xs font-semibold leading-5 text-[#4d5d55]">Each action opens a real form and writes a new event into the shared timeline.</p>
               <div className="mt-4 space-y-2">
                 {copy.actions.map((action, index) => (
                   <button
-                    key={action.label}
+                    key={action.id}
                     type="button"
-                    onClick={() => recordAction(action)}
+                    onClick={() => setActiveAction(action)}
                     className={`w-full rounded-2xl border px-4 py-4 text-left transition ${index === 0 ? "border-[#173b2d] bg-[#173b2d] text-white shadow-md hover:bg-[#102b3a]" : "border-[#d8d0c0] bg-white text-[#102b3a] hover:border-[#86a45f] hover:bg-[#f8fbf8]"}`}
                   >
                     <span className="block text-sm font-black">{action.label}</span>
@@ -501,13 +830,41 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
               </div>
             </section>
 
-            <section data-portal-demo="guardrail" className="rounded-[1.7rem] border border-[#ddb66c]/45 bg-[#fff8e7] p-5 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#7a5b20]">Guardrail</p>
-              <p className="mt-2 text-sm font-bold leading-6 text-[#5f4b1f]">This portal shows only the information and actions appropriate for {copy.accountRole.toLowerCase()} access.</p>
+            <section data-portal-demo="visibility" className="rounded-[1.7rem] border border-[#ddb66c]/45 bg-[#fff8e7] p-5 shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#7a5b20]">Access & Visibility</p>
+              <p className="mt-2 text-sm font-bold leading-6 text-[#5f4b1f]">{copy.visibilitySummary}</p>
             </section>
           </aside>
         </div>
       </section>
+
+      {activeAction ? (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-[#0d2b3b]/60 p-4 backdrop-blur-sm">
+          <form onSubmit={handleActionSubmit} className="max-h-[92vh] w-full max-w-2xl overflow-auto rounded-[2rem] border border-[#d8d0c0] bg-[#fbf8f0] p-6 text-[#102b3a] shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">{portalNames[portal]}</p>
+                <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">{activeAction.label}</h2>
+                <p className="mt-2 text-sm font-semibold leading-6 text-[#4d5d55]">{activeAction.detail}</p>
+              </div>
+              <button type="button" onClick={() => setActiveAction(null)} className="rounded-full border border-[#d8d0c0] bg-white px-4 py-2 text-sm font-black text-[#4d5d55] hover:border-[#86a45f]">
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-4">
+              {activeAction.fields.map((field) => renderField(field))}
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs font-bold leading-5 text-[#5f4b1f]">Submitting this form records a demo timeline event inside this portal flow.</p>
+              <button type="submit" className="rounded-xl bg-[#173b2d] px-6 py-3 text-sm font-black text-white shadow-lg hover:bg-[#102b3a]">
+                {activeAction.submitLabel}
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </main>
   );
 }

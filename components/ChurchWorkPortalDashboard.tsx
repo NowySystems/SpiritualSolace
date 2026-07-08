@@ -1,6 +1,6 @@
 "use client";
 
-import { ChurchWorkGuidedPortalDashboard } from "@/components/ChurchWorkGuidedPortalDashboard";
+import { ChurchWorkAwesomeGuidedPortalDashboard } from "@/components/ChurchWorkAwesomeGuidedPortalDashboard";
 
 type PortalKind = "requester" | "facility" | "partner";
 
@@ -9,5 +9,5 @@ type ChurchWorkPortalDashboardProps = {
 };
 
 export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardProps) {
-  return <ChurchWorkGuidedPortalDashboard portal={portal} />;
+  return <ChurchWorkAwesomeGuidedPortalDashboard portal={portal} />;
 }

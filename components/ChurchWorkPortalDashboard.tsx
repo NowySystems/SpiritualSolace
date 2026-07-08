@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { driver, type DriveStep } from "driver.js";
+import "driver.js/dist/driver.css";
 
 type PortalKind = "requester" | "facility" | "partner";
 
@@ -19,17 +21,9 @@ type TimelineEvent = {
   partnerVisible: boolean;
 };
 
-type ChurchWorkPortalDashboardProps = {
-  portal: PortalKind;
-};
+type PortalAction = { label: string; detail: string; eventTitle: string; eventDetail: string; tone: TimelineEvent["tone"] };
 
-const roleLinks: { id: PortalKind; label: string; href: string }[] = [
-  { id: "requester", label: "Requester Portal", href: "/requester-portal" },
-  { id: "facility", label: "Facility Portal", href: "/facility-portal" },
-  { id: "partner", label: "Partner Portal", href: "/partner-portal" }
-];
-
-const portalCopy: Record<PortalKind, {
+type PortalCopy = {
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -44,8 +38,20 @@ const portalCopy: Record<PortalKind, {
   contextItems: { label: string; detail: string; badge?: string }[];
   infoCards: { title: string; body: string; footer: string }[];
   actionsTitle: string;
-  actions: { label: string; detail: string; eventTitle: string; eventDetail: string; tone: TimelineEvent["tone"] }[];
-}> = {
+  actions: PortalAction[];
+};
+
+type ChurchWorkPortalDashboardProps = {
+  portal: PortalKind;
+};
+
+const roleLinks: { id: PortalKind; label: string; href: string }[] = [
+  { id: "requester", label: "Requester Portal", href: "/requester-portal" },
+  { id: "facility", label: "Facility Portal", href: "/facility-portal" },
+  { id: "partner", label: "Partner Portal", href: "/partner-portal" }
+];
+
+const portalCopy: Record<PortalKind, PortalCopy> = {
   requester: {
     eyebrow: "Requester access",
     title: "My Care Request Workspace",
@@ -230,12 +236,98 @@ function visibleForPortal(event: TimelineEvent, portal: PortalKind) {
   return event.requesterVisible;
 }
 
+function portalDemoSteps(portal: PortalKind, copy: PortalCopy): DriveStep[] {
+  const portalLabel = portal === "requester" ? "requester" : portal === "facility" ? "facility" : "partner";
+
+  return [
+    {
+      element: '[data-portal-demo="portal-title"]',
+      popover: {
+        title: `${copy.title}`,
+        description: `This is the ${portalLabel} portal. It is intentionally one focused dashboard, not a full admin maze.`,
+        side: "bottom",
+        align: "start"
+      }
+    },
+    {
+      element: '[data-portal-demo="context-panel"]',
+      popover: {
+        title: copy.contextTitle,
+        description: "This panel keeps the current request, queue, or assignments close without adding a permanent left-side dashboard.",
+        side: "right",
+        align: "start"
+      }
+    },
+    {
+      element: '[data-portal-demo="summary-card"]',
+      popover: {
+        title: "Current request summary",
+        description: "The top card explains who this request is about, what is happening, and what the safe next step should be.",
+        side: "bottom",
+        align: "start"
+      }
+    },
+    {
+      element: '[data-portal-demo="info-cards"]',
+      popover: {
+        title: "Only the useful details",
+        description: "Each portal shows the few cards this user type needs. Requesters, facilities, and partners do not need the same detail level.",
+        side: "bottom",
+        align: "start"
+      }
+    },
+    {
+      element: '[data-portal-demo="timeline"]',
+      popover: {
+        title: "Shared care timeline",
+        description: "This is the shared source of truth. The same timeline is filtered so each portal sees the right events in English.",
+        side: "top",
+        align: "start"
+      }
+    },
+    {
+      element: '[data-portal-demo="actions"]',
+      popover: {
+        title: copy.actionsTitle,
+        description: "These are the only action buttons this portal needs right now. Clicking one records a demo event in the timeline.",
+        side: "left",
+        align: "start"
+      }
+    },
+    {
+      element: '[data-portal-demo="guardrail"]',
+      popover: {
+        title: "Role-safe guardrail",
+        description: "This reminder reinforces that each portal is filtered by role, consent, and sharing rules.",
+        side: "left",
+        align: "start"
+      }
+    }
+  ];
+}
+
 export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardProps) {
   const [timeline, setTimeline] = useState(initialTimeline);
   const copy = portalCopy[portal];
   const visibleTimeline = useMemo(() => timeline.filter((event) => visibleForPortal(event, portal)), [timeline, portal]);
 
-  function recordAction(action: (typeof copy.actions)[number]) {
+  const startGuidedDemo = useCallback(() => {
+    const demo = driver({
+      showProgress: true,
+      allowClose: true,
+      overlayOpacity: 0.55,
+      stagePadding: 8,
+      nextBtnText: "Next",
+      prevBtnText: "Back",
+      doneBtnText: "Done",
+      popoverClass: "churchwork-portal-demo-popover",
+      steps: portalDemoSteps(portal, copy)
+    });
+
+    demo.drive();
+  }, [copy, portal]);
+
+  function recordAction(action: PortalAction) {
     const newEvent: TimelineEvent = {
       id: `${portal}-${Date.now()}`,
       date: "Today",
@@ -281,6 +373,9 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
 
           <div className="flex flex-wrap items-center gap-3 text-sm">
             <span className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-[#edf5e6]">Same app · role-safe timeline · human-reviewed sharing</span>
+            <button type="button" onClick={startGuidedDemo} className="rounded-full bg-[#cbbbea] px-4 py-2 text-xs font-black text-[#16243a] shadow-sm hover:bg-[#d8cff1]">
+              Start Guided Demo
+            </button>
             <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-right">
               <p className="font-black">{copy.accountName}</p>
               <p className="text-xs font-semibold text-[#d4dedc]">{copy.accountRole}</p>
@@ -290,7 +385,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
       </header>
 
       <section className="mx-auto max-w-[92rem] px-5 py-6">
-        <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div data-portal-demo="portal-title" className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">{copy.eyebrow}</p>
             <h1 className="mt-2 font-serif text-4xl font-semibold tracking-[-0.04em] md:text-5xl">{copy.title}</h1>
@@ -304,7 +399,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
 
         <div className="grid gap-5 xl:grid-cols-[310px_minmax(0,1fr)_320px]">
           <aside className="space-y-5">
-            <section className="rounded-[1.7rem] border border-[#d8d0c0] bg-white/90 p-5 shadow-sm">
+            <section data-portal-demo="context-panel" className="rounded-[1.7rem] border border-[#d8d0c0] bg-white/90 p-5 shadow-sm">
               <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#173b2d]">{copy.contextTitle}</h2>
               <div className="mt-4 space-y-3">
                 {copy.contextItems.map((item) => (
@@ -328,7 +423,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
           </aside>
 
           <section className="space-y-5">
-            <section className="rounded-[1.8rem] border border-[#d8d0c0] bg-white/95 p-6 shadow-sm">
+            <section data-portal-demo="summary-card" className="rounded-[1.8rem] border border-[#d8d0c0] bg-white/95 p-6 shadow-sm">
               <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-3">
@@ -347,7 +442,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
               </div>
             </section>
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div data-portal-demo="info-cards" className="grid gap-4 lg:grid-cols-3">
               {copy.infoCards.map((card) => (
                 <article key={card.title} className="rounded-[1.5rem] border border-[#d8d0c0] bg-white/95 p-5 shadow-sm">
                   <p className="text-xs font-black uppercase tracking-[0.16em] text-[#173b2d]">{card.title}</p>
@@ -357,7 +452,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
               ))}
             </div>
 
-            <section className="rounded-[1.8rem] border border-[#d8d0c0] bg-white/95 p-6 shadow-sm">
+            <section data-portal-demo="timeline" className="rounded-[1.8rem] border border-[#d8d0c0] bg-white/95 p-6 shadow-sm">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#173b2d]">Shared Care Timeline</h2>
@@ -388,7 +483,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
           </section>
 
           <aside className="space-y-5">
-            <section className="rounded-[1.7rem] border border-[#d8d0c0] bg-white/95 p-5 shadow-sm">
+            <section data-portal-demo="actions" className="rounded-[1.7rem] border border-[#d8d0c0] bg-white/95 p-5 shadow-sm">
               <h2 className="text-sm font-black uppercase tracking-[0.18em] text-[#173b2d]">{copy.actionsTitle}</h2>
               <p className="mt-2 text-xs font-semibold leading-5 text-[#4d5d55]">Only the actions this portal actually needs are shown here.</p>
               <div className="mt-4 space-y-2">
@@ -406,7 +501,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
               </div>
             </section>
 
-            <section className="rounded-[1.7rem] border border-[#ddb66c]/45 bg-[#fff8e7] p-5 shadow-sm">
+            <section data-portal-demo="guardrail" className="rounded-[1.7rem] border border-[#ddb66c]/45 bg-[#fff8e7] p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#7a5b20]">Guardrail</p>
               <p className="mt-2 text-sm font-bold leading-6 text-[#5f4b1f]">This portal shows only the information and actions appropriate for {copy.accountRole.toLowerCase()} access.</p>
             </section>

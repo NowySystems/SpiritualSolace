@@ -1,10 +1,10 @@
 import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { ChurchWorkPortalDashboard } from "@/components/ChurchWorkPortalDashboard";
+import { ChurchWorkGuidedPortalDashboard } from "@/components/ChurchWorkGuidedPortalDashboard";
 
 export default function PartnerPortalPage() {
   return (
     <ChurchWorkAccessGate>
-      <ChurchWorkPortalDashboard portal="partner" />
+      <ChurchWorkGuidedPortalDashboard portal="partner" />
     </ChurchWorkAccessGate>
   );
 }

@@ -2,10 +2,26 @@ import Image from "next/image";
 import Link from "next/link";
 
 const flow = [
-  { label: "Owner View", detail: "See access, users, organizations, requests, and activity from one control layer." },
-  { label: "Facility View", detail: "Create a facility workspace, manage staff, and prepare requests for review." },
-  { label: "Partner View", detail: "Coordinate approved partner-side actions from a focused workspace." },
-  { label: "Shared Timeline", detail: "Keep approved actions and status updates organized in one place." }
+  {
+    label: "Requester Portal",
+    href: "/requester-portal",
+    detail: "A simple request status page with approved updates, consent summary, next step, and only requester-safe actions."
+  },
+  {
+    label: "Facility Portal",
+    href: "/facility-portal",
+    detail: "A facility care workspace for consent review, resident/request queue, partner sharing, and timeline updates."
+  },
+  {
+    label: "Partner Portal",
+    href: "/partner-portal",
+    detail: "A partner assignment workspace showing approved care needs, shared timeline, and report-back actions only."
+  },
+  {
+    label: "Owner/Admin",
+    href: "/pilot",
+    detail: "The broader control layer for access, organizations, roles, requests, and pilot administration."
+  }
 ];
 
 export function LandingPageV1() {
@@ -25,13 +41,13 @@ export function LandingPageV1() {
             </span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
-            <Link href="/pilot" className="hover:text-[#d7e7b7]">Pilot Access</Link>
+            <a href="#portals" className="hover:text-[#d7e7b7]">Portals</a>
             <a href="#workspace" className="hover:text-[#d7e7b7]">Workspace</a>
             <a href="#flow" className="hover:text-[#d7e7b7]">Role Views</a>
             <a href="#guardrails" className="hover:text-[#d7e7b7]">Guardrails</a>
           </nav>
-          <Link href="/pilot" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
-            Open Pilot
+          <Link href="/facility-portal" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
+            Facility Portal
           </Link>
         </div>
       </header>
@@ -57,26 +73,42 @@ export function LandingPageV1() {
                 One controlled workspace for facilities and partners.
               </h1>
               <p className="mt-7 max-w-2xl text-lg leading-8 text-[#e8efef]">
-                ChurchWork keeps spiritual support coordination in one app: access is gated, teams are organized by role, and each workspace shows only the right information for that user.
+                ChurchWork keeps spiritual support coordination in one app: each portal is simple, access is gated, and the shared timeline shows only the right information for that user.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link href="/pilot" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
-                  Open Pilot Access
+                <Link href="/requester-portal" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                  Requester Portal
                 </Link>
-                <Link href="/request-care?demo=true" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
-                  Preview Intake
+                <Link href="/facility-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                  Facility Portal
                 </Link>
-                <Link href="/care-binder?demo=true" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
-                  See Workspace Demo
+                <Link href="/partner-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                  Partner Portal
                 </Link>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="flow" className="px-6 py-16">
+        <section id="portals" className="px-6 py-16">
           <div className="mx-auto max-w-7xl">
-            <h2 className="font-serif text-4xl font-semibold tracking-[-0.03em]">One workspace with role-based views.</h2>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Role-based portals</p>
+            <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.03em]">Three simple portals. One shared care timeline.</h2>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {flow.slice(0, 3).map((step) => (
+                <Link key={step.label} href={step.href} className="rounded-3xl border border-[#ded6c8] bg-white/75 p-6 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">{step.label}</p>
+                  <p className="mt-3 text-sm leading-6 text-[#4d5d55]">{step.detail}</p>
+                  <span className="mt-5 inline-flex text-sm font-black text-[#173b2d]">Open portal →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="flow" className="px-6 pb-16">
+          <div className="mx-auto max-w-7xl">
+            <h2 className="font-serif text-4xl font-semibold tracking-[-0.03em]">Same product, different workspaces.</h2>
             <div className="mt-8 grid gap-4 md:grid-cols-4">
               {flow.map((step) => (
                 <article key={step.label} className="rounded-3xl border border-[#ded6c8] bg-white/70 p-6 shadow-sm">
@@ -93,7 +125,7 @@ export function LandingPageV1() {
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Pilot guardrails</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold">Controlled access first. Human review before anything external.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              ChurchWork remains one coordinated workspace with Owner View, Facility View, Partner View, and Requester View. Pilot access is gated, structured, and policy-aware. Public demo actions remain preview-only.
+              ChurchWork remains one coordinated workspace with requester, facility, partner, and owner/admin access. Pilot access is gated, structured, and policy-aware. Public demo actions remain preview-only.
             </p>
           </div>
         </section>

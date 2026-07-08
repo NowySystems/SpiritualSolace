@@ -25,6 +25,32 @@ a {
   text-decoration: none;
 }
 
+.churchwork-demo-active {
+  position: relative;
+  z-index: 12;
+  animation: churchwork-demo-pulse 1.7s ease-in-out infinite;
+}
+
+.churchwork-demo-active::after {
+  position: absolute;
+  inset: -0.65rem;
+  z-index: -1;
+  border: 2px solid rgba(111, 75, 180, 0.38);
+  border-radius: inherit;
+  background: radial-gradient(circle at top left, rgba(203, 187, 234, 0.32), transparent 60%);
+  content: "";
+  pointer-events: none;
+}
+
+@keyframes churchwork-demo-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(111, 75, 180, 0.32), 0 18px 55px rgba(91, 74, 131, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 0.45rem rgba(111, 75, 180, 0.12), 0 26px 75px rgba(91, 74, 131, 0.28);
+  }
+}
+
 header[data-demo-target="requester-demo-header"] a > span:first-child {
   display: inline-flex;
   width: 4.75rem;
@@ -168,21 +194,10 @@ img[src="/brand/churchwork-corner-logo.svg"] {
   text-transform: uppercase;
 }
 
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-bottom {
-  border-bottom-color: #fffaf2;
-}
-
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-top {
-  border-top-color: #fffaf2;
-}
-
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-left {
-  border-left-color: #fffaf2;
-}
-
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-right {
-  border-right-color: #fffaf2;
-}
+.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-bottom { border-bottom-color: #fffaf2; }
+.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-top { border-top-color: #fffaf2; }
+.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-left { border-left-color: #fffaf2; }
+.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-right { border-right-color: #fffaf2; }
 
 .driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-audio-panel {
   position: relative;

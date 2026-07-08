@@ -1,10 +1,10 @@
 import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { ChurchWorkPortalDashboard } from "@/components/ChurchWorkPortalDashboard";
+import { ChurchWorkGuidedPortalDashboard } from "@/components/ChurchWorkGuidedPortalDashboard";
 
 export default function RequesterPortalPage() {
   return (
     <ChurchWorkAccessGate>
-      <ChurchWorkPortalDashboard portal="requester" />
+      <ChurchWorkGuidedPortalDashboard portal="requester" />
     </ChurchWorkAccessGate>
   );
 }

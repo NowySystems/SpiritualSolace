@@ -15,7 +15,7 @@ export function LandingPageV1() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link href="/" aria-label="ChurchWork home" className="flex items-center gap-3">
             <span className="inline-flex h-[4.6rem] w-[7.8rem] items-center justify-center rounded-2xl bg-white p-2 shadow-sm">
-              <img src="/brand/churchwork-corner-logo.svg" alt="ChurchWork CW logo" className="h-full w-full object-contain" />
+              <img src="/brand/churchwork-corner-logo.png" alt="ChurchWork CW logo" className="h-full w-full object-contain" />
             </span>
             <span>
               <span className="block font-serif text-3xl font-semibold leading-none tracking-[-0.04em] text-white">

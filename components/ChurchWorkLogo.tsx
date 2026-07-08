@@ -14,7 +14,17 @@ type ChurchWorkLogoProps = {
 };
 
 export function ChurchWorkMark({ className = "h-16 w-28", title = "ChurchWork" }: ChurchWorkMarkProps) {
-  return <img src="/brand/churchwork-corner-logo.svg" alt={title} className={["object-contain", className].join(" ")} />;
+  return (
+    <img
+      src="/brand/churchwork-corner-logo.png"
+      alt={title}
+      className={["object-contain", className].join(" ")}
+      onError={(event) => {
+        event.currentTarget.onerror = null;
+        event.currentTarget.src = "/brand/churchwork-corner-logo.svg";
+      }}
+    />
+  );
 }
 
 export function ChurchWorkLogo({

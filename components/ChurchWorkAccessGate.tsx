@@ -69,7 +69,7 @@ export function ChurchWorkAccessGate({ children }: ChurchWorkAccessGateProps) {
           <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-[#789052]">ChurchWork</p>
           <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em] text-[#102b3a]">Private pilot access</h1>
           <p className="mt-4 text-sm leading-6 text-[#4d5d55]">
-            Enter the pilot access code to continue into the Care Binder experience.
+            Enter the pilot access code to continue into the ChurchWork portal experience.
           </p>
         </div>
 

@@ -7,6 +7,7 @@ type PortalKind = "requester" | "facility" | "partner";
 type FieldType = "select" | "date" | "checkbox";
 type TimelineTone = "teal" | "gold" | "blue" | "green" | "clay" | "stone";
 type DemoHighlight = "title" | "context" | "summary" | "details" | "timeline" | "actions" | "visibility" | "demo" | null;
+type FormValue = string | boolean;
 
 type TimelineEvent = {
   id: string;
@@ -61,6 +62,19 @@ type PortalCopy = {
   actionsTitle: string;
   visibilitySummary: string;
   actions: PortalAction[];
+};
+
+type DemoStep = {
+  id: string;
+  portal: PortalKind;
+  label: string;
+  narration: string;
+  highlight: DemoHighlight;
+  actionId?: string;
+  activeField?: string;
+  values?: Record<string, FormValue>;
+  status?: Partial<Record<PortalKind, string>>;
+  subjectDetail?: string;
 };
 
 type ChurchWorkPortalDashboardProps = {
@@ -347,18 +361,315 @@ const portalCopy: Record<PortalKind, PortalCopy> = {
   }
 };
 
+const demoTimelineEvents: { step: number; event: TimelineEvent }[] = [
+  {
+    step: 6,
+    event: {
+      id: "demo-request-submitted",
+      date: "Today",
+      time: "Step 6",
+      title: "Care request submitted",
+      detail: "Sarah submitted a structured request: Person Jane Doe · Relationship Daughter · Request Family Encouragement & Prayer Support · Contact Text messages.",
+      actor: "Sarah K. (Daughter)",
+      badge: "Submitted",
+      tone: "green",
+      requesterVisible: true,
+      partnerVisible: false
+    }
+  },
+  {
+    step: 8,
+    event: {
+      id: "demo-facility-reviewed",
+      date: "Today",
+      time: "Step 8",
+      title: "Request reviewed by facility",
+      detail: "Morning Pointe reviewed the request and confirmed it is eligible for spiritual-care workflow.",
+      actor: "Morning Pointe Franklin",
+      badge: "Reviewed",
+      tone: "blue",
+      requesterVisible: true,
+      partnerVisible: false
+    }
+  },
+  {
+    step: 10,
+    event: {
+      id: "demo-consent-confirmed",
+      date: "Today",
+      time: "Step 10",
+      title: "Consent confirmed by facility",
+      detail: "Consent source: POA / family contact · Approved visibility: Requester + approved partner · Consent reviewed before sharing.",
+      actor: "Morning Pointe Franklin",
+      badge: "Consent",
+      tone: "green",
+      requesterVisible: true,
+      partnerVisible: true
+    }
+  },
+  {
+    step: 12,
+    event: {
+      id: "demo-shared-partner",
+      date: "Today",
+      time: "Step 12",
+      title: "Request shared with partner",
+      detail: "Morning Pointe shared a limited spiritual-care summary with Morning Pointe Church.",
+      actor: "Morning Pointe Franklin",
+      badge: "Shared",
+      tone: "teal",
+      requesterVisible: true,
+      partnerVisible: true
+    }
+  },
+  {
+    step: 14,
+    event: {
+      id: "demo-assignment-accepted",
+      date: "Today",
+      time: "Step 14",
+      title: "Assignment accepted",
+      detail: "Morning Pointe Church accepted the assignment scope: Visit and prayer support.",
+      actor: "Morning Pointe Church",
+      badge: "Accepted",
+      tone: "green",
+      requesterVisible: false,
+      partnerVisible: true
+    }
+  },
+  {
+    step: 16,
+    event: {
+      id: "demo-prayer-focus",
+      date: "Today",
+      time: "Step 16",
+      title: "Prayer focus selected",
+      detail: "Prayer focus: Comfort and Peace · Care approach: Brief visit. No custom prayer text was typed or sent.",
+      actor: "Morning Pointe Church",
+      badge: "Prayer Focus",
+      tone: "teal",
+      requesterVisible: false,
+      partnerVisible: true
+    }
+  },
+  {
+    step: 18,
+    event: {
+      id: "demo-outcome-logged",
+      date: "Today",
+      time: "Step 18",
+      title: "Partner care outcome logged",
+      detail: "Care outcome: Prayer support offered · Next step: No further action today · Shared with facility.",
+      actor: "Morning Pointe Church",
+      badge: "Outcome",
+      tone: "green",
+      requesterVisible: true,
+      partnerVisible: true
+    }
+  }
+];
+
 const initialTimeline: TimelineEvent[] = [
   {
     id: "request-started",
     date: "Today",
     time: "Ready",
     title: "Demo ready",
-    detail: "Start the end-to-end demo to watch a requester, facility, and partner complete one shared care workflow.",
+    detail: "Start the guided demo. Use Next to move one step at a time through requester, facility, and partner workflow.",
     actor: "ChurchWork",
     badge: "Ready",
     tone: "stone",
     requesterVisible: true,
     partnerVisible: true
+  }
+];
+
+const demoSteps: DemoStep[] = [
+  {
+    id: "intro",
+    portal: "requester",
+    label: "Step 1 of 20 · Start with the requester",
+    narration: "We start in the requester portal. This is not an open chat box. Sarah will submit a care request using controlled choices only.",
+    highlight: "title",
+    subjectDetail: "Sarah uses preselected choices only. No open text request is needed to start a spiritual-care workflow.",
+    status: { requester: "Ready to Submit", facility: "Awaiting Review", partner: "Waiting for Assignment" }
+  },
+  {
+    id: "requester-person",
+    portal: "requester",
+    label: "Step 2 of 20 · Select the person",
+    narration: "The request form opens. The first field is who this is for. Sarah selects Jane Doe from the approved list.",
+    highlight: "actions",
+    actionId: "requester-submit-care-request",
+    activeField: "person",
+    values: { person: "Jane Doe" }
+  },
+  {
+    id: "requester-relationship",
+    portal: "requester",
+    label: "Step 3 of 20 · Choose relationship",
+    narration: "Next, Sarah chooses her relationship. This is a fixed dropdown. She selects Daughter.",
+    highlight: "actions",
+    actionId: "requester-submit-care-request",
+    activeField: "relationship",
+    values: { person: "Jane Doe", relationship: "Daughter" }
+  },
+  {
+    id: "requester-type",
+    portal: "requester",
+    label: "Step 4 of 20 · Choose request type",
+    narration: "Now she chooses the request type. She selects Family Encouragement and Prayer Support.",
+    highlight: "actions",
+    actionId: "requester-submit-care-request",
+    activeField: "requestType",
+    values: { person: "Jane Doe", relationship: "Daughter", requestType: "Family Encouragement & Prayer Support" }
+  },
+  {
+    id: "requester-focus",
+    portal: "requester",
+    label: "Step 5 of 20 · Choose support focus",
+    narration: "The support focus is also structured. Sarah selects Prayer support and text messages for updates.",
+    highlight: "actions",
+    actionId: "requester-submit-care-request",
+    activeField: "supportFocus",
+    values: { person: "Jane Doe", relationship: "Daughter", requestType: "Family Encouragement & Prayer Support", supportFocus: "Prayer support", contactPreference: "Text messages" }
+  },
+  {
+    id: "requester-ack",
+    portal: "requester",
+    label: "Step 6 of 20 · Confirm safe boundary",
+    narration: "Before submitting, Sarah confirms this is spiritual-care coordination only and does not include medical details.",
+    highlight: "actions",
+    actionId: "requester-submit-care-request",
+    activeField: "acknowledgeNoMedical",
+    values: { person: "Jane Doe", relationship: "Daughter", requestType: "Family Encouragement & Prayer Support", supportFocus: "Prayer support", contactPreference: "Text messages", acknowledgeNoMedical: true }
+  },
+  {
+    id: "requester-submitted",
+    portal: "requester",
+    label: "Step 7 of 20 · Request enters timeline",
+    narration: "The request is submitted and appears on the requester timeline. It is not shared with a partner yet.",
+    highlight: "timeline",
+    status: { requester: "Submitted" }
+  },
+  {
+    id: "facility-open",
+    portal: "facility",
+    label: "Step 8 of 20 · Facility receives request",
+    narration: "Now the facility portal receives Jane Doe's request in the queue for review.",
+    highlight: "context",
+    subjectDetail: portalCopy.facility.primaryCardDetail,
+    status: { facility: "Awaiting Review" }
+  },
+  {
+    id: "facility-review",
+    portal: "facility",
+    label: "Step 9 of 20 · Facility reviews request",
+    narration: "The facility reviews the request and confirms it is eligible for spiritual-care workflow.",
+    highlight: "actions",
+    actionId: "facility-review-request",
+    activeField: "facilityDisposition",
+    values: { requestType: "Family Encouragement & Prayer Support", facilityDisposition: "Eligible for spiritual-care workflow" }
+  },
+  {
+    id: "facility-review-timeline",
+    portal: "facility",
+    label: "Step 10 of 20 · Review is recorded",
+    narration: "The facility review is now recorded on the shared timeline.",
+    highlight: "timeline",
+    status: { facility: "Facility Reviewed" }
+  },
+  {
+    id: "facility-consent",
+    portal: "facility",
+    label: "Step 11 of 20 · Confirm consent",
+    narration: "Next, the facility confirms consent and chooses the visibility level: requester plus approved partner.",
+    highlight: "actions",
+    actionId: "facility-confirm-consent",
+    activeField: "visibility",
+    values: { consentSource: "POA / family contact", visibility: "Requester + approved partner", confirmed: true }
+  },
+  {
+    id: "facility-consent-timeline",
+    portal: "facility",
+    label: "Step 12 of 20 · Consent is recorded",
+    narration: "Consent is now documented before anything is shared outside the facility workflow.",
+    highlight: "timeline",
+    status: { facility: "Consent Confirmed" }
+  },
+  {
+    id: "facility-share",
+    portal: "facility",
+    label: "Step 13 of 20 · Share approved context",
+    narration: "The facility shares only a limited spiritual-care summary with Morning Pointe Church. No medical details are shared.",
+    highlight: "actions",
+    actionId: "facility-share-partner",
+    activeField: "sharingLevel",
+    values: { partner: "Morning Pointe Church", sharingLevel: "Limited spiritual-care summary", approved: true }
+  },
+  {
+    id: "partner-open",
+    portal: "partner",
+    label: "Step 14 of 20 · Partner receives assignment",
+    narration: "Now the partner portal receives the approved assignment. The partner sees only the approved care need.",
+    highlight: "context",
+    subjectDetail: portalCopy.partner.primaryCardDetail,
+    status: { partner: "New Assignment", facility: "Shared With Partner" }
+  },
+  {
+    id: "partner-accept",
+    portal: "partner",
+    label: "Step 15 of 20 · Accept assignment",
+    narration: "The partner accepts responsibility for the approved care action.",
+    highlight: "actions",
+    actionId: "partner-accept-assignment",
+    activeField: "assignmentScope",
+    values: { assignmentScope: "Visit and prayer support", accepted: true }
+  },
+  {
+    id: "partner-accepted-timeline",
+    portal: "partner",
+    label: "Step 16 of 20 · Assignment is recorded",
+    narration: "The accepted assignment is recorded for the partner and facility. The requester does not need to see every internal partner step.",
+    highlight: "timeline",
+    status: { partner: "Assignment Accepted" }
+  },
+  {
+    id: "partner-prayer-focus",
+    portal: "partner",
+    label: "Step 17 of 20 · Select prayer focus",
+    narration: "The partner does not type and send a custom prayer. The partner selects an approved prayer focus: Comfort and Peace.",
+    highlight: "actions",
+    actionId: "partner-select-prayer-focus",
+    activeField: "prayerFocus",
+    values: { prayerFocus: "Comfort and Peace", careApproach: "Brief visit" }
+  },
+  {
+    id: "partner-outcome",
+    portal: "partner",
+    label: "Step 18 of 20 · Log structured outcome",
+    narration: "After the care action, the partner logs a structured outcome: prayer support offered and no further action today.",
+    highlight: "actions",
+    actionId: "partner-log-outcome",
+    activeField: "outcome",
+    values: { outcome: "Prayer support offered", nextStep: "No further action today", shareWithFacility: true }
+  },
+  {
+    id: "partner-outcome-recorded",
+    portal: "partner",
+    label: "Step 19 of 20 · Outcome reaches timeline",
+    narration: "The partner outcome is recorded on the timeline and shared back to the facility.",
+    highlight: "timeline",
+    status: { partner: "Outcome Logged" }
+  },
+  {
+    id: "requester-final",
+    portal: "requester",
+    label: "Step 20 of 20 · Requester sees approved update",
+    narration: "Back in the requester portal, Sarah sees only approved status updates. Internal notes and partner-only workflow remain hidden.",
+    highlight: "timeline",
+    status: { requester: "Care Outcome Logged" },
+    subjectDetail: "Sarah now sees the approved care outcome and next step without seeing facility-only notes or partner-only workflow details."
   }
 ];
 
@@ -381,39 +692,78 @@ function visibleForPortal(event: TimelineEvent, portal: PortalKind) {
   return event.requesterVisible;
 }
 
-function fieldValue(formData: FormData, field: ActionField) {
-  const value = formData.get(field.name);
-  if (field.type === "checkbox") return value ? "Confirmed" : "Not confirmed";
-  return String(value ?? field.defaultValue ?? "").trim();
+function defaultValuesForAction(action: PortalAction) {
+  return action.fields.reduce<Record<string, FormValue>>((values, field) => {
+    values[field.name] = field.type === "checkbox" ? false : field.defaultValue ?? field.options?.[0] ?? "";
+    return values;
+  }, {});
 }
 
-function buildEventDetail(action: PortalAction, formData: FormData) {
+function buildEventDetail(action: PortalAction, values: Record<string, FormValue>) {
   const details = action.fields
     .filter((field) => field.type !== "checkbox")
-    .map((field) => `${field.label}: ${fieldValue(formData, field)}`)
+    .map((field) => `${field.label}: ${String(values[field.name] ?? field.defaultValue ?? "")}`)
     .filter((line) => !line.endsWith(": "));
 
   if (!details.length) return action.eventDetail;
   return `${action.eventDetail} ${details.join(" · ")}.`;
 }
 
-function renderField(field: ActionField) {
+function chooseFriendlyEnglishVoice() {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return undefined;
+
+  const voices = window.speechSynthesis.getVoices();
+  const englishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith("en"));
+  return (
+    englishVoices.find((voice) => /samantha|ava|jenny|aria|emma|natural|female|warm/i.test(`${voice.name} ${voice.voiceURI}`)) ??
+    englishVoices.find((voice) => voice.lang.toLowerCase().startsWith("en-us")) ??
+    englishVoices[0]
+  );
+}
+
+function speakStep(text: string) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
+
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.lang = "en-US";
+  utterance.rate = 0.94;
+  utterance.pitch = 1.02;
+  utterance.volume = 0.86;
+  const voice = chooseFriendlyEnglishVoice();
+  if (voice) utterance.voice = voice;
+  window.speechSynthesis.speak(utterance);
+}
+
+function actionFor(portal: PortalKind, actionId?: string) {
+  if (!actionId) return null;
+  return portalCopy[portal].actions.find((action) => action.id === actionId) ?? null;
+}
+
+function renderField(
+  field: ActionField,
+  value: FormValue,
+  onChange: (name: string, value: FormValue) => void,
+  isActive: boolean
+) {
+  const activeClasses = isActive ? "border-[#8f7bb8] bg-[#f4effc] ring-4 ring-[#cbbbea]" : "border-[#d8d0c0] bg-white";
+
   if (field.type === "checkbox") {
     return (
-      <label key={field.name} className="flex gap-3 rounded-2xl border border-[#d8d0c0] bg-[#fff8e7] p-4 text-sm font-bold leading-6 text-[#5f4b1f]">
-        <input name={field.name} type="checkbox" required={field.required} className="mt-1 h-5 w-5" />
+      <label key={field.name} data-demo-field={field.name} className={`flex gap-3 rounded-2xl border p-4 text-sm font-bold leading-6 text-[#5f4b1f] transition ${activeClasses}`}>
+        <input name={field.name} type="checkbox" checked={Boolean(value)} onChange={(event) => onChange(field.name, event.target.checked)} required={field.required} className="mt-1 h-5 w-5" />
         <span>{field.label}</span>
       </label>
     );
   }
 
   return (
-    <label key={field.name} className="block text-sm font-bold text-[#173b2d]">
+    <label key={field.name} data-demo-field={field.name} className={`block rounded-2xl border p-4 text-sm font-bold text-[#173b2d] transition ${activeClasses}`}>
       {field.label}
       {field.type === "date" ? (
-        <input name={field.name} type="date" required={field.required} defaultValue={field.defaultValue} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#102b3a] outline-none ring-[#86a45f]/25 focus:border-[#86a45f] focus:ring-4" />
+        <input name={field.name} type="date" required={field.required} value={String(value ?? field.defaultValue ?? "")} onChange={(event) => onChange(field.name, event.target.value)} className="mt-2 w-full rounded-xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#102b3a] outline-none ring-[#86a45f]/25 focus:border-[#86a45f] focus:ring-4" />
       ) : (
-        <select name={field.name} required={field.required} defaultValue={field.defaultValue} className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#102b3a] outline-none ring-[#86a45f]/25 focus:border-[#86a45f] focus:ring-4">
+        <select name={field.name} required={field.required} value={String(value ?? field.defaultValue ?? "")} onChange={(event) => onChange(field.name, event.target.value)} className="mt-2 w-full rounded-xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm text-[#102b3a] outline-none ring-[#86a45f]/25 focus:border-[#86a45f] focus:ring-4">
           {(field.options ?? []).map((option) => (
             <option key={option} value={option}>{option}</option>
           ))}
@@ -423,140 +773,109 @@ function renderField(field: ActionField) {
   );
 }
 
-function wait(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-function speakEnglish(text: string) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = "en-US";
-  utterance.rate = 0.93;
-  utterance.pitch = 1.02;
-  utterance.volume = 0.9;
-  const voices = window.speechSynthesis.getVoices();
-  const englishVoice = voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us")) ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en"));
-  if (englishVoice) utterance.voice = englishVoice;
-  window.speechSynthesis.speak(utterance);
-}
-
-function selectAction(portal: PortalKind, actionId: string) {
-  return portalCopy[portal].actions.find((action) => action.id === actionId) ?? portalCopy[portal].actions[0];
-}
-
 export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardProps) {
-  const [timeline, setTimeline] = useState(initialTimeline);
-  const [activeAction, setActiveAction] = useState<PortalAction | null>(null);
+  const [manualTimeline, setManualTimeline] = useState<TimelineEvent[]>([]);
   const [displayPortal, setDisplayPortal] = useState<PortalKind>(portal);
   const [statusLabels, setStatusLabels] = useState<Record<PortalKind, string>>({ requester: portalCopy.requester.statusLabel, facility: portalCopy.facility.statusLabel, partner: portalCopy.partner.statusLabel });
   const [subjectName, setSubjectName] = useState("Jane Doe");
   const [subjectMeta, setSubjectMeta] = useState("Room 104B · Family Encouragement & Prayer Support");
   const [subjectDetail, setSubjectDetail] = useState(portalCopy[portal].primaryCardDetail);
-  const [demoCaption, setDemoCaption] = useState("");
-  const [demoStepLabel, setDemoStepLabel] = useState("");
-  const [demoHighlight, setDemoHighlight] = useState<DemoHighlight>(null);
-  const [isDemoRunning, setDemoRunning] = useState(false);
+  const [activeAction, setActiveAction] = useState<PortalAction | null>(null);
+  const [fieldValues, setFieldValues] = useState<Record<string, FormValue>>({});
+  const [demoIndex, setDemoIndex] = useState<number | null>(null);
+  const [demoRunning, setDemoRunning] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [activeFieldName, setActiveFieldName] = useState<string | null>(null);
 
+  const step = demoIndex === null ? null : demoSteps[demoIndex];
   const copy = portalCopy[displayPortal];
-  const visibleTimeline = useMemo(() => timeline.filter((event) => visibleForPortal(event, displayPortal)), [timeline, displayPortal]);
+  const demoTimeline = demoIndex === null ? [] : demoTimelineEvents.filter((item) => item.step <= demoIndex).map((item) => item.event);
+  const visibleTimeline = useMemo(() => [...manualTimeline, ...demoTimeline, ...initialTimeline].filter((event) => visibleForPortal(event, displayPortal)), [manualTimeline, demoTimeline, displayPortal]);
 
   function ringFor(target: DemoHighlight) {
-    return demoHighlight === target ? "ring-4 ring-[#cbbbea] ring-offset-4 ring-offset-[#f7f3ea]" : "";
+    return step?.highlight === target ? "ring-4 ring-[#cbbbea] ring-offset-4 ring-offset-[#f7f3ea]" : "";
   }
 
-  function addTimelineEvent(portalForAction: PortalKind, action: PortalAction, detailOverride?: string) {
-    const actor = portalCopy[portalForAction].accountName;
-    const newEvent: TimelineEvent = {
-      id: `${portalForAction}-${action.id}-${Date.now()}`,
-      date: "Today",
-      time: "Now",
-      title: action.eventTitle,
-      detail: detailOverride ?? action.eventDetail,
-      actor,
-      badge: action.label,
-      tone: action.tone,
-      requesterVisible: action.requesterVisible,
-      partnerVisible: action.partnerVisible
-    };
+  function applyDemoStep(index: number, shouldSpeak = true) {
+    const nextStep = demoSteps[index];
+    const nextAction = actionFor(nextStep.portal, nextStep.actionId);
+    const baseStatus = { requester: portalCopy.requester.statusLabel, facility: portalCopy.facility.statusLabel, partner: portalCopy.partner.statusLabel };
+    const statusFromSteps = demoSteps.slice(0, index + 1).reduce<Partial<Record<PortalKind, string>>>((statuses, item) => ({ ...statuses, ...item.status }), {});
 
-    setStatusLabels((labels) => ({ ...labels, [portalForAction]: action.statusAfter }));
-    setTimeline((items) => [newEvent, ...items]);
-  }
+    setDisplayPortal(nextStep.portal);
+    setDemoIndex(index);
+    setStatusLabels({ ...baseStatus, ...statusFromSteps });
+    setSubjectName("Jane Doe");
+    setSubjectMeta(nextStep.portal === "partner" ? portalCopy.partner.primaryCardMeta : nextStep.portal === "facility" ? portalCopy.facility.primaryCardMeta : "Room 104B · Family Encouragement & Prayer Support");
+    setSubjectDetail(nextStep.subjectDetail ?? portalCopy[nextStep.portal].primaryCardDetail);
+    setActiveFieldName(nextStep.activeField ?? null);
 
-  async function typeDemoLine(text: string, stepLabel: string, highlight: DemoHighlight) {
-    setDemoStepLabel(stepLabel);
-    setDemoHighlight(highlight);
-    setDemoCaption("");
-    speakEnglish(text);
-    for (let index = 0; index <= text.length; index += 1) {
-      setDemoCaption(text.slice(0, index));
-      await wait(16);
+    if (nextAction) {
+      setActiveAction(nextAction);
+      setFieldValues({ ...defaultValuesForAction(nextAction), ...(nextStep.values ?? {}) });
+    } else {
+      setActiveAction(null);
+      setFieldValues({});
     }
-    await wait(1000);
+
+    if (shouldSpeak && voiceEnabled) speakStep(nextStep.narration);
   }
 
-  async function startEndToEndDemo() {
-    if (isDemoRunning) return;
+  function startGuidedDemo() {
     setDemoRunning(true);
+    setManualTimeline([]);
+    applyDemoStep(0);
+  }
+
+  function stopGuidedDemo() {
+    window.speechSynthesis?.cancel();
+    setDemoRunning(false);
+    setDemoIndex(null);
     setActiveAction(null);
-    setTimeline(initialTimeline);
-    setStatusLabels({ requester: "Ready to Submit", facility: "Awaiting Review", partner: "Waiting for Assignment" });
+    setActiveFieldName(null);
+  }
 
-    try {
-      setDisplayPortal("requester");
-      setSubjectName("Jane Doe");
-      setSubjectMeta("Room 104B · Family Encouragement & Prayer Support");
-      setSubjectDetail("Sarah uses preselected choices only. No open text request is needed to start a spiritual-care workflow.");
-      await typeDemoLine("Requester portal. Sarah selects Jane Doe, chooses Daughter, selects Family Encouragement and Prayer Support, chooses text messages, and confirms this is spiritual-care coordination only.", "Step 1 · Requester submits", "actions");
-      addTimelineEvent("requester", selectAction("requester", "requester-submit-care-request"), "Sarah submitted a structured request: Person Jane Doe · Relationship Daughter · Request Family Encouragement & Prayer Support · Contact Text messages.");
+  function moveDemo(delta: number) {
+    if (demoIndex === null) return;
+    const nextIndex = Math.max(0, Math.min(demoSteps.length - 1, demoIndex + delta));
+    applyDemoStep(nextIndex);
+  }
 
-      await typeDemoLine("The request is now visible to the requester as submitted, but it is not sent to a partner yet. The facility must review it first.", "Step 2 · Timeline records request", "timeline");
+  function replayVoice() {
+    if (step && voiceEnabled) speakStep(step.narration);
+  }
 
-      setDisplayPortal("facility");
-      setSubjectDetail(portalCopy.facility.primaryCardDetail);
-      await typeDemoLine("Facility portal. Morning Pointe reviews Jane Doe's request and moves it into the facility workflow.", "Step 3 · Facility reviews", "actions");
-      addTimelineEvent("facility", selectAction("facility", "facility-review-request"), "Morning Pointe reviewed the request and confirmed it is eligible for spiritual-care workflow.");
-
-      await typeDemoLine("The facility confirms consent and chooses the visibility level: requester plus approved partner.", "Step 4 · Consent confirmed", "actions");
-      addTimelineEvent("facility", selectAction("facility", "facility-confirm-consent"), "Consent source: POA / family contact · Approved visibility: Requester + approved partner · Consent reviewed before sharing.");
-
-      await typeDemoLine("The facility shares only a limited spiritual-care summary with Morning Pointe Church. Medical details and internal notes stay hidden.", "Step 5 · Partner sharing", "visibility");
-      addTimelineEvent("facility", selectAction("facility", "facility-share-partner"), "Morning Pointe shared: Limited spiritual-care summary · Approved partner: Morning Pointe Church.");
-
-      setDisplayPortal("partner");
-      setSubjectDetail(portalCopy.partner.primaryCardDetail);
-      await typeDemoLine("Partner portal. Morning Pointe Church receives the approved assignment and accepts responsibility for the care action.", "Step 6 · Partner accepts", "actions");
-      addTimelineEvent("partner", selectAction("partner", "partner-accept-assignment"), "Morning Pointe Church accepted the assignment scope: Visit and prayer support.");
-
-      await typeDemoLine("The partner does not type and send a custom prayer. The partner selects an approved prayer focus: Comfort and Peace.", "Step 7 · Prayer focus selected", "actions");
-      addTimelineEvent("partner", selectAction("partner", "partner-select-prayer-focus"), "Prayer focus: Comfort and Peace · Care approach: Brief visit.");
-
-      await typeDemoLine("After the visit, the partner logs a structured outcome back to the facility: prayer support offered, no further action today.", "Step 8 · Outcome logged", "actions");
-      addTimelineEvent("partner", selectAction("partner", "partner-log-outcome"), "Care outcome: Prayer support offered · Next step: No further action today · Shared with facility.");
-
-      setDisplayPortal("requester");
-      await typeDemoLine("Back on the requester portal, Sarah sees only the approved status updates. Internal notes and partner-only details are not visible.", "Step 9 · Requester sees approved updates", "timeline");
-      setStatusLabels((labels) => ({ ...labels, requester: "Care Outcome Logged" }));
-
-      await typeDemoLine("End-to-end demo complete. One structured request moved from requester, to facility review, to approved partner care, and back into the shared timeline.", "Complete", "demo");
-    } finally {
-      window.speechSynthesis?.cancel();
-      setDemoRunning(false);
-      setDemoHighlight(null);
-    }
+  function openManualAction(action: PortalAction) {
+    setDemoRunning(false);
+    setDemoIndex(null);
+    setActiveFieldName(null);
+    setActiveAction(action);
+    setFieldValues(defaultValuesForAction(action));
   }
 
   function handleActionSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!activeAction) return;
 
-    const formData = new FormData(event.currentTarget);
-    addTimelineEvent(displayPortal, activeAction, buildEventDetail(activeAction, formData));
+    const newEvent: TimelineEvent = {
+      id: `${displayPortal}-${activeAction.id}-${Date.now()}`,
+      date: "Today",
+      time: "Now",
+      title: activeAction.eventTitle,
+      detail: buildEventDetail(activeAction, fieldValues),
+      actor: copy.accountName,
+      badge: activeAction.label,
+      tone: activeAction.tone,
+      requesterVisible: activeAction.requesterVisible,
+      partnerVisible: activeAction.partnerVisible
+    };
+
+    setManualTimeline((items) => [newEvent, ...items]);
+    setStatusLabels((labels) => ({ ...labels, [displayPortal]: activeAction.statusAfter }));
 
     if (activeAction.id === "requester-submit-care-request") {
-      const person = String(formData.get("person") ?? "Jane Doe");
-      const requestType = String(formData.get("requestType") ?? "Family Encouragement & Prayer Support");
+      const person = String(fieldValues.person ?? "Jane Doe");
+      const requestType = String(fieldValues.requestType ?? "Family Encouragement & Prayer Support");
       setSubjectName(person);
       setSubjectMeta(`Room 104B · ${requestType}`);
       setSubjectDetail("Structured spiritual-care request submitted through the requester portal. The facility will review consent, visibility, and the next safe care step.");
@@ -580,12 +899,12 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
           </Link>
 
           <div className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-[#edf5e6]">
-            Structured choices · role-safe timeline · English voice demo
+            Structured choices · role-safe timeline · step-by-step demo
           </div>
 
           <div className="flex flex-wrap items-center gap-3 text-sm">
-            <button type="button" disabled={isDemoRunning} onClick={() => void startEndToEndDemo()} className="rounded-full bg-[#cbbbea] px-4 py-2 text-xs font-black text-[#16243a] shadow-sm hover:bg-[#d8cff1] disabled:cursor-not-allowed disabled:opacity-60">
-              {isDemoRunning ? "Demo Running…" : "Start End-to-End Demo"}
+            <button type="button" onClick={startGuidedDemo} className="rounded-full bg-[#cbbbea] px-4 py-2 text-xs font-black text-[#16243a] shadow-sm hover:bg-[#d8cff1]">
+              Start Guided Demo
             </button>
             <div className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-right">
               <p className="font-black">{copy.accountName}</p>
@@ -595,11 +914,32 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
         </div>
       </header>
 
-      {demoCaption ? (
+      {demoRunning && step ? (
         <section className={`mx-auto mt-5 max-w-[92rem] px-5 ${ringFor("demo")}`} aria-live="polite">
           <div className="rounded-[1.5rem] border border-[#cbbbea] bg-[#f4effc] p-5 shadow-lg shadow-[#5b4a83]/10">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#5b4a83]">{demoStepLabel}</p>
-            <p className="mt-2 text-lg font-black leading-7 text-[#16243a]">{demoCaption}<span className="animate-pulse">|</span></p>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#5b4a83]">{step.label}</p>
+                <p className="mt-2 max-w-4xl text-base font-black leading-7 text-[#16243a]">{step.narration}</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setVoiceEnabled((value) => !value)} className="rounded-full border border-[#cbbbea] bg-white px-4 py-2 text-xs font-black text-[#5b4a83]">
+                  Voice {voiceEnabled ? "On" : "Off"}
+                </button>
+                <button type="button" onClick={replayVoice} className="rounded-full border border-[#cbbbea] bg-white px-4 py-2 text-xs font-black text-[#5b4a83]">
+                  Replay Voice
+                </button>
+                <button type="button" onClick={() => moveDemo(-1)} disabled={demoIndex === 0} className="rounded-full border border-[#cbbbea] bg-white px-4 py-2 text-xs font-black text-[#5b4a83] disabled:cursor-not-allowed disabled:opacity-50">
+                  Back
+                </button>
+                <button type="button" onClick={() => moveDemo(1)} disabled={demoIndex === demoSteps.length - 1} className="rounded-full bg-[#173b2d] px-4 py-2 text-xs font-black text-white disabled:cursor-not-allowed disabled:opacity-50">
+                  Next
+                </button>
+                <button type="button" onClick={stopGuidedDemo} className="rounded-full border border-[#d8d0c0] bg-white px-4 py-2 text-xs font-black text-[#5f4b1f]">
+                  End
+                </button>
+              </div>
+            </div>
           </div>
         </section>
       ) : null}
@@ -711,7 +1051,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
                   <button
                     key={action.id}
                     type="button"
-                    onClick={() => setActiveAction(action)}
+                    onClick={() => openManualAction(action)}
                     className={`w-full rounded-2xl border px-4 py-4 text-left transition ${index === 0 ? "border-[#173b2d] bg-[#173b2d] text-white shadow-md hover:bg-[#102b3a]" : "border-[#d8d0c0] bg-white text-[#102b3a] hover:border-[#86a45f] hover:bg-[#f8fbf8]"}`}
                   >
                     <span className="block text-sm font-black">{action.label}</span>
@@ -744,7 +1084,7 @@ export function ChurchWorkPortalDashboard({ portal }: ChurchWorkPortalDashboardP
             </div>
 
             <div className="mt-6 grid gap-4">
-              {activeAction.fields.map((field) => renderField(field))}
+              {activeAction.fields.map((field) => renderField(field, fieldValues[field.name], (name, value) => setFieldValues((values) => ({ ...values, [name]: value })), activeFieldName === field.name))}
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

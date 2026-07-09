@@ -30,6 +30,7 @@ type FacilityReviewRequest = {
 
 type FacilityReviewSnapshot = {
   can_review: boolean;
+  can_assign_to_hope: boolean;
   facility_id: string;
   facility_name: string;
   requests: FacilityReviewRequest[];
@@ -63,6 +64,7 @@ function formatDate(value: string) {
 function statusTone(status: string) {
   if (status === "new") return "bg-[#fff8e7] text-[#5f4b1f] border-[#ddb66c]/45";
   if (status === "partner_ready") return "bg-[#f0f5e8] text-[#173b2d] border-[#86a45f]/45";
+  if (status === "partner_assigned") return "bg-[#edf5e6] text-[#173b2d] border-[#86a45f]/45";
   if (status === "paused") return "bg-[#f7f3ea] text-[#4d5d55] border-[#d8d0c0]";
   return "bg-white text-[#173b2d] border-[#d8d0c0]";
 }
@@ -118,6 +120,27 @@ export function GrandviewFacilityReviewQueue() {
     await loadQueue();
   }
 
+  async function handleHopeAssignment(requestId: string) {
+    setIsBusy(true);
+    setActiveRequestId(requestId);
+    setStatus("Assigning request to Hope Church...");
+
+    const { error } = await supabase.rpc("assign_grandview_request_to_hope", {
+      p_care_request_id: requestId
+    });
+
+    if (error) {
+      setStatus(error.message);
+      setIsBusy(false);
+      setActiveRequestId(null);
+      return;
+    }
+
+    setStatus("Request assigned to Hope Church.");
+    setActiveRequestId(null);
+    await loadQueue();
+  }
+
   useEffect(() => {
     void loadQueue();
   }, []);
@@ -145,7 +168,7 @@ export function GrandviewFacilityReviewQueue() {
       </div>
 
       <div className="mt-6 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-        Facility review can start review, mark a request ready for later partner assignment, pause, or close. This does not assign Hope Church yet.
+        Facility review can start review, mark a request ready for later partner assignment, pause, or close. Owner/admin users can assign partner-ready requests to Hope Church after human review.
       </div>
 
       <div className="mt-6 rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-4 text-sm font-semibold text-[#173b2d]">
@@ -191,6 +214,16 @@ export function GrandviewFacilityReviewQueue() {
                     {item.label}
                   </button>
                 ))}
+                {snapshot?.can_assign_to_hope && request.status === "partner_ready" ? (
+                  <button
+                    type="button"
+                    onClick={() => handleHopeAssignment(request.id)}
+                    disabled={isBusy || activeRequestId === request.id}
+                    className="rounded-xl border border-[#86a45f]/30 bg-[#173b2d] px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-[#102b3a] disabled:opacity-60"
+                  >
+                    Assign to Hope
+                  </button>
+                ) : null}
               </div>
             </div>
 

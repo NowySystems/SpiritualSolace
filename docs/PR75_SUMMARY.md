@@ -31,7 +31,7 @@ Adds `public.assign_grandview_request_to_hope(uuid)`:
 - Creates or refreshes a Hope Church partner assignment.
 - Updates the care request status to `partner_assigned`.
 - Inserts a `partner_assigned` timeline event with:
-  - `visibility = 'partner'`,
+  - `visibility = 'shared'`,
   - `sharing_level = 'partner_safe'`,
   - `non_medical_note = null`.
 - Writes an audit log record.

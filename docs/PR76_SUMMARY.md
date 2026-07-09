@@ -11,13 +11,15 @@ The guided demo needed stronger visual emphasis before showing it to pilot stake
 - active forms were trapped inside the right rail and created nested scrollbars,
 - the viewer could lose track of where they were in the story,
 - the demo stopped at the ledger too often instead of keeping the story moving,
-- centered forms still felt like squeezed sidebar content instead of a full demo stage.
+- centered forms still felt like squeezed sidebar content instead of a full demo stage,
+- showing the full form at once still felt squished during narration.
 
 ## Description
 
 Adds:
 
 - `app/demo-polish.css`
+- `app/demo-focus-field.css`
 - `components/ChurchWorkDemoFlowSkipper.tsx`
 - `docs/PR76_SUMMARY.md`
 
@@ -27,24 +29,23 @@ Updates:
 
 ## Behavior
 
-The demo polish stylesheet:
+The demo polish stylesheets:
 
-- widens the demo workspace while a guided highlight is active,
-- gives the right rail a larger responsive column on desktop,
-- strengthens active card scale and motion,
-- swaps the spotlight from purple-heavy to warmer gold/green contrast,
-- overrides the active ring/halo styling so highlighted boxes stand out more,
-- moves active guided forms into a centered presentation board instead of trapping them inside the right rail,
-- widens the center-stage form to use far more of the viewport,
-- compresses the form header/controls so the fields get more room,
-- lays form fields into two columns on desktop and three columns on wide screens,
-- keeps checkbox/acknowledgement rows full-width,
-- keeps the guided form controls inside the centered panel during form steps,
-- uses a consistent floating narration/control bar for non-form steps,
-- hides the floating narration/control bar while the form is center-stage so there is only one focus area,
-- highlights the newest visible timeline update during the demo,
-- expands the current timeline update card and adds a `Current update` badge,
-- keeps reduced-motion behavior for users who prefer less animation.
+- widen the demo workspace while a guided highlight is active,
+- give the right rail a larger responsive column on desktop,
+- strengthen active card scale and motion,
+- swap the spotlight from purple-heavy to warmer gold/green contrast,
+- override the active ring/halo styling so highlighted boxes stand out more,
+- move active guided forms into a centered presentation board instead of trapping them inside the right rail,
+- keep the guided form controls inside the centered panel during form steps,
+- show only the current active form field during guided form steps,
+- hide inactive form fields during narration so the field being discussed becomes the whole focus,
+- enlarge the current field, select, checkbox, and current-step badge,
+- use a consistent floating narration/control bar for non-form steps,
+- hide the floating narration/control bar while the form is center-stage so there is only one focus area,
+- highlight the newest visible timeline update during the demo,
+- expand the current timeline update card and add a `Current update` badge,
+- keep reduced-motion behavior for users who prefer less animation.
 
 The demo flow skipper:
 
@@ -75,12 +76,12 @@ Browser test after deployment:
 
 1. Start the guided demo.
 2. Confirm active guided forms pop to the center instead of staying trapped in the right rail.
-3. Confirm the centered form feels like a wide presentation board, not a narrow modal.
-4. Confirm fields appear in multiple columns on desktop/wide screens.
-5. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
-6. Confirm the guided controls follow the centered form during form steps.
-7. Confirm the floating narration/control bar appears during non-form steps.
-8. Confirm the right rail has more room on desktop.
+3. Confirm only the current form field is shown during guided form steps.
+4. Confirm the current form field is large and easy to understand.
+5. Confirm inactive form fields are hidden during narration.
+6. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
+7. Confirm the guided controls follow the centered form during form steps.
+8. Confirm the floating narration/control bar appears during non-form steps.
 9. Confirm highlighted cards are larger and move more visibly.
 10. Confirm the highlight is warmer gold/green, not purple-forward.
 11. Confirm the newest timeline update expands and shows `Current update`.

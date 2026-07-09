@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ChurchWorkDemoFlowSkipper } from "@/components/ChurchWorkDemoFlowSkipper";
 import "./globals.css";
 import "./demo-polish.css";
+import "./demo-focus-field.css";
 
 export const metadata: Metadata = {
   title: "ChurchWork | Spiritual care operations for churches",

@@ -1,23 +1,23 @@
 # ChurchWork Demo Audio Architecture
 
-The current guided demo uses browser speech synthesis as a fallback. Final ChurchWork demos should use generated narration audio so the voice is consistent across devices and does not depend on browser/system voice settings.
+The guided demo now uses a server-side audio route with browser speech synthesis as the fallback. OpenAI-generated narration is supported when `OPENAI_API_KEY` is configured in the deployment environment.
 
 ## Goal
 
 Provide warm, professional, consistent narration for guided demos without exposing API keys in the browser.
 
-## Target flow
+## Current flow
 
 ```txt
 Guided demo step
-→ browser requests narration for step id
+→ browser requests narration for script id + step id
 → server validates the known step
-→ server generates or retrieves cached audio
-→ browser plays audio
-→ browser falls back to speechSynthesis if unavailable
+→ server returns cached audio, generates OpenAI audio, or returns fallback JSON
+→ browser plays audio when audio is returned
+→ browser falls back to speechSynthesis when fallback JSON or an error is returned
 ```
 
-## Proposed API route
+## API route
 
 `POST /api/churchwork-demo-audio`
 
@@ -27,25 +27,31 @@ Request body:
 {
   "scriptId": "churchwork-end-to-end-v1",
   "stepId": "requester-terms-accepted",
-  "voice": "default"
+  "voice": "marin"
 }
 ```
 
-Response options:
+Successful audio response:
 
-1. `audio/mpeg` or another supported audio MIME type directly.
-2. JSON containing a cached signed URL.
+- Status: `200`
+- Content-Type: `audio/mpeg` or another `audio/*` response from OpenAI
+- Body: audio bytes
 
-Preferred first implementation: return the audio bytes directly so the client can create an object URL.
+Fallback response:
+
+- Status: `202`
+- JSON with `status: "fallback_only"`
+- Browser should use speech synthesis fallback
 
 ## Server responsibilities
 
 - Validate `scriptId` and `stepId` against known demo scripts.
 - Never accept arbitrary user-provided narration text from the browser.
-- Generate narration through the server-side OpenAI API client.
-- Cache generated audio by `scriptId`, `stepId`, `voice`, and script version.
-- Return cached audio on repeat plays.
+- Generate narration through the server-side OpenAI Speech API only when `OPENAI_API_KEY` is set.
+- Cache generated audio in memory by `scriptId`, `stepId`, `voice`, and model.
+- Return cached audio on repeat plays while the server instance keeps the cache.
 - Never expose the OpenAI API key to the browser.
+- Fall back safely when the OpenAI key is missing or generation fails.
 
 ## Client responsibilities
 
@@ -53,8 +59,32 @@ Preferred first implementation: return the audio bytes directly so the client ca
 - Keep Replay Step.
 - Request audio only after the user starts the demo.
 - Do not auto-start audio on page load.
-- Fall back to browser speech synthesis if the API route fails.
+- Fall back to browser speech synthesis if the API route returns fallback JSON or fails.
 - Cancel current audio before moving to the next step.
+
+## Environment variables
+
+Required for OpenAI narration:
+
+```txt
+OPENAI_API_KEY=...
+```
+
+Optional:
+
+```txt
+CHURCHWORK_TTS_MODEL=gpt-4o-mini-tts
+```
+
+Default model: `gpt-4o-mini-tts`
+
+Default voice: `marin`
+
+Allowed built-in voices:
+
+```txt
+alloy, ash, ballad, coral, echo, fable, onyx, nova, sage, shimmer, verse, marin, cedar
+```
 
 ## Demo script versioning
 
@@ -75,8 +105,8 @@ Use OpenAI only from the server/API route. The frontend should know only `script
 
 ## Future refinements
 
+- Durable audio storage instead of memory-only cache.
 - Per-demo voice style.
-- Intro/outro music disabled by default.
 - Faster prefetching of next-step audio after the current step starts.
 - Admin setting to switch between browser voice and OpenAI voice.
 - Demo analytics for how far a facility or partner prospect gets through the guided demo.

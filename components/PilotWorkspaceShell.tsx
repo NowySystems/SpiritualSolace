@@ -20,12 +20,32 @@ type OrganizationPreview = {
   status: string;
 };
 
-type WorkspaceKey = "overview" | "owner" | "facility" | "requester";
+type WorkspaceKey = "overview" | "owner" | "facility" | "partner" | "requester";
+
+type PilotWorkspaceRole = {
+  id: string;
+  role: string;
+  status: string;
+  organization_name: string;
+  organization_slug: string;
+  organization_type: string;
+};
+
+type PilotWorkspaceAccess = {
+  current_user_email: string | null;
+  recommended_workspace: WorkspaceKey;
+  has_owner_admin: boolean;
+  has_facility: boolean;
+  has_partner: boolean;
+  has_requester: boolean;
+  roles: PilotWorkspaceRole[];
+};
 
 const workspaceTabs: { key: WorkspaceKey; label: string; eyebrow: string; description: string }[] = [
   { key: "overview", label: "Overview", eyebrow: "Pilot status", description: "Current pilot targets, guardrails, seed check, and next build path." },
   { key: "owner", label: "Owner/Admin", eyebrow: "Platform view", description: "Users, role buckets, requests, and timeline oversight." },
   { key: "facility", label: "Facility", eyebrow: "Facility ops", description: "Create a facility workspace and manage facility users." },
+  { key: "partner", label: "Partner", eyebrow: "Church partner", description: "Hope Church workspace routing and partner-safe next actions." },
   { key: "requester", label: "Requester", eyebrow: "Spiritual-care request", description: "Submit a structured spiritual-care request with no medical notes." }
 ];
 
@@ -55,6 +75,14 @@ const nextBuildPath = [
   "Timeline visibility and RLS test matrix before real pilot data."
 ];
 
+const workspaceLabels: Record<WorkspaceKey, string> = {
+  overview: "Overview",
+  owner: "Owner/Admin",
+  facility: "Facility",
+  partner: "Partner",
+  requester: "Requester"
+};
+
 function formatSystemLabel(value: string | null | undefined) {
   if (!value) return "";
   return value
@@ -64,38 +92,135 @@ function formatSystemLabel(value: string | null | undefined) {
     .join(" ");
 }
 
+function normalizeWorkspaceKey(value: string | null | undefined): WorkspaceKey {
+  if (value === "owner" || value === "facility" || value === "partner" || value === "requester") {
+    return value;
+  }
+
+  return "overview";
+}
+
+function summarizeAccess(access: PilotWorkspaceAccess | null) {
+  if (!access) return "Checking your pilot role...";
+  if (!access.roles.length) return "No active pilot role is assigned yet.";
+
+  return `${access.roles.length} active pilot role${access.roles.length === 1 ? "" : "s"} found.`;
+}
+
+function PartnerWorkspacePlaceholder({ access }: { access: PilotWorkspaceAccess | null }) {
+  return (
+    <section className="mt-8 rounded-[2rem] border border-[#d8d0c0] bg-white p-8 text-[#102b3a] shadow-sm">
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Partner workspace</p>
+      <h3 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.03em]">Hope Church partner path.</h3>
+      <p className="mt-3 max-w-3xl text-sm leading-7 text-[#4d5d55]">
+        Partner access is now recognized by the pilot router. The next build step is the actual Hope Church workspace: assigned care needs, partner-safe timeline items, and simple report-back actions.
+      </p>
+
+      <div className="mt-6 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
+        This tab is intentionally a placeholder until partner request assignment and timeline visibility are ready. Do not use it for real care coordination yet.
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Next</p>
+          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Build assigned care cards for Hope Church partner users.</p>
+        </article>
+        <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Visibility</p>
+          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Show only approved, partner-safe timeline events and requester consent details.</p>
+        </article>
+        <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Report back</p>
+          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Let partners mark accepted, contacted, scheduled, or completed without open chat.</p>
+        </article>
+      </div>
+
+      {access?.roles.length ? (
+        <div className="mt-6 rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Detected role</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {access.roles
+              .filter((role) => role.role === "partner_admin" || role.role === "partner_user")
+              .map((role) => (
+                <span key={role.id} className="rounded-full border border-[#d8d0c0] bg-white px-3 py-1 text-xs font-bold text-[#173b2d]">
+                  {role.organization_name}: {formatSystemLabel(role.role)}
+                </span>
+              ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [organizations, setOrganizations] = useState<OrganizationPreview[]>([]);
   const [status, setStatus] = useState("Checking Pilot Safe v1 seed data...");
+  const [accessStatus, setAccessStatus] = useState("Checking your pilot workspace access...");
   const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceKey>("overview");
+  const [pilotAccess, setPilotAccess] = useState<PilotWorkspaceAccess | null>(null);
+  const [hasAppliedRecommendedWorkspace, setHasAppliedRecommendedWorkspace] = useState(false);
 
   const userEmail = useMemo(() => session.user.email ?? "Signed-in pilot user", [session.user.email]);
 
   useEffect(() => {
     let isMounted = true;
 
-    supabase
-      .from("organizations")
-      .select("id, name, slug, organization_type, status")
-      .in("slug", ["churchwork", "grandview-post-acute", "hope-church"])
-      .order("slug")
-      .then(({ data, error }) => {
-        if (!isMounted) return;
+    async function loadPilotContext() {
+      const { data, error } = await supabase
+        .from("organizations")
+        .select("id, name, slug, organization_type, status")
+        .in("slug", ["churchwork", "grandview-post-acute", "hope-church"])
+        .order("slug");
 
-        if (error) {
-          setStatus(error.message);
-          return;
-        }
+      if (!isMounted) return;
 
+      if (error) {
+        setStatus(error.message);
+      } else {
         setOrganizations((data as OrganizationPreview[] | null) ?? []);
         setStatus("Pilot seed check completed for ChurchWork, Grandview Post Acute, and Hope Church.");
-      });
+      }
+
+      await supabase.rpc("sync_current_pilot_profile");
+
+      const { error: bootstrapError } = await supabase.rpc("claim_churchwork_bootstrap_admin");
+      if (bootstrapError && !bootstrapError.message.toLowerCase().includes("not authorized")) {
+        setAccessStatus(bootstrapError.message);
+      }
+
+      const { data: accessData, error: accessError } = await supabase.rpc("get_pilot_workspace_access");
+      if (!isMounted) return;
+
+      if (accessError) {
+        setAccessStatus(accessError.message);
+        return;
+      }
+
+      const nextAccess = accessData as PilotWorkspaceAccess;
+      const recommendedWorkspace = normalizeWorkspaceKey(nextAccess.recommended_workspace);
+      const normalizedAccess = {
+        ...nextAccess,
+        recommended_workspace: recommendedWorkspace,
+        roles: nextAccess.roles ?? []
+      };
+
+      setPilotAccess(normalizedAccess);
+      setAccessStatus(`Recommended workspace: ${workspaceLabels[recommendedWorkspace]}.`);
+
+      if (!hasAppliedRecommendedWorkspace) {
+        setActiveWorkspace(recommendedWorkspace);
+        setHasAppliedRecommendedWorkspace(true);
+      }
+    }
+
+    void loadPilotContext();
 
     return () => {
       isMounted = false;
     };
-  }, [supabase]);
+  }, [hasAppliedRecommendedWorkspace, supabase]);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -118,9 +243,39 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
           </div>
         </div>
 
-        <div className="grid gap-3 border-b border-[#d8d0c0] bg-[#f7f3ea] p-4 md:grid-cols-4">
+        <div className="border-b border-[#d8d0c0] bg-white p-4">
+          <div className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Your pilot access</p>
+                <p className="mt-2 text-sm font-semibold text-[#173b2d]">{accessStatus}</p>
+                <p className="mt-1 text-sm leading-6 text-[#4d5d55]">{summarizeAccess(pilotAccess)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveWorkspace(pilotAccess?.recommended_workspace ?? "overview")}
+                className="rounded-xl bg-[#173b2d] px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#102b3a]"
+              >
+                Go to my workspace
+              </button>
+            </div>
+
+            {pilotAccess?.roles.length ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {pilotAccess.roles.map((role) => (
+                  <span key={role.id} className="rounded-full border border-[#d8d0c0] bg-white px-3 py-1 text-xs font-bold text-[#173b2d]">
+                    {role.organization_name}: {formatSystemLabel(role.role)}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid gap-3 border-b border-[#d8d0c0] bg-[#f7f3ea] p-4 md:grid-cols-5">
           {workspaceTabs.map((tab) => {
             const isActive = activeWorkspace === tab.key;
+            const isRecommended = pilotAccess?.recommended_workspace === tab.key;
             return (
               <button
                 key={tab.key}
@@ -135,6 +290,11 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
                 <span className="block text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#789052]">{tab.eyebrow}</span>
                 <span className="mt-2 block font-serif text-xl font-semibold text-[#102b3a]">{tab.label}</span>
                 <span className="mt-2 block text-sm leading-6 text-[#4d5d55]">{tab.description}</span>
+                {isRecommended ? (
+                  <span className="mt-3 inline-flex rounded-full bg-[#173b2d] px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.12em] text-white">
+                    Recommended
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -218,6 +378,8 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
           <FacilityUserManagementCard session={session} />
         </>
       ) : null}
+
+      {activeWorkspace === "partner" ? <PartnerWorkspacePlaceholder access={pilotAccess} /> : null}
 
       {activeWorkspace === "requester" ? <StructuredRequesterIntake session={session} /> : null}
     </main>

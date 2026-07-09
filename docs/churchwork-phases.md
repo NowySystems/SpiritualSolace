@@ -37,6 +37,7 @@ Replace prototype language with real product records.
 - Added `lib/churchworkWorkflow.ts` as the shared workflow and timeline-event model.
 - Added `lib/churchworkDemoScripts.ts` as the approved demo narration/script registry.
 - Added the `/api/churchwork-demo-audio` scaffold so future audio is validated by script id and step id instead of arbitrary browser text.
+- Wired the guided dashboard to the shared script registry and workflow event definitions.
 
 ### Product objects
 
@@ -72,7 +73,7 @@ Replace prototype language with real product records.
 
 ## Phase 3 — Visual Redesign
 
-Status: next.
+Status: active next phase.
 
 Current UI proves the workflow but still feels box-heavy. The design pass should reduce visual clutter and move toward a calm care workspace.
 
@@ -130,18 +131,18 @@ Every role should see only what is appropriate:
 
 ## Phase 6 — Audio Narration Layer
 
-Status: scaffold started.
+Status: working in production, needs continued QA.
 
-Current browser speech synthesis is fallback only. Final demo narration should support OpenAI-generated audio through a server-side API route so the API key never reaches the browser.
+OpenAI-generated narration is wired through `/api/churchwork-demo-audio`, validated by script id and step id, and kept server-side so the OpenAI key is never exposed to the browser. Browser speech synthesis remains the fallback if the API key is missing or audio generation fails.
 
-Target architecture:
+Completed:
 
-1. Demo step script provides narration text.
-2. Browser requests audio for a step from `/api/churchwork-demo-audio`.
-3. Server validates the step and calls OpenAI speech generation.
-4. Server returns an audio blob or cached URL.
-5. Browser plays consistent narration.
-6. Browser falls back to speechSynthesis if API audio is unavailable.
+- Approved demo script registry.
+- Server-side OpenAI speech route.
+- Memory cache for generated audio during the server instance lifetime.
+- Browser audio client with cancel/replay behavior.
+- Vercel `OPENAI_API_KEY` configured and redeployed.
+- Production test confirmed a calm American OpenAI voice.
 
 Rules:
 

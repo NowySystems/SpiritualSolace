@@ -19,6 +19,16 @@ function findActiveDemoTarget() {
   return highlightedTargets[0] ?? null;
 }
 
+function centerTargetInScrollContainer(target: HTMLElement, parent: HTMLElement) {
+  const parentRect = parent.getBoundingClientRect();
+  const targetRect = target.getBoundingClientRect();
+  const targetCenter = targetRect.top + targetRect.height / 2;
+  const parentCenter = parentRect.top + parentRect.height / 2;
+  const nextTop = parent.scrollTop + targetCenter - parentCenter;
+
+  parent.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+}
+
 function scrollContainingPanels(target: HTMLElement) {
   let parent = target.parentElement;
 
@@ -27,14 +37,32 @@ function scrollContainingPanels(target: HTMLElement) {
     const canScroll = /(auto|scroll)/.test(`${style.overflow}${style.overflowY}${style.overflowX}`);
 
     if (canScroll && parent.scrollHeight > parent.clientHeight) {
-      const parentRect = parent.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      const nextTop = parent.scrollTop + targetRect.top - parentRect.top - 24;
-      parent.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
+      centerTargetInScrollContainer(target, parent);
     }
 
     parent = parent.parentElement;
   }
+}
+
+function centerTargetInViewport(target: HTMLElement) {
+  const rect = target.getBoundingClientRect();
+  const headerAllowance = 96;
+  const availableHeight = Math.max(360, window.innerHeight - headerAllowance);
+  const targetTop = window.scrollY + rect.top;
+  const desiredTop = rect.height > availableHeight * 0.78
+    ? targetTop - headerAllowance
+    : targetTop - (window.innerHeight - rect.height) / 2;
+
+  window.scrollTo({ top: Math.max(0, desiredTop), behavior: "smooth" });
+}
+
+function markTargetAsSettling(target: HTMLElement) {
+  target.dataset.demoSpotlight = "true";
+  window.setTimeout(() => {
+    if (target.dataset.demoSpotlight === "true") {
+      delete target.dataset.demoSpotlight;
+    }
+  }, 900);
 }
 
 export function ChurchWorkDemoAutoScroll({ children }: ChurchWorkDemoAutoScrollProps) {
@@ -49,15 +77,14 @@ export function ChurchWorkDemoAutoScroll({ children }: ChurchWorkDemoAutoScrollP
         if (!target) return;
 
         const rect = target.getBoundingClientRect();
-        const signature = `${target.tagName}:${target.textContent?.slice(0, 42)}:${Math.round(rect.top)}:${Math.round(rect.left)}`;
+        const signature = `${target.tagName}:${target.dataset.demoActive ?? ""}:${target.dataset.demoFieldActive ?? ""}:${target.textContent?.slice(0, 42)}:${Math.round(rect.width)}x${Math.round(rect.height)}`;
         if (signature === lastSignature) return;
         lastSignature = signature;
 
+        markTargetAsSettling(target);
         scrollContainingPanels(target);
-
-        const targetTop = window.scrollY + target.getBoundingClientRect().top - 130;
-        window.scrollTo({ top: Math.max(0, targetTop), behavior: "smooth" });
-      }, 120);
+        window.setTimeout(() => centerTargetInViewport(target), 80);
+      }, 110);
     }
 
     const observer = new MutationObserver(scrollToActiveTarget);
@@ -65,7 +92,7 @@ export function ChurchWorkDemoAutoScroll({ children }: ChurchWorkDemoAutoScrollP
       subtree: true,
       attributes: true,
       childList: true,
-      attributeFilter: ["class", "data-demo-active", "data-demo-field-active", "aria-live"]
+      attributeFilter: ["class", "data-demo-active", "data-demo-field-active", "data-demo-spotlight", "aria-live"]
     });
 
     scrollToActiveTarget();

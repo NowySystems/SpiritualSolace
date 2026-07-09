@@ -28,9 +28,15 @@ Locked end-to-end path:
 
 ## Phase 2 — Product Language and Records
 
-Status: starting now.
+Status: in progress.
 
 Replace prototype language with real product records.
+
+### Completed in this phase
+
+- Added `lib/churchworkWorkflow.ts` as the shared workflow and timeline-event model.
+- Added `lib/churchworkDemoScripts.ts` as the approved demo narration/script registry.
+- Added the `/api/churchwork-demo-audio` scaffold so future audio is validated by script id and step id instead of arbitrary browser text.
 
 ### Product objects
 
@@ -124,7 +130,7 @@ Every role should see only what is appropriate:
 
 ## Phase 6 — Audio Narration Layer
 
-Status: planned.
+Status: scaffold started.
 
 Current browser speech synthesis is fallback only. Final demo narration should support OpenAI-generated audio through a server-side API route so the API key never reaches the browser.
 

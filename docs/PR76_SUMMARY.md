@@ -9,13 +9,15 @@ The guided demo needed stronger visual emphasis before showing it to pilot stake
 - timeline updates did not clearly spotlight each new update,
 - the purple highlight blended into the existing palette,
 - active forms were trapped inside the right rail and created nested scrollbars,
-- the viewer could lose track of where they were in the story.
+- the viewer could lose track of where they were in the story,
+- the demo stopped at the ledger too often instead of keeping the story moving.
 
 ## Description
 
 Adds:
 
 - `app/demo-polish.css`
+- `components/ChurchWorkDemoFlowSkipper.tsx`
 - `docs/PR76_SUMMARY.md`
 
 Updates:
@@ -39,14 +41,26 @@ The demo polish stylesheet:
 - expands the current timeline update card and adds a `Current update` badge,
 - keeps reduced-motion behavior for users who prefer less animation.
 
+The demo flow skipper:
+
+- automatically advances past intermediate ledger-only stops,
+- keeps the story focused on the active module,
+- still leaves major ledger/timeline moments available as summaries and final proof.
+
+Skipped intermediate ledger stops:
+
+- Step 10: facility review recorded,
+- Step 12: consent recorded,
+- Step 16: partner acceptance recorded.
+
 ## Guardrails
 
-- No business logic changes.
+- No business data changes.
 - No Supabase changes.
 - No pilot workflow changes.
-- No demo script copy changes.
 - No audio route changes.
 - No production data changes.
+- No changes to the real care workflow.
 
 ## Testing
 
@@ -55,12 +69,13 @@ Source-level review only in this environment.
 Browser test after deployment:
 
 1. Start the guided demo.
-2. Confirm the right rail has more room on desktop.
-3. Confirm active guided forms pop to the center instead of staying trapped in the right rail.
-4. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
-5. Confirm the guided controls follow the centered form during form steps.
-6. Confirm the floating narration/control bar appears during non-form steps.
+2. Confirm active guided forms pop to the center instead of staying trapped in the right rail.
+3. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
+4. Confirm the guided controls follow the centered form during form steps.
+5. Confirm the floating narration/control bar appears during non-form steps.
+6. Confirm the right rail has more room on desktop.
 7. Confirm highlighted cards are larger and move more visibly.
 8. Confirm the highlight is warmer gold/green, not purple-forward.
 9. Confirm the newest timeline update expands and shows `Current update`.
-10. Confirm reduced motion settings disable the new motion.
+10. Confirm the demo no longer stops on every intermediate ledger-only moment.
+11. Confirm reduced motion settings disable the new motion.

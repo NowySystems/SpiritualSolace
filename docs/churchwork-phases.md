@@ -73,11 +73,19 @@ Replace prototype language with real product records.
 
 ## Phase 3 — Visual Redesign
 
-Status: active next phase.
+Status: active first pass.
 
 Current UI proves the workflow but still feels box-heavy. The design pass should reduce visual clutter and move toward a calm care workspace.
 
-Targets:
+Completed first pass:
+
+- Added `components/ChurchWorkCareLedgerDashboard.tsx` as the calmer role workspace shell.
+- Retired the heavy multi-card look from the routed portal dashboard by pointing `ChurchWorkAwesomeGuidedPortalDashboard` to the Care Ledger shell.
+- Reframed the timeline as an "Official care ledger."
+- Moved role actions into a guided checklist rail.
+- Kept OpenAI narration, script IDs, auto-scroll highlights, role filtering, and structured forms intact.
+
+Targets still open:
 
 - Fewer boxed cards.
 - One clear primary workspace surface.

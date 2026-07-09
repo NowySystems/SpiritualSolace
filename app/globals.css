@@ -20,6 +20,18 @@ body {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+body:has(.churchwork-demo-active)::after {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  background:
+    radial-gradient(circle at center, rgba(247, 243, 234, 0.03), rgba(13, 43, 59, 0.16) 58%, rgba(13, 43, 59, 0.26));
+  content: "";
+  opacity: 0.88;
+  pointer-events: none;
+  transition: opacity 260ms ease;
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -27,84 +39,133 @@ a {
 
 .churchwork-demo-active {
   position: relative;
-  z-index: 50;
+  z-index: 80;
   isolation: isolate;
-  transform: translate3d(0, -0.18rem, 0) scale(1.035);
+  transform: translate3d(0, -0.08rem, 0) scale(1.014);
   transform-origin: center center;
   transition:
-    transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    filter 420ms ease,
-    box-shadow 420ms ease;
-  filter: saturate(1.08) contrast(1.02);
-  animation: churchwork-demo-lift 1.45s ease-in-out infinite;
+    transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 520ms ease,
+    box-shadow 520ms ease;
+  filter: saturate(1.08) contrast(1.03) brightness(1.02);
+  animation: churchwork-demo-lift 1.75s ease-in-out infinite;
 }
 
 .churchwork-demo-active::before {
   position: absolute;
-  inset: -0.9rem;
+  inset: -1.05rem;
   z-index: -2;
-  border-radius: calc(1.4rem + 0.9rem);
+  border-radius: calc(1.4rem + 1.05rem);
   background:
-    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.92), rgba(244, 239, 252, 0.48) 34%, transparent 72%),
-    linear-gradient(135deg, rgba(203, 187, 234, 0.72), rgba(255, 248, 231, 0.44));
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.96), rgba(244, 239, 252, 0.62) 33%, transparent 72%),
+    linear-gradient(135deg, rgba(203, 187, 234, 0.86), rgba(255, 248, 231, 0.58));
   box-shadow:
-    0 0 0 0.45rem rgba(111, 75, 180, 0.18),
-    0 2.5rem 6rem rgba(91, 74, 131, 0.32),
-    0 0 7rem rgba(203, 187, 234, 0.44);
+    0 0 0 0.55rem rgba(111, 75, 180, 0.22),
+    0 2.6rem 7.5rem rgba(91, 74, 131, 0.38),
+    0 0 8rem rgba(203, 187, 234, 0.58);
   content: "";
   pointer-events: none;
 }
 
 .churchwork-demo-active::after {
   position: absolute;
-  inset: -0.55rem;
+  inset: -0.6rem;
   z-index: -1;
-  border: 3px solid rgba(111, 75, 180, 0.58);
-  border-radius: calc(1.15rem + 0.55rem);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(203, 187, 234, 0.2));
+  border: 4px solid rgba(111, 75, 180, 0.72);
+  border-radius: calc(1.15rem + 0.6rem);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(203, 187, 234, 0.24));
   content: "";
   pointer-events: none;
 }
 
 [data-demo-spotlight="true"] {
-  animation: churchwork-demo-pop-in 520ms cubic-bezier(0.16, 1, 0.3, 1), churchwork-demo-lift 1.45s ease-in-out infinite 520ms;
+  z-index: 90;
+  animation: churchwork-demo-pop-forward 1.15s cubic-bezier(0.16, 1, 0.3, 1), churchwork-demo-lift 1.75s ease-in-out infinite 1.15s;
+}
+
+[data-demo-spotlight="true"]::before {
+  animation: churchwork-demo-halo-pop 1.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 [data-demo-field-active="true"] {
-  transform: translate3d(0, -0.15rem, 0) scale(1.045);
+  transform: translate3d(0, -0.1rem, 0) scale(1.022);
 }
 
-@keyframes churchwork-demo-pop-in {
+[data-demo-field-active="true"][data-demo-spotlight="true"] {
+  animation: churchwork-demo-field-pop-forward 1.15s cubic-bezier(0.16, 1, 0.3, 1), churchwork-demo-lift 1.75s ease-in-out infinite 1.15s;
+}
+
+@keyframes churchwork-demo-pop-forward {
   0% {
-    transform: translate3d(0, 0.4rem, 0) scale(0.985);
-    filter: saturate(1) contrast(1);
+    transform: translate3d(0, 1rem, 0) scale(0.985);
+    filter: saturate(1) contrast(1) brightness(1);
   }
-  62% {
-    transform: translate3d(0, -0.35rem, 0) scale(1.055);
-    filter: saturate(1.1) contrast(1.04);
+  46% {
+    transform: translate3d(0, -0.45rem, 0) scale(1.07);
+    filter: saturate(1.14) contrast(1.06) brightness(1.05);
+  }
+  76% {
+    transform: translate3d(0, -0.25rem, 0) scale(1.04);
+    filter: saturate(1.1) contrast(1.04) brightness(1.03);
   }
   100% {
-    transform: translate3d(0, -0.18rem, 0) scale(1.035);
-    filter: saturate(1.08) contrast(1.02);
+    transform: translate3d(0, -0.08rem, 0) scale(1.014);
+    filter: saturate(1.08) contrast(1.03) brightness(1.02);
+  }
+}
+
+@keyframes churchwork-demo-field-pop-forward {
+  0% {
+    transform: translate3d(0, 0.75rem, 0) scale(0.985);
+  }
+  48% {
+    transform: translate3d(0, -0.35rem, 0) scale(1.075);
+  }
+  78% {
+    transform: translate3d(0, -0.2rem, 0) scale(1.045);
+  }
+  100% {
+    transform: translate3d(0, -0.1rem, 0) scale(1.022);
+  }
+}
+
+@keyframes churchwork-demo-halo-pop {
+  0% {
+    opacity: 0.2;
+    transform: scale(0.94);
+  }
+  48% {
+    opacity: 1;
+    transform: scale(1.045);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @keyframes churchwork-demo-lift {
   0%, 100% {
     box-shadow:
-      0 0 0 0 rgba(111, 75, 180, 0.22),
+      0 0 0 0 rgba(111, 75, 180, 0.2),
       0 1.45rem 4.5rem rgba(91, 74, 131, 0.22);
   }
   50% {
     box-shadow:
-      0 0 0 0.42rem rgba(111, 75, 180, 0.12),
-      0 2rem 5.6rem rgba(91, 74, 131, 0.34);
+      0 0 0 0.36rem rgba(111, 75, 180, 0.12),
+      0 2rem 5.8rem rgba(91, 74, 131, 0.34);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  body:has(.churchwork-demo-active)::after {
+    opacity: 0.42;
+  }
+
   .churchwork-demo-active,
-  [data-demo-spotlight="true"] {
+  [data-demo-spotlight="true"],
+  [data-demo-field-active="true"],
+  [data-demo-field-active="true"][data-demo-spotlight="true"] {
     animation: none;
     transform: none;
   }
@@ -218,63 +279,4 @@ img[src="/brand/churchwork-corner-logo.svg"] {
 .driver-popover.spiritual-solace-demo-popover .driver-popover-close-btn {
   top: 0.8rem;
   right: 0.85rem;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  color: #7b6b57;
-  font-size: 1.4rem;
-  line-height: 1;
-}
-
-.driver-popover.spiritual-solace-demo-popover .driver-popover-close-btn:hover,
-.driver-popover.spiritual-solace-demo-popover .driver-popover-close-btn:focus {
-  background: rgba(23, 59, 45, 0.08);
-  color: #173b2d;
-}
-
-.driver-popover.spiritual-solace-demo-popover .driver-popover-footer,
-.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-footer {
-  display: block !important;
-  margin-top: 0.85rem;
-  text-align: left;
-}
-
-.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-progress {
-  display: inline-flex !important;
-  align-items: center;
-  margin-top: 0.95rem;
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  background: #eaf2ed;
-  color: #2f644a;
-  font-size: 0.72rem;
-  font-weight: 950;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-bottom { border-bottom-color: #fffaf2; }
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-top { border-top-color: #fffaf2; }
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-left { border-left-color: #fffaf2; }
-.driver-popover.spiritual-solace-demo-popover .driver-popover-arrow-side-right { border-right-color: #fffaf2; }
-
-.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-audio-panel {
-  position: relative;
-  z-index: 3;
-  margin-top: 0.9rem;
-  pointer-events: auto;
-}
-
-.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-audio-panel button {
-  pointer-events: auto;
-}
-
-.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-custom-actions {
-  position: relative;
-  z-index: 4;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.9rem;
 }

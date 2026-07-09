@@ -12,7 +12,8 @@ The guided demo needed stronger visual emphasis before showing it to pilot stake
 - the viewer could lose track of where they were in the story,
 - the demo stopped at the ledger too often instead of keeping the story moving,
 - centered forms still felt like squeezed sidebar content instead of a full demo stage,
-- showing the full form at once still felt squished during narration.
+- showing the full form at once still felt squished during narration,
+- active fields appeared in the center but did not balloon up from their original form positions.
 
 ## Description
 
@@ -41,6 +42,8 @@ The demo polish stylesheets:
 - show only the current active form field during guided form steps,
 - hide inactive form fields during narration so the field being discussed becomes the whole focus,
 - enlarge the current field, select, checkbox, and current-step badge,
+- animate the active field from an approximate original form-grid position into the center,
+- use different starting positions for early, middle, right, lower, and acknowledgement fields,
 - use a consistent floating narration/control bar for non-form steps,
 - hide the floating narration/control bar while the form is center-stage so there is only one focus area,
 - highlight the newest visible timeline update during the demo,
@@ -79,11 +82,13 @@ Browser test after deployment:
 3. Confirm only the current form field is shown during guided form steps.
 4. Confirm the current form field is large and easy to understand.
 5. Confirm inactive form fields are hidden during narration.
-6. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
-7. Confirm the guided controls follow the centered form during form steps.
-8. Confirm the floating narration/control bar appears during non-form steps.
-9. Confirm highlighted cards are larger and move more visibly.
-10. Confirm the highlight is warmer gold/green, not purple-forward.
-11. Confirm the newest timeline update expands and shows `Current update`.
-12. Confirm the demo no longer stops on every intermediate ledger-only moment.
-13. Confirm reduced motion settings disable the new motion.
+6. Confirm active fields balloon from different form-grid positions into the center.
+7. Confirm the field movement feels like it is being pulled out of the form rather than simply appearing.
+8. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
+9. Confirm the guided controls follow the centered form during form steps.
+10. Confirm the floating narration/control bar appears during non-form steps.
+11. Confirm highlighted cards are larger and move more visibly.
+12. Confirm the highlight is warmer gold/green, not purple-forward.
+13. Confirm the newest timeline update expands and shows `Current update`.
+14. Confirm the demo no longer stops on every intermediate ledger-only moment.
+15. Confirm reduced motion settings disable the new motion.

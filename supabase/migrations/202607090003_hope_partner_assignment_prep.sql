@@ -104,7 +104,7 @@ begin
     p_care_request_id,
     auth.uid(),
     'partner_assigned',
-    'partner',
+    'shared',
     'partner_safe',
     coalesce(v_priority, 'none'),
     null

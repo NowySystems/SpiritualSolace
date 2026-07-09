@@ -12,7 +12,10 @@ function isVisible(element: Element) {
 }
 
 function findActiveDemoTarget() {
-  const explicitTargets = Array.from(document.querySelectorAll<HTMLElement>('[data-demo-field-active="true"], [data-demo-active="true"]')).filter(isVisible);
+  const fieldTargets = Array.from(document.querySelectorAll<HTMLElement>('[data-demo-field-active="true"]')).filter(isVisible);
+  if (fieldTargets.length) return fieldTargets[0];
+
+  const explicitTargets = Array.from(document.querySelectorAll<HTMLElement>('[data-demo-active="true"]')).filter(isVisible);
   if (explicitTargets.length) return explicitTargets[0];
 
   const highlightedTargets = Array.from(document.querySelectorAll<HTMLElement>('.churchwork-demo-active, [class*="ring-[#cbbbea]"], [class*="ring-[#d8c5ff]"]')).filter(isVisible);
@@ -23,8 +26,8 @@ function centerTargetInScrollContainer(target: HTMLElement, parent: HTMLElement)
   const parentRect = parent.getBoundingClientRect();
   const targetRect = target.getBoundingClientRect();
   const targetCenter = targetRect.top + targetRect.height / 2;
-  const parentCenter = parentRect.top + parentRect.height / 2;
-  const nextTop = parent.scrollTop + targetCenter - parentCenter;
+  const parentFocusLine = parentRect.top + parentRect.height * 0.46;
+  const nextTop = parent.scrollTop + targetCenter - parentFocusLine;
 
   parent.scrollTo({ top: Math.max(0, nextTop), behavior: "smooth" });
 }
@@ -46,23 +49,31 @@ function scrollContainingPanels(target: HTMLElement) {
 
 function centerTargetInViewport(target: HTMLElement) {
   const rect = target.getBoundingClientRect();
-  const headerAllowance = 96;
-  const availableHeight = Math.max(360, window.innerHeight - headerAllowance);
+  const headerAllowance = 112;
+  const viewportHeight = window.innerHeight;
+  const availableHeight = Math.max(360, viewportHeight - headerAllowance);
   const targetTop = window.scrollY + rect.top;
+  const targetCenter = targetTop + rect.height / 2;
+  const focusLine = headerAllowance + availableHeight * 0.43;
   const desiredTop = rect.height > availableHeight * 0.78
-    ? targetTop - headerAllowance
-    : targetTop - (window.innerHeight - rect.height) / 2;
+    ? targetTop - headerAllowance - 18
+    : targetCenter - focusLine;
 
   window.scrollTo({ top: Math.max(0, desiredTop), behavior: "smooth" });
 }
 
-function markTargetAsSettling(target: HTMLElement) {
+function focusActiveTarget(target: HTMLElement) {
+  const activeTargets = Array.from(document.querySelectorAll<HTMLElement>('[data-demo-spotlight="true"]'));
+  activeTargets.forEach((item) => {
+    if (item !== target) delete item.dataset.demoSpotlight;
+  });
+
   target.dataset.demoSpotlight = "true";
   window.setTimeout(() => {
     if (target.dataset.demoSpotlight === "true") {
       delete target.dataset.demoSpotlight;
     }
-  }, 900);
+  }, 1350);
 }
 
 export function ChurchWorkDemoAutoScroll({ children }: ChurchWorkDemoAutoScrollProps) {
@@ -77,14 +88,15 @@ export function ChurchWorkDemoAutoScroll({ children }: ChurchWorkDemoAutoScrollP
         if (!target) return;
 
         const rect = target.getBoundingClientRect();
-        const signature = `${target.tagName}:${target.dataset.demoActive ?? ""}:${target.dataset.demoFieldActive ?? ""}:${target.textContent?.slice(0, 42)}:${Math.round(rect.width)}x${Math.round(rect.height)}`;
+        const signature = `${target.tagName}:${target.dataset.demoActive ?? ""}:${target.dataset.demoFieldActive ?? ""}:${target.textContent?.slice(0, 80)}:${Math.round(rect.width)}x${Math.round(rect.height)}:${Math.round(rect.top)}`;
         if (signature === lastSignature) return;
         lastSignature = signature;
 
-        markTargetAsSettling(target);
+        focusActiveTarget(target);
         scrollContainingPanels(target);
-        window.setTimeout(() => centerTargetInViewport(target), 80);
-      }, 110);
+        window.setTimeout(() => centerTargetInViewport(target), 60);
+        window.setTimeout(() => centerTargetInViewport(target), 420);
+      }, 95);
     }
 
     const observer = new MutationObserver(scrollToActiveTarget);

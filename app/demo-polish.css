@@ -41,13 +41,13 @@ body:has(form.churchwork-demo-active)::after {
 
 form.churchwork-demo-active {
   position: fixed !important;
-  top: 52% !important;
+  top: 50% !important;
   left: 50% !important;
   z-index: 140 !important;
-  width: min(68rem, calc(100vw - 2rem)) !important;
-  max-height: min(82vh, 58rem) !important;
+  width: min(92rem, calc(100vw - 3rem)) !important;
+  max-height: calc(100vh - 2rem) !important;
   margin: 0 !important;
-  padding: 1.15rem !important;
+  padding: 1rem !important;
   overflow: hidden !important;
   border: 2px solid rgba(242, 184, 75, 0.8) !important;
   border-radius: 2rem !important;
@@ -71,6 +71,7 @@ form.churchwork-demo-active > div:first-child {
   top: auto !important;
   z-index: 3 !important;
   margin: 0 !important;
+  padding: 1rem !important;
   border-radius: 1.35rem !important;
   border: 1px solid rgba(242, 184, 75, 0.34) !important;
   background: rgba(255, 250, 242, 0.92) !important;
@@ -80,22 +81,73 @@ form.churchwork-demo-active > div:first-child p[class*="text-[#5b4a83]"] {
   color: #7a5b20 !important;
 }
 
+form.churchwork-demo-active > div:first-child h3 {
+  margin-top: 0.35rem !important;
+  font-size: clamp(1.35rem, 2.4vw, 2rem) !important;
+}
+
+form.churchwork-demo-active > div:first-child div[class*="rounded-[1.25rem]"] {
+  margin-top: 0.75rem !important;
+  padding: 0.75rem !important;
+}
+
 form.churchwork-demo-active > div:nth-child(2) {
-  max-height: min(52vh, 34rem) !important;
-  margin-top: 1.1rem !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 1rem !important;
+  max-height: calc(100vh - 15.25rem) !important;
+  margin-top: 1rem !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  padding: 0.75rem 0.35rem 1rem !important;
+  padding: 0.55rem 0.25rem 0.9rem !important;
   scrollbar-width: thin;
 }
 
+@media (min-width: 900px) {
+  form.churchwork-demo-active > div:nth-child(2) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    max-height: calc(100vh - 14.5rem) !important;
+  }
+
+  form.churchwork-demo-active label:has(input[type="checkbox"]) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
+@media (min-width: 1180px) {
+  form.churchwork-demo-active {
+    width: min(98rem, calc(100vw - 4rem)) !important;
+  }
+
+  form.churchwork-demo-active > div:nth-child(2) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    max-height: calc(100vh - 14rem) !important;
+  }
+
+  form.churchwork-demo-active label:has(input[type="checkbox"]) {
+    grid-column: 1 / -1 !important;
+  }
+}
+
 form.churchwork-demo-active label {
-  padding: 1.2rem !important;
-  font-size: 1rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-height: 8.5rem !important;
+  padding: 1.25rem !important;
+  font-size: 1.02rem !important;
+}
+
+form.churchwork-demo-active label:has(input[type="checkbox"]) {
+  min-height: auto !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
 }
 
 form.churchwork-demo-active select {
-  min-height: 3.6rem !important;
+  min-height: 3.75rem !important;
   font-size: 1rem !important;
 }
 
@@ -106,7 +158,7 @@ form.churchwork-demo-active p[class*="bg-[#fff8e7]"] {
 }
 
 [data-demo-field-active="true"] {
-  transform: translate3d(0, -0.42rem, 0) scale(1.065) !important;
+  transform: translate3d(0, -0.42rem, 0) scale(1.045) !important;
 }
 
 [data-demo-field-active="true"] span[class*="bg-[#6f4bb4]"] {
@@ -259,12 +311,18 @@ body:has(.churchwork-demo-active) section.sticky p[class*="text-[#5b4a83]"] {
   form.churchwork-demo-active {
     top: 50% !important;
     width: calc(100vw - 1rem) !important;
-    max-height: 86vh !important;
+    max-height: 90vh !important;
     padding: 0.85rem !important;
   }
 
   form.churchwork-demo-active > div:nth-child(2) {
-    max-height: 49vh !important;
+    display: block !important;
+    max-height: calc(100vh - 15.5rem) !important;
+  }
+
+  form.churchwork-demo-active label {
+    min-height: auto !important;
+    margin-bottom: 0.85rem !important;
   }
 
   body:has(.churchwork-demo-active) main.min-h-screen > section[aria-live="polite"] {

@@ -6,6 +6,12 @@ body:has(.churchwork-demo-active)::after {
     radial-gradient(circle at center, rgba(255, 250, 242, 0.04), rgba(13, 43, 59, 0.12) 52%, rgba(13, 43, 59, 0.24));
 }
 
+body:has(form.churchwork-demo-active)::after {
+  z-index: 118;
+  background:
+    radial-gradient(circle at center, rgba(255, 250, 242, 0.12), rgba(13, 43, 59, 0.28) 48%, rgba(13, 43, 59, 0.48));
+}
+
 .churchwork-demo-active {
   --tw-ring-color: rgba(242, 184, 75, 0.72) !important;
   --tw-ring-offset-color: #fff8e7 !important;
@@ -33,6 +39,72 @@ body:has(.churchwork-demo-active)::after {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(242, 184, 75, 0.2)) !important;
 }
 
+form.churchwork-demo-active {
+  position: fixed !important;
+  top: 52% !important;
+  left: 50% !important;
+  z-index: 140 !important;
+  width: min(68rem, calc(100vw - 2rem)) !important;
+  max-height: min(82vh, 58rem) !important;
+  margin: 0 !important;
+  padding: 1.15rem !important;
+  overflow: hidden !important;
+  border: 2px solid rgba(242, 184, 75, 0.8) !important;
+  border-radius: 2rem !important;
+  background:
+    linear-gradient(135deg, rgba(255, 253, 248, 0.99), rgba(239, 247, 245, 0.98)),
+    radial-gradient(circle at 18% 0%, rgba(242, 184, 75, 0.22), transparent 20rem) !important;
+  box-shadow:
+    0 3rem 8rem rgba(13, 43, 59, 0.36),
+    0 0 0 0.55rem rgba(242, 184, 75, 0.2) !important;
+  transform: translate3d(-50%, -50%, 0) scale(1) !important;
+  animation: churchwork-demo-center-stage 520ms cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+form.churchwork-demo-active::before,
+form.churchwork-demo-active::after {
+  display: none !important;
+}
+
+form.churchwork-demo-active > div:first-child {
+  position: relative !important;
+  top: auto !important;
+  z-index: 3 !important;
+  margin: 0 !important;
+  border-radius: 1.35rem !important;
+  border: 1px solid rgba(242, 184, 75, 0.34) !important;
+  background: rgba(255, 250, 242, 0.92) !important;
+}
+
+form.churchwork-demo-active > div:first-child p[class*="text-[#5b4a83]"] {
+  color: #7a5b20 !important;
+}
+
+form.churchwork-demo-active > div:nth-child(2) {
+  max-height: min(52vh, 34rem) !important;
+  margin-top: 1.1rem !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 0.75rem 0.35rem 1rem !important;
+  scrollbar-width: thin;
+}
+
+form.churchwork-demo-active label {
+  padding: 1.2rem !important;
+  font-size: 1rem !important;
+}
+
+form.churchwork-demo-active select {
+  min-height: 3.6rem !important;
+  font-size: 1rem !important;
+}
+
+form.churchwork-demo-active p[class*="bg-[#fff8e7]"] {
+  border: 1px solid rgba(242, 184, 75, 0.34) !important;
+  background: rgba(255, 248, 231, 0.9) !important;
+  font-size: 0.86rem !important;
+}
+
 [data-demo-field-active="true"] {
   transform: translate3d(0, -0.42rem, 0) scale(1.065) !important;
 }
@@ -40,6 +112,33 @@ body:has(.churchwork-demo-active)::after {
 [data-demo-field-active="true"] span[class*="bg-[#6f4bb4]"] {
   background: #173b2d !important;
   color: #fff8e7 !important;
+}
+
+body:has(.churchwork-demo-active) main.min-h-screen > section[aria-live="polite"] {
+  position: fixed !important;
+  right: 1rem !important;
+  bottom: 1rem !important;
+  left: 1rem !important;
+  top: auto !important;
+  z-index: 135 !important;
+  max-width: 68rem !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+}
+
+body:has(form.churchwork-demo-active) main.min-h-screen > section[aria-live="polite"] {
+  display: none !important;
+}
+
+body:has(.churchwork-demo-active) main.min-h-screen > section[aria-live="polite"] > div {
+  border-color: rgba(242, 184, 75, 0.56) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 252, 244, 0.98), rgba(239, 247, 245, 0.96)) !important;
+  box-shadow: 0 1.4rem 4.5rem rgba(23, 59, 45, 0.24) !important;
+}
+
+body:has(.churchwork-demo-active) main.min-h-screen > section[aria-live="polite"] p[class*="text-[#5b4a83]"] {
+  color: #7a5b20 !important;
 }
 
 @media (min-width: 1280px) {
@@ -55,6 +154,7 @@ body:has(.churchwork-demo-active)::after {
   body:has(.churchwork-demo-active) main.min-h-screen aside[class*="sticky"] {
     top: 7.25rem !important;
     max-height: calc(100vh - 7.75rem) !important;
+    overflow-x: hidden !important;
   }
 }
 
@@ -125,6 +225,21 @@ body:has(.churchwork-demo-active) section.sticky p[class*="text-[#5b4a83]"] {
   }
 }
 
+@keyframes churchwork-demo-center-stage {
+  0% {
+    opacity: 0.85;
+    transform: translate3d(-50%, -44%, 0) scale(0.94);
+  }
+  65% {
+    opacity: 1;
+    transform: translate3d(-50%, -51.5%, 0) scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(-50%, -50%, 0) scale(1);
+  }
+}
+
 @keyframes churchwork-timeline-update-pop {
   0% {
     opacity: 0.82;
@@ -140,11 +255,35 @@ body:has(.churchwork-demo-active) section.sticky p[class*="text-[#5b4a83]"] {
   }
 }
 
+@media (max-width: 767px) {
+  form.churchwork-demo-active {
+    top: 50% !important;
+    width: calc(100vw - 1rem) !important;
+    max-height: 86vh !important;
+    padding: 0.85rem !important;
+  }
+
+  form.churchwork-demo-active > div:nth-child(2) {
+    max-height: 49vh !important;
+  }
+
+  body:has(.churchwork-demo-active) main.min-h-screen > section[aria-live="polite"] {
+    right: 0.5rem !important;
+    bottom: 0.5rem !important;
+    left: 0.5rem !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .churchwork-demo-active,
   [data-demo-field-active="true"],
+  form.churchwork-demo-active,
   body:has(.churchwork-demo-active) main.min-h-screen [class*="max-h-[38rem]"] article:first-child > div:last-child {
     animation: none !important;
     transform: none !important;
+  }
+
+  form.churchwork-demo-active {
+    transform: translate3d(-50%, -50%, 0) !important;
   }
 }

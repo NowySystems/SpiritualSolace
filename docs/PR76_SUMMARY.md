@@ -10,7 +10,8 @@ The guided demo needed stronger visual emphasis before showing it to pilot stake
 - the purple highlight blended into the existing palette,
 - active forms were trapped inside the right rail and created nested scrollbars,
 - the viewer could lose track of where they were in the story,
-- the demo stopped at the ledger too often instead of keeping the story moving.
+- the demo stopped at the ledger too often instead of keeping the story moving,
+- centered forms still felt like squeezed sidebar content instead of a full demo stage.
 
 ## Description
 
@@ -33,7 +34,11 @@ The demo polish stylesheet:
 - strengthens active card scale and motion,
 - swaps the spotlight from purple-heavy to warmer gold/green contrast,
 - overrides the active ring/halo styling so highlighted boxes stand out more,
-- moves active guided forms into a centered stage panel instead of trapping them inside the right rail,
+- moves active guided forms into a centered presentation board instead of trapping them inside the right rail,
+- widens the center-stage form to use far more of the viewport,
+- compresses the form header/controls so the fields get more room,
+- lays form fields into two columns on desktop and three columns on wide screens,
+- keeps checkbox/acknowledgement rows full-width,
 - keeps the guided form controls inside the centered panel during form steps,
 - uses a consistent floating narration/control bar for non-form steps,
 - hides the floating narration/control bar while the form is center-stage so there is only one focus area,
@@ -70,12 +75,14 @@ Browser test after deployment:
 
 1. Start the guided demo.
 2. Confirm active guided forms pop to the center instead of staying trapped in the right rail.
-3. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
-4. Confirm the guided controls follow the centered form during form steps.
-5. Confirm the floating narration/control bar appears during non-form steps.
-6. Confirm the right rail has more room on desktop.
-7. Confirm highlighted cards are larger and move more visibly.
-8. Confirm the highlight is warmer gold/green, not purple-forward.
-9. Confirm the newest timeline update expands and shows `Current update`.
-10. Confirm the demo no longer stops on every intermediate ledger-only moment.
-11. Confirm reduced motion settings disable the new motion.
+3. Confirm the centered form feels like a wide presentation board, not a narrow modal.
+4. Confirm fields appear in multiple columns on desktop/wide screens.
+5. Confirm there are not multiple nested horizontal/vertical scrollbars around the form.
+6. Confirm the guided controls follow the centered form during form steps.
+7. Confirm the floating narration/control bar appears during non-form steps.
+8. Confirm the right rail has more room on desktop.
+9. Confirm highlighted cards are larger and move more visibly.
+10. Confirm the highlight is warmer gold/green, not purple-forward.
+11. Confirm the newest timeline update expands and shows `Current update`.
+12. Confirm the demo no longer stops on every intermediate ledger-only moment.
+13. Confirm reduced motion settings disable the new motion.

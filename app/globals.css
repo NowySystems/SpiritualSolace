@@ -27,27 +27,86 @@ a {
 
 .churchwork-demo-active {
   position: relative;
-  z-index: 12;
-  animation: churchwork-demo-pulse 1.7s ease-in-out infinite;
+  z-index: 50;
+  isolation: isolate;
+  transform: translate3d(0, -0.18rem, 0) scale(1.035);
+  transform-origin: center center;
+  transition:
+    transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 420ms ease,
+    box-shadow 420ms ease;
+  filter: saturate(1.08) contrast(1.02);
+  animation: churchwork-demo-lift 1.45s ease-in-out infinite;
 }
 
-.churchwork-demo-active::after {
+.churchwork-demo-active::before {
   position: absolute;
-  inset: -0.65rem;
-  z-index: -1;
-  border: 2px solid rgba(111, 75, 180, 0.38);
-  border-radius: inherit;
-  background: radial-gradient(circle at top left, rgba(203, 187, 234, 0.32), transparent 60%);
+  inset: -0.9rem;
+  z-index: -2;
+  border-radius: calc(1.4rem + 0.9rem);
+  background:
+    radial-gradient(circle at 18% 16%, rgba(255, 255, 255, 0.92), rgba(244, 239, 252, 0.48) 34%, transparent 72%),
+    linear-gradient(135deg, rgba(203, 187, 234, 0.72), rgba(255, 248, 231, 0.44));
+  box-shadow:
+    0 0 0 0.45rem rgba(111, 75, 180, 0.18),
+    0 2.5rem 6rem rgba(91, 74, 131, 0.32),
+    0 0 7rem rgba(203, 187, 234, 0.44);
   content: "";
   pointer-events: none;
 }
 
-@keyframes churchwork-demo-pulse {
+.churchwork-demo-active::after {
+  position: absolute;
+  inset: -0.55rem;
+  z-index: -1;
+  border: 3px solid rgba(111, 75, 180, 0.58);
+  border-radius: calc(1.15rem + 0.55rem);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(203, 187, 234, 0.2));
+  content: "";
+  pointer-events: none;
+}
+
+[data-demo-spotlight="true"] {
+  animation: churchwork-demo-pop-in 520ms cubic-bezier(0.16, 1, 0.3, 1), churchwork-demo-lift 1.45s ease-in-out infinite 520ms;
+}
+
+[data-demo-field-active="true"] {
+  transform: translate3d(0, -0.15rem, 0) scale(1.045);
+}
+
+@keyframes churchwork-demo-pop-in {
+  0% {
+    transform: translate3d(0, 0.4rem, 0) scale(0.985);
+    filter: saturate(1) contrast(1);
+  }
+  62% {
+    transform: translate3d(0, -0.35rem, 0) scale(1.055);
+    filter: saturate(1.1) contrast(1.04);
+  }
+  100% {
+    transform: translate3d(0, -0.18rem, 0) scale(1.035);
+    filter: saturate(1.08) contrast(1.02);
+  }
+}
+
+@keyframes churchwork-demo-lift {
   0%, 100% {
-    box-shadow: 0 0 0 0 rgba(111, 75, 180, 0.32), 0 18px 55px rgba(91, 74, 131, 0.18);
+    box-shadow:
+      0 0 0 0 rgba(111, 75, 180, 0.22),
+      0 1.45rem 4.5rem rgba(91, 74, 131, 0.22);
   }
   50% {
-    box-shadow: 0 0 0 0.45rem rgba(111, 75, 180, 0.12), 0 26px 75px rgba(91, 74, 131, 0.28);
+    box-shadow:
+      0 0 0 0.42rem rgba(111, 75, 180, 0.12),
+      0 2rem 5.6rem rgba(91, 74, 131, 0.34);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .churchwork-demo-active,
+  [data-demo-spotlight="true"] {
+    animation: none;
+    transform: none;
   }
 }
 
@@ -218,16 +277,4 @@ img[src="/brand/churchwork-corner-logo.svg"] {
   justify-content: flex-end;
   gap: 0.5rem;
   margin-top: 0.9rem;
-  pointer-events: auto;
-}
-
-.driver-popover.spiritual-solace-demo-popover .spiritual-solace-demo-native-actions {
-  position: relative;
-  z-index: 1;
-  display: none !important;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  margin-top: 0.9rem;
-  pointer-events: auto;
 }

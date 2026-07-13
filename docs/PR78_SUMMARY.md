@@ -6,11 +6,14 @@ The guided demo now has strong field animation and better card behavior, but the
 
 The first role cue pass created a current-lane chip, but it was easy to miss and could feel like it got swallowed by the narration bar. The demo needs an actual persistent legend so a first-time viewer always knows where they are in the path.
 
+The viewer also should never lose the core demo controls. Next, Back, Replay, Voice On, and End need to stay visible no matter whether the current step is in the narrator card, form, ledger, or lane transition.
+
 ## Description
 
 Adds:
 
 - `components/ChurchWorkDemoRoleCue.tsx`
+- `components/ChurchWorkDemoControlsDock.tsx`
 - `docs/PR78_SUMMARY.md`
 
 Updates:
@@ -36,6 +39,14 @@ The role cue component:
   - Facility → Partner,
   - Partner → Requester update.
 
+The controls dock component:
+
+- watches for the current guided demo step,
+- stays fixed on screen while the demo is running,
+- keeps Voice On, Replay, Back, Next, and End visible,
+- forwards clicks to the existing guided demo controls,
+- makes Next the most prominent action.
+
 The chapter card explains:
 
 - who is acting now,
@@ -60,11 +71,15 @@ Browser test the guided demo:
 2. Confirm a persistent bottom `Demo path` legend appears while the demo is running.
 3. Confirm the legend shows Request → Facility → Partner → Update.
 4. Confirm steps 1–7 mark Request as current.
-5. Confirm a large transition cue appears when moving to Facility.
-6. Confirm steps 8–13 mark Facility as current.
-7. Confirm a large transition cue appears when moving to Partner.
-8. Confirm steps 14–19 mark Partner as current.
-9. Confirm a large transition cue appears before the final requester update.
-10. Confirm step 20 marks Update as current.
-11. Confirm the legend does not cover the title/narration area.
-12. Confirm the legend does not block the field balloon animation during normal field steps.
+5. Confirm the persistent controls dock shows Voice On, Replay, Back, Next, and End.
+6. Confirm the controls remain visible during form, ledger, and transition steps.
+7. Confirm Next advances the existing guided demo.
+8. Confirm Back, Replay, Voice On, and End still work.
+9. Confirm a large transition cue appears when moving to Facility.
+10. Confirm steps 8–13 mark Facility as current.
+11. Confirm a large transition cue appears when moving to Partner.
+12. Confirm steps 14–19 mark Partner as current.
+13. Confirm a large transition cue appears before the final requester update.
+14. Confirm step 20 marks Update as current.
+15. Confirm the legend does not cover the title/narration area.
+16. Confirm the legend and controls do not block the field balloon animation during normal field steps.

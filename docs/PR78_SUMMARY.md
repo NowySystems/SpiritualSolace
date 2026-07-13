@@ -33,6 +33,7 @@ The role cue component:
 - shows a persistent bottom `Demo path` legend while the demo is running,
 - shows all lanes in order: Request → Facility → Partner → Update,
 - visually separates past, current, and upcoming lanes,
+- uses a darker navy/gold treatment so the legend stands apart from the card background,
 - keeps the current lane obvious without covering the narration/title area,
 - shows a larger chapter card when the demo transitions between lanes:
   - Requester → Facility,
@@ -44,7 +45,9 @@ The controls dock component:
 - watches for the current guided demo step,
 - stays fixed on screen while the demo is running,
 - keeps Voice On, Replay, Back, Next, and End visible,
+- uses a darker navy/gold treatment so the controls do not blend into the page,
 - forwards clicks to the existing guided demo controls,
+- ignores its own dock buttons when searching for the real control target,
 - makes Next the most prominent action.
 
 The chapter card explains:
@@ -70,16 +73,18 @@ Browser test the guided demo:
 1. Start the guided demo.
 2. Confirm a persistent bottom `Demo path` legend appears while the demo is running.
 3. Confirm the legend shows Request → Facility → Partner → Update.
-4. Confirm steps 1–7 mark Request as current.
-5. Confirm the persistent controls dock shows Voice On, Replay, Back, Next, and End.
-6. Confirm the controls remain visible during form, ledger, and transition steps.
-7. Confirm Next advances the existing guided demo.
-8. Confirm Back, Replay, Voice On, and End still work.
-9. Confirm a large transition cue appears when moving to Facility.
-10. Confirm steps 8–13 mark Facility as current.
-11. Confirm a large transition cue appears when moving to Partner.
-12. Confirm steps 14–19 mark Partner as current.
-13. Confirm a large transition cue appears before the final requester update.
-14. Confirm step 20 marks Update as current.
-15. Confirm the legend does not cover the title/narration area.
-16. Confirm the legend and controls do not block the field balloon animation during normal field steps.
+4. Confirm the legend is visually distinct from the beige/card background.
+5. Confirm steps 1–7 mark Request as current.
+6. Confirm the persistent controls dock shows Voice On, Replay, Back, Next, and End.
+7. Confirm the controls dock is visually distinct from the beige/card background.
+8. Confirm the controls remain visible during form, ledger, and transition steps.
+9. Confirm Next advances the existing guided demo from the dock.
+10. Confirm Back, Replay, Voice On, and End still work from the dock.
+11. Confirm a large transition cue appears when moving to Facility.
+12. Confirm steps 8–13 mark Facility as current.
+13. Confirm a large transition cue appears when moving to Partner.
+14. Confirm steps 14–19 mark Partner as current.
+15. Confirm a large transition cue appears before the final requester update.
+16. Confirm step 20 marks Update as current.
+17. Confirm the legend does not cover the title/narration area.
+18. Confirm the legend and controls do not block the field balloon animation during normal field steps.

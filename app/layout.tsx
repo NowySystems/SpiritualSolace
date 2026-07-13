@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { ChurchWorkDemoBalloonAnimator } from "@/components/ChurchWorkDemoBalloonAnimator";
 import { ChurchWorkDemoFlowSkipper } from "@/components/ChurchWorkDemoFlowSkipper";
+import { ChurchWorkDemoRoleCue } from "@/components/ChurchWorkDemoRoleCue";
 import "./globals.css";
 import "./demo-polish.css";
 import "./demo-focus-field.css";
@@ -18,6 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body>
         <ChurchWorkDemoFlowSkipper />
         <ChurchWorkDemoBalloonAnimator />
+        <ChurchWorkDemoRoleCue />
         {children}
       </body>
     </html>

@@ -12,13 +12,18 @@ function getDemoStepLabel() {
   return `${match[1]}/${match[2]}`;
 }
 
-function findButtonByLabel(label: DemoButtonAction) {
+function findRealDemoButton(label: DemoButtonAction) {
   const buttons = Array.from(document.querySelectorAll("button"));
-  return buttons.find((button) => button.textContent?.trim().toLowerCase() === label.toLowerCase()) ?? null;
+  const normalizedLabel = label.toLowerCase();
+
+  return buttons.find((button) => {
+    if (button.closest(".churchwork-demo-controls-dock")) return false;
+    return button.textContent?.trim().toLowerCase() === normalizedLabel;
+  }) ?? null;
 }
 
 function clickDemoButton(label: DemoButtonAction) {
-  const button = findButtonByLabel(label);
+  const button = findRealDemoButton(label);
   if (!button || button.disabled) return;
   button.click();
 }
@@ -43,11 +48,11 @@ export function ChurchWorkDemoControlsDock() {
   if (!stepLabel) return null;
 
   return (
-    <section className="churchwork-demo-controls-dock pointer-events-auto fixed bottom-5 right-5 z-[245] rounded-[1.35rem] border border-[#d8d0c0] bg-[#fffdf8]/96 p-3 text-[#102b3a] shadow-[0_1.5rem_4rem_rgba(13,43,59,0.24)] backdrop-blur" aria-label="Guided demo controls">
+    <section className="churchwork-demo-controls-dock pointer-events-auto fixed bottom-5 right-5 z-[245] rounded-[1.35rem] border border-[#f2b84b]/45 bg-[#0d2b3b] p-3 text-[#fff8e7] shadow-[0_1.5rem_4rem_rgba(13,43,59,0.36)] ring-1 ring-white/10 backdrop-blur" aria-label="Guided demo controls">
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between gap-4 px-1">
-          <span className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-[#7a5b20]">Guided demo</span>
-          <span className="rounded-full bg-[#173b2d] px-2.5 py-1 text-[0.65rem] font-black text-[#fff8e7]">{stepLabel}</span>
+          <span className="text-[0.65rem] font-black uppercase tracking-[0.16em] text-[#f2d68b]">Guided demo</span>
+          <span className="rounded-full bg-[#f2b84b] px-2.5 py-1 text-[0.65rem] font-black text-[#102b3a]">{stepLabel}</span>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {actions.map((action) => (
@@ -55,7 +60,7 @@ export function ChurchWorkDemoControlsDock() {
               key={action}
               type="button"
               onClick={() => clickDemoButton(action)}
-              className={action === "Next" ? "rounded-full bg-[#173b2d] px-4 py-2 text-xs font-black text-white shadow-sm hover:bg-[#102b3a]" : "rounded-full border border-[#d8d0c0] bg-white px-3 py-2 text-xs font-black text-[#4d3f73] shadow-sm hover:bg-[#f7f3ea]"}
+              className={action === "Next" ? "rounded-full bg-[#f2b84b] px-4 py-2 text-xs font-black text-[#102b3a] shadow-sm hover:bg-[#ffd56f]" : "rounded-full border border-white/15 bg-white/10 px-3 py-2 text-xs font-black text-[#fff8e7] shadow-sm hover:bg-white/18"}
             >
               {action}
             </button>

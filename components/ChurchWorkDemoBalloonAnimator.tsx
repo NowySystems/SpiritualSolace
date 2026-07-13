@@ -27,21 +27,24 @@ function styleClone(clone: HTMLElement, sourceRect: DOMRect) {
   clone.style.top = `${sourceRect.top}px`;
   clone.style.width = `${sourceRect.width}px`;
   clone.style.height = `${sourceRect.height}px`;
+  clone.style.maxWidth = "none";
+  clone.style.maxHeight = "none";
   clone.style.margin = "0";
-  clone.style.zIndex = "190";
+  clone.style.zIndex = "520";
   clone.style.pointerEvents = "none";
   clone.style.transformOrigin = "center center";
   clone.style.boxSizing = "border-box";
-  clone.style.border = "3px solid rgba(242, 184, 75, 0.96)";
+  clone.style.border = "3px solid rgba(242, 184, 75, 0.98)";
   clone.style.borderRadius = "1.75rem";
   clone.style.background = "linear-gradient(135deg, rgba(255, 252, 244, 0.99), rgba(239, 247, 245, 0.98))";
-  clone.style.boxShadow = "0 2.5rem 6rem rgba(13, 43, 59, 0.32), 0 0 0 0.6rem rgba(242, 184, 75, 0.22)";
+  clone.style.boxShadow = "0 3rem 8rem rgba(13, 43, 59, 0.42), 0 0 0 0.72rem rgba(242, 184, 75, 0.24)";
   clone.style.padding = "2rem";
   clone.style.display = "flex";
   clone.style.flexDirection = "column";
   clone.style.justifyContent = "center";
   clone.style.overflow = "hidden";
-  clone.style.willChange = "left, top, width, height, transform, opacity, filter";
+  clone.style.willChange = "transform, opacity, filter";
+  clone.style.isolation = "isolate";
 }
 
 function styleCloneChildren(clone: HTMLElement) {
@@ -69,14 +72,22 @@ function styleCloneChildren(clone: HTMLElement) {
   }
 }
 
-function getTargetRect(sourceRect: DOMRect) {
-  const targetWidth = Math.min(820, Math.max(560, window.innerWidth * 0.58));
-  const targetHeight = Math.min(330, Math.max(230, sourceRect.height * 2.35));
+function getTargetMotion(sourceRect: DOMRect) {
+  const sourceCenterX = sourceRect.left + sourceRect.width / 2;
+  const sourceCenterY = sourceRect.top + sourceRect.height / 2;
+  const targetCenterX = window.innerWidth / 2;
+  const targetCenterY = window.innerHeight / 2;
+
+  const targetWidth = Math.min(860, Math.max(560, window.innerWidth * 0.58));
+  const targetHeight = Math.min(350, Math.max(240, sourceRect.height * 2.45));
+  const scaleX = targetWidth / Math.max(sourceRect.width, 1);
+  const scaleY = targetHeight / Math.max(sourceRect.height, 1);
+  const scale = Math.max(1.38, Math.min(2.15, Math.min(scaleX, scaleY)));
+
   return {
-    left: (window.innerWidth - targetWidth) / 2,
-    top: (window.innerHeight - targetHeight) / 2 + 18,
-    width: targetWidth,
-    height: targetHeight
+    dx: targetCenterX - sourceCenterX,
+    dy: targetCenterY - sourceCenterY,
+    scale
   };
 }
 
@@ -84,7 +95,7 @@ function animateField(element: HTMLElement) {
   const sourceRect = element.getBoundingClientRect();
   if (!sourceRect.width || !sourceRect.height) return;
 
-  const target = getTargetRect(sourceRect);
+  const target = getTargetMotion(sourceRect);
   const clone = element.cloneNode(true) as HTMLElement;
   styleClone(clone, sourceRect);
   styleCloneChildren(clone);
@@ -92,55 +103,37 @@ function animateField(element: HTMLElement) {
 
   element.classList.add("churchwork-demo-field-origin-highlight");
 
+  const centerTransform = `translate3d(${target.dx}px, ${target.dy}px, 0) scale(${target.scale})`;
+
   const animation = clone.animate(
     [
       {
-        left: `${sourceRect.left}px`,
-        top: `${sourceRect.top}px`,
-        width: `${sourceRect.width}px`,
-        height: `${sourceRect.height}px`,
-        opacity: "0.72",
-        transform: "scale(1)",
+        opacity: "0.78",
+        transform: "translate3d(0, 0, 0) scale(1)",
         filter: "saturate(0.95) blur(0.5px)",
         offset: 0
       },
       {
-        left: `${sourceRect.left}px`,
-        top: `${sourceRect.top}px`,
-        width: `${sourceRect.width}px`,
-        height: `${sourceRect.height}px`,
         opacity: "1",
-        transform: "scale(1.04)",
+        transform: "translate3d(0, -0.5rem, 0) scale(1.06)",
         filter: "saturate(1.08) blur(0)",
         offset: 0.11
       },
       {
-        left: `${target.left}px`,
-        top: `${target.top}px`,
-        width: `${target.width}px`,
-        height: `${target.height}px`,
         opacity: "1",
-        transform: "scale(1.045)",
-        filter: "saturate(1.16) blur(0)",
+        transform: centerTransform,
+        filter: "saturate(1.18) blur(0)",
         offset: centerHoldStart
       },
       {
-        left: `${target.left}px`,
-        top: `${target.top}px`,
-        width: `${target.width}px`,
-        height: `${target.height}px`,
         opacity: "1",
-        transform: "scale(1.045)",
-        filter: "saturate(1.16) blur(0)",
+        transform: centerTransform,
+        filter: "saturate(1.18) blur(0)",
         offset: centerHoldEnd
       },
       {
-        left: `${sourceRect.left}px`,
-        top: `${sourceRect.top}px`,
-        width: `${sourceRect.width}px`,
-        height: `${sourceRect.height}px`,
-        opacity: "0.18",
-        transform: "scale(1)",
+        opacity: "0.28",
+        transform: "translate3d(0, 0, 0) scale(1)",
         filter: "saturate(0.95) blur(0.5px)",
         offset: 1
       }

@@ -10,6 +10,7 @@ type LaneInfo = {
   title: string;
   subtitle: string;
   badge: string;
+  shortLabel: string;
 };
 
 const laneInfo: Record<DemoLane, LaneInfo> = {
@@ -18,30 +19,36 @@ const laneInfo: Record<DemoLane, LaneInfo> = {
     eyebrow: "Requester lane",
     title: "Sarah submits the need",
     subtitle: "The family/requester side creates a structured spiritual-care request with no medical details.",
-    badge: "Requester"
+    badge: "Requester",
+    shortLabel: "Request"
   },
   facility: {
     lane: "facility",
     eyebrow: "Facility lane",
     title: "Facility reviews and controls sharing",
     subtitle: "The facility receives the request, reviews consent, and decides what can be shared externally.",
-    badge: "Facility"
+    badge: "Facility",
+    shortLabel: "Facility"
   },
   partner: {
     lane: "partner",
     eyebrow: "Partner lane",
     title: "Partner receives approved context only",
     subtitle: "The church/partner sees only the approved assignment and reports back through structured actions.",
-    badge: "Partner"
+    badge: "Partner",
+    shortLabel: "Partner"
   },
   "requester-update": {
     lane: "requester-update",
     eyebrow: "Requester update",
     title: "Sarah sees the approved outcome",
     subtitle: "The requester receives a safe update without facility-only notes or partner-only workflow details.",
-    badge: "Requester"
+    badge: "Requester update",
+    shortLabel: "Update"
   }
 };
+
+const laneOrder: DemoLane[] = ["requester", "facility", "partner", "requester-update"];
 
 function getStepNumber() {
   const text = document.body.textContent ?? "";
@@ -84,7 +91,7 @@ export function ChurchWorkDemoRoleCue() {
       if (lastLaneRef.current && lastLaneRef.current !== nextLane) {
         setTransitionLane(nextLane);
         if (transitionTimeoutRef.current) window.clearTimeout(transitionTimeoutRef.current);
-        transitionTimeoutRef.current = window.setTimeout(() => setTransitionLane(null), 2800);
+        transitionTimeoutRef.current = window.setTimeout(() => setTransitionLane(null), 3000);
       }
       lastLaneRef.current = nextLane;
     }
@@ -108,19 +115,46 @@ export function ChurchWorkDemoRoleCue() {
 
   return (
     <>
-      <div className="pointer-events-none fixed left-1/2 top-[5.25rem] z-[210] w-[min(54rem,calc(100vw-1.5rem))] -translate-x-1/2">
-        <div className="mx-auto flex max-w-fit items-center gap-3 rounded-full border border-[#d8d0c0] bg-[#fffdf8]/96 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#173b2d] shadow-[0_1.25rem_3rem_rgba(13,43,59,0.18)] backdrop-blur">
-          <span className="rounded-full bg-[#173b2d] px-3 py-1 text-[#fff8e7]">Current lane</span>
-          <span>{current.badge}</span>
-          <span className="hidden h-1.5 w-1.5 rounded-full bg-[#f2b84b] md:inline-block" />
-          <span className="hidden text-[#7a5b20] md:inline">Step {stepNumber}</span>
+      <aside className="pointer-events-none fixed bottom-4 left-1/2 z-[210] w-[min(58rem,calc(100vw-1rem))] -translate-x-1/2 px-2 md:bottom-5">
+        <div className="rounded-[1.4rem] border border-[#d8d0c0] bg-[#fffdf8]/96 p-3 shadow-[0_1.25rem_3rem_rgba(13,43,59,0.2)] backdrop-blur">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2 whitespace-nowrap text-xs font-black uppercase tracking-[0.16em] text-[#173b2d]">
+              <span className="rounded-full bg-[#173b2d] px-3 py-1 text-[#fff8e7]">Demo path</span>
+              <span className="hidden text-[#7a5b20] sm:inline">Current: {current.badge}</span>
+              <span className="text-[#7a5b20] sm:hidden">{current.shortLabel}</span>
+            </div>
+
+            <ol className="grid grid-cols-4 gap-2 text-center text-[0.62rem] font-black uppercase tracking-[0.08em] text-[#4d5d55] md:flex md:items-center md:gap-2">
+              {laneOrder.map((lane, index) => {
+                const info = laneInfo[lane];
+                const isActive = currentLane === lane;
+                const isPast = laneOrder.indexOf(currentLane) > index;
+                return (
+                  <li key={lane} className="flex min-w-0 items-center gap-2 md:min-w-[7.5rem]">
+                    <span
+                      className={`block w-full rounded-full border px-2 py-2 transition ${
+                        isActive
+                          ? "border-[#173b2d] bg-[#173b2d] text-[#fff8e7] shadow-sm"
+                          : isPast
+                            ? "border-[#86a45f]/40 bg-[#edf5e6] text-[#173b2d]"
+                            : "border-[#d8d0c0] bg-[#f7f3ea] text-[#4d5d55]"
+                      }`}
+                    >
+                      {info.shortLabel}
+                    </span>
+                    {index < laneOrder.length - 1 ? <span className="hidden shrink-0 text-[#c69a2b] md:block">→</span> : null}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         </div>
-      </div>
+      </aside>
 
       {transition ? (
         <div className="pointer-events-none fixed inset-0 z-[220] flex items-center justify-center px-5">
           <div className="absolute inset-0 bg-[#0d2b3b]/18 backdrop-blur-[1px]" />
-          <section className="relative w-[min(48rem,calc(100vw-2rem))] rounded-[2rem] border border-[#f2b84b]/70 bg-[#fffdf8] p-7 text-center shadow-[0_3rem_8rem_rgba(13,43,59,0.38)] animate-[churchwork-role-cue-enter_2.8s_cubic-bezier(0.16,1,0.3,1)_both]">
+          <section className="relative w-[min(48rem,calc(100vw-2rem))] rounded-[2rem] border border-[#f2b84b]/70 bg-[#fffdf8] p-7 text-center shadow-[0_3rem_8rem_rgba(13,43,59,0.38)] animate-[churchwork-role-cue-enter_3s_cubic-bezier(0.16,1,0.3,1)_both]">
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#7a5b20]">{transition.eyebrow}</p>
             <h2 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.045em] text-[#0d2b3b] md:text-5xl">{transition.title}</h2>
             <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-7 text-[#4d5d55]">{transition.subtitle}</p>

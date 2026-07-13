@@ -1,6 +1,5 @@
-/* Final guided demo focus pass.
-   During a guided form step, show only the current field as the center-stage object.
-   The active field now balloons in from its approximate original form position. */
+/* Guided demo focus pass.
+   The real active field stays in place. A temporary clone balloons to center and returns. */
 
 form.churchwork-demo-active {
   width: min(96rem, calc(100vw - 4rem)) !important;
@@ -22,129 +21,71 @@ form.churchwork-demo-active > div:first-child div[class*="rounded-[1.25rem]"] {
 }
 
 form.churchwork-demo-active > div:nth-child(2) {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  min-height: min(31rem, calc(100vh - 16rem)) !important;
-  max-height: calc(100vh - 14.75rem) !important;
-  overflow: visible !important;
-  padding: 1.4rem !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 1rem !important;
+  max-height: calc(100vh - 15.25rem) !important;
+  margin-top: 1rem !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding: 0.55rem 0.25rem 0.9rem !important;
+  scrollbar-width: thin;
 }
 
-form.churchwork-demo-active > div:nth-child(2) > label:not([data-demo-field-active="true"]) {
-  display: none !important;
+@media (min-width: 900px) {
+  form.churchwork-demo-active > div:nth-child(2) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    align-items: stretch !important;
+    max-height: calc(100vh - 14.5rem) !important;
+  }
+
+  form.churchwork-demo-active label:has(input[type="checkbox"]) {
+    grid-column: 1 / -1 !important;
+  }
 }
 
-form.churchwork-demo-active > div:nth-child(2) > [data-demo-field-active="true"] {
-  --demo-start-x: 0rem;
-  --demo-start-y: 0rem;
-  --demo-start-scale: 0.48;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: center !important;
-  width: min(58rem, 92%) !important;
-  min-height: min(24rem, calc(100vh - 18rem)) !important;
-  margin: 0 auto !important;
-  padding: clamp(1.5rem, 3vw, 2.4rem) !important;
-  border-width: 3px !important;
-  border-color: rgba(242, 184, 75, 0.92) !important;
-  border-radius: 1.75rem !important;
-  background: linear-gradient(135deg, rgba(255, 252, 244, 0.99), rgba(239, 247, 245, 0.98)) !important;
-  box-shadow: 0 2rem 5rem rgba(23, 59, 45, 0.2), 0 0 0 0.55rem rgba(242, 184, 75, 0.2) !important;
-  opacity: 1 !important;
-  translate: 0 -0.2rem;
-  scale: 1.02;
-  transform: translate3d(0, -0.2rem, 0) scale(1.02) !important;
-  transform-origin: center center !important;
-  animation: churchwork-field-balloon-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both !important;
-  will-change: translate, scale, opacity, filter;
+@media (min-width: 1180px) {
+  form.churchwork-demo-active > div:nth-child(2) {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    max-height: calc(100vh - 14rem) !important;
+  }
+
+  form.churchwork-demo-active label:has(input[type="checkbox"]) {
+    grid-column: 1 / -1 !important;
+  }
 }
 
-form.churchwork-demo-active > div:nth-child(2) > label:nth-of-type(1)[data-demo-field-active="true"] {
-  --demo-start-x: -26rem;
-  --demo-start-y: -8rem;
-  --demo-start-scale: 0.42;
+form.churchwork-demo-active label {
+  min-height: 7.25rem !important;
+  padding: 1.15rem !important;
+  transition: box-shadow 220ms ease, transform 220ms ease, border-color 220ms ease, background 220ms ease !important;
 }
 
-form.churchwork-demo-active > div:nth-child(2) > label:nth-of-type(2)[data-demo-field-active="true"] {
-  --demo-start-x: 0rem;
-  --demo-start-y: -8rem;
-  --demo-start-scale: 0.42;
+form.churchwork-demo-active label[data-demo-field-active="true"],
+form.churchwork-demo-active .churchwork-demo-field-origin-highlight {
+  border-color: rgba(242, 184, 75, 0.9) !important;
+  background:
+    linear-gradient(135deg, rgba(255, 252, 244, 0.98), rgba(239, 247, 245, 0.94)) !important;
+  box-shadow:
+    0 1.2rem 3rem rgba(23, 59, 45, 0.14),
+    0 0 0 0.35rem rgba(242, 184, 75, 0.16) !important;
+  transform: translate3d(0, -0.18rem, 0) scale(1.012) !important;
 }
 
-form.churchwork-demo-active > div:nth-child(2) > label:nth-of-type(3)[data-demo-field-active="true"] {
-  --demo-start-x: 26rem;
-  --demo-start-y: -8rem;
-  --demo-start-scale: 0.42;
-}
-
-form.churchwork-demo-active > div:nth-child(2) > label:nth-of-type(4)[data-demo-field-active="true"] {
-  --demo-start-x: -26rem;
-  --demo-start-y: 7rem;
-  --demo-start-scale: 0.42;
-}
-
-form.churchwork-demo-active > div:nth-child(2) > label:nth-of-type(5)[data-demo-field-active="true"] {
-  --demo-start-x: 0rem;
-  --demo-start-y: 7rem;
-  --demo-start-scale: 0.42;
-}
-
-form.churchwork-demo-active > div:nth-child(2) > label:nth-of-type(6)[data-demo-field-active="true"] {
-  --demo-start-x: 0rem;
-  --demo-start-y: 11rem;
-  --demo-start-scale: 0.44;
-}
-
-form.churchwork-demo-active > div:nth-child(2) > label[data-demo-field-active="true"] {
-  font-size: clamp(1.15rem, 1.9vw, 1.65rem) !important;
-  line-height: 1.25 !important;
-}
-
-form.churchwork-demo-active > div:nth-child(2) > label[data-demo-field-active="true"] > span[class*="Current step"] {
-  top: -1.05rem !important;
-  left: 1.5rem !important;
+form.churchwork-demo-active label[data-demo-field-active="true"] > span[class*="Current step"] {
   background: #173b2d !important;
   color: #fff8e7 !important;
 }
 
-form.churchwork-demo-active > div:nth-child(2) > label[data-demo-field-active="true"] select {
-  min-height: 5rem !important;
-  margin-top: 1.25rem !important;
-  padding-inline: 1.25rem !important;
-  border-radius: 1rem !important;
-  font-size: clamp(1.1rem, 1.8vw, 1.55rem) !important;
-  font-weight: 900 !important;
+form.churchwork-demo-active select {
+  min-height: 3.55rem !important;
+  font-size: 1rem !important;
 }
 
-form.churchwork-demo-active > div:nth-child(2) > label[data-demo-field-active="true"] input[type="checkbox"] {
-  height: 2.1rem !important;
-  width: 2.1rem !important;
-}
-
-form.churchwork-demo-active > div:nth-child(2) > label[data-demo-field-active="true"] span:last-child {
-  font-size: clamp(1.05rem, 1.6vw, 1.35rem) !important;
-}
-
-@keyframes churchwork-field-balloon-in {
-  0% {
-    opacity: 0.3;
-    translate: var(--demo-start-x) var(--demo-start-y);
-    scale: var(--demo-start-scale);
-    filter: blur(1.5px) saturate(0.92);
-  }
-  55% {
-    opacity: 1;
-    translate: 0 -0.45rem;
-    scale: 1.075;
-    filter: blur(0) saturate(1.15);
-  }
-  100% {
-    opacity: 1;
-    translate: 0 -0.2rem;
-    scale: 1.02;
-    filter: blur(0) saturate(1.05);
-  }
+form.churchwork-demo-active p[class*="bg-[#fff8e7]"] {
+  border: 1px solid rgba(242, 184, 75, 0.34) !important;
+  background: rgba(255, 248, 231, 0.92) !important;
+  font-size: 0.9rem !important;
 }
 
 @media (max-width: 767px) {
@@ -154,24 +95,12 @@ form.churchwork-demo-active > div:nth-child(2) > label[data-demo-field-active="t
   }
 
   form.churchwork-demo-active > div:nth-child(2) {
-    min-height: 20rem !important;
-    max-height: calc(100vh - 14rem) !important;
-    padding: 0.75rem !important;
+    display: block !important;
+    max-height: calc(100vh - 15rem) !important;
   }
 
-  form.churchwork-demo-active > div:nth-child(2) > [data-demo-field-active="true"] {
-    --demo-start-x: 0rem !important;
-    --demo-start-y: 4.5rem !important;
-    width: 100% !important;
-    min-height: 17rem !important;
-    padding: 1.35rem !important;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  form.churchwork-demo-active > div:nth-child(2) > [data-demo-field-active="true"] {
-    animation: none !important;
-    translate: 0 0 !important;
-    scale: 1 !important;
+  form.churchwork-demo-active label {
+    min-height: auto !important;
+    margin-bottom: 0.85rem !important;
   }
 }

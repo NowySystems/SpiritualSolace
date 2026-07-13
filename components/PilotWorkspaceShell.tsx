@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { FacilitySignupCard } from "@/components/FacilitySignupCard";
 import { FacilityUserManagementCard } from "@/components/FacilityUserManagementCard";
+import { GrandviewFacilityReviewQueue } from "@/components/GrandviewFacilityReviewQueue";
 import { OwnerAdminAccessCenter } from "@/components/OwnerAdminAccessCenter";
 import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -44,7 +45,7 @@ type PilotWorkspaceAccess = {
 const workspaceTabs: { key: WorkspaceKey; label: string; eyebrow: string; description: string }[] = [
   { key: "overview", label: "Overview", eyebrow: "Pilot status", description: "Current pilot targets, guardrails, seed check, and next build path." },
   { key: "owner", label: "Owner/Admin", eyebrow: "Platform view", description: "Users, role buckets, requests, and timeline oversight." },
-  { key: "facility", label: "Facility", eyebrow: "Facility ops", description: "Create a facility workspace and manage facility users." },
+  { key: "facility", label: "Facility", eyebrow: "Facility ops", description: "Review Grandview requests, create facility workspaces, and manage facility users." },
   { key: "partner", label: "Partner", eyebrow: "Church partner", description: "Hope Church workspace routing and partner-safe next actions." },
   { key: "requester", label: "Requester", eyebrow: "Spiritual-care request", description: "Submit a structured spiritual-care request with no medical notes." }
 ];
@@ -314,7 +315,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
             </article>
             <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Facility path</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: create a facility workspace and manage facility users inside that organization.</p>
+              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: review the Grandview queue, create facility workspaces, and manage users.</p>
             </article>
             <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Partner path</p>
@@ -365,7 +366,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
           </div>
 
           <div className="mt-8 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-            Keep sandbox tests fake until role membership, RLS tests, facility review, partner assignment, and timeline visibility are complete. Worship From Home is queued as a landing-page content layer after the pilot path stays stable.
+            Keep sandbox tests fake until role membership, RLS tests, partner assignment, and timeline visibility are complete. Worship From Home is queued as a landing-page content layer after the pilot path stays stable.
           </div>
         </section>
       ) : null}
@@ -374,6 +375,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
 
       {activeWorkspace === "facility" ? (
         <>
+          <GrandviewFacilityReviewQueue />
           <FacilitySignupCard session={session} />
           <FacilityUserManagementCard session={session} />
         </>

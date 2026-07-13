@@ -23,10 +23,36 @@ type OrganizationPreview = {
 type WorkspaceKey = "overview" | "owner" | "facility" | "requester";
 
 const workspaceTabs: { key: WorkspaceKey; label: string; eyebrow: string; description: string }[] = [
-  { key: "overview", label: "Overview", eyebrow: "Pilot status", description: "Seed check, guardrails, and current pilot paths." },
+  { key: "overview", label: "Overview", eyebrow: "Pilot status", description: "Current pilot targets, guardrails, seed check, and next build path." },
   { key: "owner", label: "Owner/Admin", eyebrow: "Platform view", description: "Users, role buckets, requests, and timeline oversight." },
   { key: "facility", label: "Facility", eyebrow: "Facility ops", description: "Create a facility workspace and manage facility users." },
-  { key: "requester", label: "Requester", eyebrow: "Spiritual-care request", description: "Submit a structured spiritual-care request." }
+  { key: "requester", label: "Requester", eyebrow: "Spiritual-care request", description: "Submit a structured spiritual-care request with no medical notes." }
+];
+
+const pilotTargets = [
+  {
+    name: "Grandview Post Acute",
+    role: "First facility pilot target",
+    detail: "Facility review queue, resident/request context, consent boundaries, and status visibility."
+  },
+  {
+    name: "Hope Church",
+    role: "First church partner target",
+    detail: "Partner-safe workspace, assigned requests, shared care timeline, and report-back actions."
+  },
+  {
+    name: "ChurchWork Owner/Admin",
+    role: "Control layer",
+    detail: "Cole and Sam keep access, routing, visibility, and pilot safety under human review."
+  }
+];
+
+const nextBuildPath = [
+  "Role-based pilot routing so each signed-in user lands in the right workspace.",
+  "Grandview facility request review queue with safe actions only.",
+  "Hope Church partner workspace with assigned care needs and report-back actions.",
+  "Requester status view tied to the shared timeline with only requester-safe updates.",
+  "Timeline visibility and RLS test matrix before real pilot data."
 ];
 
 function formatSystemLabel(value: string | null | undefined) {
@@ -63,7 +89,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         }
 
         setOrganizations((data as OrganizationPreview[] | null) ?? []);
-        setStatus("Pilot seed check completed.");
+        setStatus("Pilot seed check completed for ChurchWork, Grandview Post Acute, and Hope Church.");
       });
 
     return () => {
@@ -80,13 +106,13 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
             <div>
               <h2 className="font-serif text-4xl font-semibold tracking-[-0.04em] md:text-5xl">Pilot workspace.</h2>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-[#d4dedc]">
-                {userEmail} is inside the controlled pilot. Choose a workspace below. ChurchWork coordinates spiritual care with structured requests, approved roles, and clear visibility boundaries.
+                {userEmail} is inside the controlled pilot. ChurchWork is now in pilot hardening for the Grandview Post Acute and Hope Church path: structured spiritual-care intake, role-based workspaces, shared timeline visibility, and owner/admin review.
               </p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/10 p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c8d9b3]">Safety rule</p>
               <p className="mt-3 text-sm leading-6 text-[#edf5e6]">
-                Keep all sandbox tests fake. ChurchWork is for spiritual-care coordination only and is not an emergency or clinical system.
+                Keep all sandbox tests fake. ChurchWork is for spiritual-care coordination only and is not an emergency, clinical, or medical-record system.
               </p>
             </div>
           </div>
@@ -120,11 +146,11 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
           <div className="grid gap-4 md:grid-cols-4">
             <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Owner/Admin</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active for Cole and Sam: view users, buckets, requests, and timeline activity.</p>
+              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active for Cole and Sam: view users, buckets, requests, timeline activity, and access status.</p>
             </article>
             <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Requester path</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: structured spiritual-care request only.</p>
+              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: structured spiritual-care request only, with no medical notes or open chat.</p>
             </article>
             <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Facility path</p>
@@ -132,8 +158,35 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
             </article>
             <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Partner path</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Next: partner signup, partner admins, and partner-safe workspaces.</p>
+              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Next: Hope Church partner workspace, partner admins, and partner-safe assignments.</p>
             </article>
+          </div>
+
+          <div className="mt-8 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className="rounded-2xl border border-[#d8d0c0] bg-[#fffaf0] p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Pilot targets</p>
+              <div className="mt-4 space-y-3">
+                {pilotTargets.map((target) => (
+                  <article key={target.name} className="rounded-xl border border-[#e4d8bd] bg-white/75 p-4">
+                    <p className="font-serif text-lg font-semibold text-[#102b3a]">{target.name}</p>
+                    <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-[#789052]">{target.role}</p>
+                    <p className="mt-2 text-sm leading-6 text-[#4d5d55]">{target.detail}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Next build path</p>
+              <ol className="mt-4 space-y-3">
+                {nextBuildPath.map((step, index) => (
+                  <li key={step} className="flex gap-3 rounded-xl border border-[#ded6c8] bg-white/75 p-4 text-sm leading-6 text-[#4d5d55]">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#173b2d] text-xs font-black text-white">{index + 1}</span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            </section>
           </div>
 
           <div className="mt-8 rounded-2xl border border-[#d8d0c0] bg-[#173b2d] p-5 text-white">
@@ -152,7 +205,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
           </div>
 
           <div className="mt-8 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-            Keep sandbox tests fake until role membership, RLS tests, facility review, partner assignment, and timeline visibility are complete.
+            Keep sandbox tests fake until role membership, RLS tests, facility review, partner assignment, and timeline visibility are complete. Worship From Home is queued as a landing-page content layer after the pilot path stays stable.
           </div>
         </section>
       ) : null}

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { ChurchWorkDemoBalloonAnimator } from "@/components/ChurchWorkDemoBalloonAnimator";
+import { ChurchWorkDemoControlsDock } from "@/components/ChurchWorkDemoControlsDock";
 import { ChurchWorkDemoFlowSkipper } from "@/components/ChurchWorkDemoFlowSkipper";
 import { ChurchWorkDemoRoleCue } from "@/components/ChurchWorkDemoRoleCue";
 import "./globals.css";
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
         <ChurchWorkDemoFlowSkipper />
         <ChurchWorkDemoBalloonAnimator />
         <ChurchWorkDemoRoleCue />
+        <ChurchWorkDemoControlsDock />
         {children}
       </body>
     </html>

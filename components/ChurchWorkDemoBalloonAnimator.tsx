@@ -2,9 +2,9 @@
 
 import { useEffect, useRef } from "react";
 
-const animationDurationMs = 1550;
-const centerHoldStart = 0.36;
-const centerHoldEnd = 0.7;
+const animationDurationMs = 5200;
+const centerHoldStart = 0.24;
+const centerHoldEnd = 0.74;
 
 function getActiveDemoField() {
   return document.querySelector("form.churchwork-demo-active [data-demo-field-active='true']") as HTMLElement | null;
@@ -81,7 +81,7 @@ function getTargetRect(sourceRect: DOMRect) {
 
 function animateField(element: HTMLElement) {
   const sourceRect = element.getBoundingClientRect();
-  if (!sourceRect.width || !sourceRect.height) return;
+  if (!sourceRect.width || !sourceRect.height) return null;
 
   const target = getTargetRect(sourceRect);
   const clone = element.cloneNode(true) as HTMLElement;
@@ -109,9 +109,9 @@ function animateField(element: HTMLElement) {
         width: `${sourceRect.width}px`,
         height: `${sourceRect.height}px`,
         opacity: "1",
-        transform: "scale(1.04)",
-        filter: "saturate(1.08) blur(0)",
-        offset: 0.13
+        transform: "scale(1.05)",
+        filter: "saturate(1.1) blur(0)",
+        offset: 0.08
       },
       {
         left: `${target.left}px`,
@@ -119,8 +119,8 @@ function animateField(element: HTMLElement) {
         width: `${target.width}px`,
         height: `${target.height}px`,
         opacity: "1",
-        transform: "scale(1.04)",
-        filter: "saturate(1.16) blur(0)",
+        transform: "scale(1.055)",
+        filter: "saturate(1.18) blur(0)",
         offset: centerHoldStart
       },
       {
@@ -129,8 +129,8 @@ function animateField(element: HTMLElement) {
         width: `${target.width}px`,
         height: `${target.height}px`,
         opacity: "1",
-        transform: "scale(1.04)",
-        filter: "saturate(1.16) blur(0)",
+        transform: "scale(1.055)",
+        filter: "saturate(1.18) blur(0)",
         offset: centerHoldEnd
       },
       {
@@ -138,8 +138,18 @@ function animateField(element: HTMLElement) {
         top: `${sourceRect.top}px`,
         width: `${sourceRect.width}px`,
         height: `${sourceRect.height}px`,
-        opacity: "0.2",
-        transform: "scale(1)",
+        opacity: "0.86",
+        transform: "scale(1.01)",
+        filter: "saturate(1.02) blur(0)",
+        offset: 0.92
+      },
+      {
+        left: `${sourceRect.left}px`,
+        top: `${sourceRect.top}px`,
+        width: `${sourceRect.width}px`,
+        height: `${sourceRect.height}px`,
+        opacity: "0",
+        transform: "scale(0.98)",
         filter: "saturate(0.95) blur(0.5px)",
         offset: 1
       }
@@ -151,19 +161,20 @@ function animateField(element: HTMLElement) {
     }
   );
 
-  animation.addEventListener("finish", () => {
+  const cleanup = () => {
     clone.remove();
     element.classList.remove("churchwork-demo-field-origin-highlight");
-  });
+  };
 
-  animation.addEventListener("cancel", () => {
-    clone.remove();
-    element.classList.remove("churchwork-demo-field-origin-highlight");
-  });
+  animation.addEventListener("finish", cleanup, { once: true });
+  animation.addEventListener("cancel", cleanup, { once: true });
+
+  return animation;
 }
 
 export function ChurchWorkDemoBalloonAnimator() {
   const lastAnimatedKeyRef = useRef<string | null>(null);
+  const activeAnimationRef = useRef<Animation | null>(null);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -182,8 +193,10 @@ export function ChurchWorkDemoBalloonAnimator() {
       timeoutId = window.setTimeout(() => {
         const currentField = getActiveDemoField();
         if (!currentField || getFieldKey(currentField) !== key) return;
-        animateField(currentField);
-      }, 120);
+
+        activeAnimationRef.current?.cancel();
+        activeAnimationRef.current = animateField(currentField);
+      }, 140);
     }
 
     const observer = new MutationObserver(scheduleAnimation);
@@ -193,6 +206,7 @@ export function ChurchWorkDemoBalloonAnimator() {
     return () => {
       observer.disconnect();
       if (timeoutId) window.clearTimeout(timeoutId);
+      activeAnimationRef.current?.cancel();
     };
   }, []);
 

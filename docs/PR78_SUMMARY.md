@@ -8,6 +8,8 @@ The first role cue pass created a current-lane chip, but it was easy to miss and
 
 The viewer also should never lose the core demo controls. Next, Back, Replay, Voice On, and End need to stay visible no matter whether the current step is in the narrator card, form, ledger, or lane transition.
 
+The controls/legend pass exposed one animation issue: the field clone could look like it only pulsed near the source instead of flying front-and-center. The balloon clone now uses a viewport-centered transform path and a higher overlay layer.
+
 ## Description
 
 Adds:
@@ -20,6 +22,7 @@ Updates:
 
 - `app/layout.tsx`
 - `app/demo-polish.css`
+- `components/ChurchWorkDemoBalloonAnimator.tsx`
 
 ## Behavior
 
@@ -50,6 +53,16 @@ The controls dock component:
 - ignores its own dock buttons when searching for the real control target,
 - makes Next the most prominent action.
 
+The balloon animator:
+
+- keeps the real active field in place,
+- highlights the real active field,
+- clones the active field,
+- flies the clone from the source field center to the viewport center using transform animation,
+- holds the clone in the center,
+- sends the clone back to the source field,
+- renders the clone above the legend and controls during the animation.
+
 The chapter card explains:
 
 - who is acting now,
@@ -63,7 +76,6 @@ The chapter card explains:
 - No care workflow changes.
 - No demo step order changes.
 - No audio route changes.
-- No field animation changes.
 - No pilot stack changes.
 
 ## Testing
@@ -80,11 +92,13 @@ Browser test the guided demo:
 8. Confirm the controls remain visible during form, ledger, and transition steps.
 9. Confirm Next advances the existing guided demo from the dock.
 10. Confirm Back, Replay, Voice On, and End still work from the dock.
-11. Confirm a large transition cue appears when moving to Facility.
-12. Confirm steps 8–13 mark Facility as current.
-13. Confirm a large transition cue appears when moving to Partner.
-14. Confirm steps 14–19 mark Partner as current.
-15. Confirm a large transition cue appears before the final requester update.
-16. Confirm step 20 marks Update as current.
-17. Confirm the legend does not cover the title/narration area.
-18. Confirm the legend and controls do not block the field balloon animation during normal field steps.
+11. Confirm active field clones fly to the actual screen center, hold, and return.
+12. Confirm the clone appears above the legend and controls while it is animating.
+13. Confirm a large transition cue appears when moving to Facility.
+14. Confirm steps 8–13 mark Facility as current.
+15. Confirm a large transition cue appears when moving to Partner.
+16. Confirm steps 14–19 mark Partner as current.
+17. Confirm a large transition cue appears before the final requester update.
+18. Confirm step 20 marks Update as current.
+19. Confirm the legend does not cover the title/narration area.
+20. Confirm the legend and controls do not block normal guided demo use.

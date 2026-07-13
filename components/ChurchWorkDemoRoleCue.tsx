@@ -116,15 +116,15 @@ export function ChurchWorkDemoRoleCue() {
   return (
     <>
       <aside className="pointer-events-none fixed bottom-4 left-1/2 z-[210] w-[min(58rem,calc(100vw-1rem))] -translate-x-1/2 px-2 md:bottom-5">
-        <div className="rounded-[1.4rem] border border-[#d8d0c0] bg-[#fffdf8]/96 p-3 shadow-[0_1.25rem_3rem_rgba(13,43,59,0.2)] backdrop-blur">
+        <div className="rounded-[1.4rem] border border-[#f2b84b]/45 bg-[#102b3a] p-3 text-[#fff8e7] shadow-[0_1.25rem_3rem_rgba(13,43,59,0.32)] ring-1 ring-white/10 backdrop-blur">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-2 whitespace-nowrap text-xs font-black uppercase tracking-[0.16em] text-[#173b2d]">
-              <span className="rounded-full bg-[#173b2d] px-3 py-1 text-[#fff8e7]">Demo path</span>
-              <span className="hidden text-[#7a5b20] sm:inline">Current: {current.badge}</span>
-              <span className="text-[#7a5b20] sm:hidden">{current.shortLabel}</span>
+            <div className="flex items-center gap-2 whitespace-nowrap text-xs font-black uppercase tracking-[0.16em] text-[#fff8e7]">
+              <span className="rounded-full bg-[#f2b84b] px-3 py-1 text-[#102b3a]">Demo path</span>
+              <span className="hidden text-[#f2d68b] sm:inline">Current: {current.badge}</span>
+              <span className="text-[#f2d68b] sm:hidden">{current.shortLabel}</span>
             </div>
 
-            <ol className="grid grid-cols-4 gap-2 text-center text-[0.62rem] font-black uppercase tracking-[0.08em] text-[#4d5d55] md:flex md:items-center md:gap-2">
+            <ol className="grid grid-cols-4 gap-2 text-center text-[0.62rem] font-black uppercase tracking-[0.08em] text-[#d4dedc] md:flex md:items-center md:gap-2">
               {laneOrder.map((lane, index) => {
                 const info = laneInfo[lane];
                 const isActive = currentLane === lane;
@@ -134,15 +134,15 @@ export function ChurchWorkDemoRoleCue() {
                     <span
                       className={`block w-full rounded-full border px-2 py-2 transition ${
                         isActive
-                          ? "border-[#173b2d] bg-[#173b2d] text-[#fff8e7] shadow-sm"
+                          ? "border-[#f2b84b] bg-[#f2b84b] text-[#102b3a] shadow-sm"
                           : isPast
-                            ? "border-[#86a45f]/40 bg-[#edf5e6] text-[#173b2d]"
-                            : "border-[#d8d0c0] bg-[#f7f3ea] text-[#4d5d55]"
+                            ? "border-[#8dbd9e]/55 bg-[#173b2d] text-[#edf5e6]"
+                            : "border-white/15 bg-white/10 text-[#d4dedc]"
                       }`}
                     >
                       {info.shortLabel}
                     </span>
-                    {index < laneOrder.length - 1 ? <span className="hidden shrink-0 text-[#c69a2b] md:block">→</span> : null}
+                    {index < laneOrder.length - 1 ? <span className="hidden shrink-0 text-[#f2b84b] md:block">→</span> : null}
                   </li>
                 );
               })}

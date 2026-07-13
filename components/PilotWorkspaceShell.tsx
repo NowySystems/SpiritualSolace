@@ -5,6 +5,7 @@ import type { Session } from "@supabase/supabase-js";
 import { FacilitySignupCard } from "@/components/FacilitySignupCard";
 import { FacilityUserManagementCard } from "@/components/FacilityUserManagementCard";
 import { GrandviewFacilityReviewQueue } from "@/components/GrandviewFacilityReviewQueue";
+import { HopePartnerAssignmentQueue } from "@/components/HopePartnerAssignmentQueue";
 import { OwnerAdminAccessCenter } from "@/components/OwnerAdminAccessCenter";
 import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
@@ -46,7 +47,7 @@ const workspaceTabs: { key: WorkspaceKey; label: string; eyebrow: string; descri
   { key: "overview", label: "Overview", eyebrow: "Pilot status", description: "Current pilot targets, guardrails, seed check, and next build path." },
   { key: "owner", label: "Owner/Admin", eyebrow: "Platform view", description: "Users, role buckets, requests, and timeline oversight." },
   { key: "facility", label: "Facility", eyebrow: "Facility ops", description: "Review Grandview requests, create facility workspaces, and manage facility users." },
-  { key: "partner", label: "Partner", eyebrow: "Church partner", description: "Hope Church workspace routing and partner-safe next actions." },
+  { key: "partner", label: "Partner", eyebrow: "Church partner", description: "View Hope Church assigned requests and partner-safe next actions." },
   { key: "requester", label: "Requester", eyebrow: "Spiritual-care request", description: "Submit a structured spiritual-care request with no medical notes." }
 ];
 
@@ -111,28 +112,28 @@ function summarizeAccess(access: PilotWorkspaceAccess | null) {
 function PartnerWorkspacePlaceholder({ access }: { access: PilotWorkspaceAccess | null }) {
   return (
     <section className="mt-8 rounded-[2rem] border border-[#d8d0c0] bg-white p-8 text-[#102b3a] shadow-sm">
-      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Partner workspace</p>
+      <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Partner next actions</p>
       <h3 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.03em]">Hope Church partner path.</h3>
       <p className="mt-3 max-w-3xl text-sm leading-7 text-[#4d5d55]">
-        Partner access is now recognized by the pilot router. The next build step is the actual Hope Church workspace: assigned care needs, partner-safe timeline items, and simple report-back actions.
+        Hope Church can now see assigned, partner-safe request context after owner/admin assignment. The next build step is partner report-back: accepted, contacted, scheduled, completed, and safe timeline updates.
       </p>
 
       <div className="mt-6 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-        This tab is intentionally a placeholder until partner request assignment and timeline visibility are ready. Do not use it for real care coordination yet.
+        This still is not open messaging. Partner users should only see requests that were manually assigned after human review.
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Next</p>
-          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Build assigned care cards for Hope Church partner users.</p>
+          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Add partner accepted/contacted/scheduled/completed status actions.</p>
         </article>
         <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Visibility</p>
-          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Show only approved, partner-safe timeline events and requester consent details.</p>
+          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Keep showing only assigned, partner-safe request context and timeline events.</p>
         </article>
         <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Report back</p>
-          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Let partners mark accepted, contacted, scheduled, or completed without open chat.</p>
+          <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Let partners report progress with controlled buttons before adding any note system.</p>
         </article>
       </div>
 
@@ -319,7 +320,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
             </article>
             <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Partner path</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Next: Hope Church partner workspace, partner admins, and partner-safe assignments.</p>
+              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: Hope Church can view assigned partner-safe requests after owner/admin assignment.</p>
             </article>
           </div>
 
@@ -366,7 +367,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
           </div>
 
           <div className="mt-8 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-            Keep sandbox tests fake until role membership, RLS tests, partner assignment, and timeline visibility are complete. Worship From Home is queued as a landing-page content layer after the pilot path stays stable.
+            Keep sandbox tests fake until role membership, RLS tests, partner report-back actions, and timeline visibility are complete. Worship From Home is queued as a landing-page content layer after the pilot path stays stable.
           </div>
         </section>
       ) : null}
@@ -381,7 +382,12 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         </>
       ) : null}
 
-      {activeWorkspace === "partner" ? <PartnerWorkspacePlaceholder access={pilotAccess} /> : null}
+      {activeWorkspace === "partner" ? (
+        <>
+          <HopePartnerAssignmentQueue />
+          <PartnerWorkspacePlaceholder access={pilotAccess} />
+        </>
+      ) : null}
 
       {activeWorkspace === "requester" ? <StructuredRequesterIntake session={session} /> : null}
     </main>

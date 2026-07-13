@@ -1,0 +1,44 @@
+{
+  "name": "ChurchWork",
+  "short_name": "ChurchWork",
+  "description": "Spiritual-care request, review, partner coordination, and care timeline workspace.",
+  "id": "/?source=pwa",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
+  "background_color": "#f7f3ea",
+  "theme_color": "#0d2b3b",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/pwa/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa/maskable-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Requester Portal",
+      "short_name": "Request",
+      "description": "Open the requester care workspace.",
+      "url": "/requester-portal?source=pwa_shortcut",
+      "icons": [{ "src": "/pwa/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    },
+    {
+      "name": "Pilot Workspace",
+      "short_name": "Pilot",
+      "description": "Open the ChurchWork pilot workspace.",
+      "url": "/pilot?source=pwa_shortcut",
+      "icons": [{ "src": "/pwa/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+    }
+  ]
+}

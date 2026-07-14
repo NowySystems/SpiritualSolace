@@ -23,10 +23,22 @@ export function ChurchWorkInstallPrompt() {
     function handleBeforeInstallPrompt(event: Event) {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);
+      setDismissedThisVisit(false);
+    }
+
+    function handleAppInstalled() {
+      setDeferredPrompt(null);
+      setDismissedThisVisit(true);
+      setStandalone(true);
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("appinstalled", handleAppInstalled);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("appinstalled", handleAppInstalled);
+    };
   }, []);
 
   async function handleInstall() {
@@ -47,7 +59,9 @@ export function ChurchWorkInstallPrompt() {
     <aside className="churchwork-install-prompt" aria-label="Install ChurchWork app">
       <div>
         <p className="churchwork-install-prompt__eyebrow">Install ChurchWork</p>
-        <p className="churchwork-install-prompt__copy">Install ChurchWork on this device for the app-style experience.</p>
+        <p className="churchwork-install-prompt__copy">
+          Add ChurchWork to this device for the app-style pilot experience.
+        </p>
       </div>
       <div className="churchwork-install-prompt__actions">
         <button type="button" onClick={handleInstall} className="churchwork-install-prompt__primary">

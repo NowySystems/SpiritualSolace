@@ -5,22 +5,22 @@ const flow = [
   {
     label: "Requester Portal",
     href: "/requester-portal",
-    detail: "A simple request status page with approved updates, consent summary, next step, and only requester-safe actions."
+    detail: "Submit a structured spiritual-care request, track approved updates, and avoid open-ended or medical details."
   },
   {
     label: "Facility Portal",
     href: "/facility-portal",
-    detail: "A facility care workspace for consent review, resident/request queue, partner sharing, and timeline updates."
+    detail: "Review requests, record consent, control partner sharing, and keep an audit-backed care timeline."
   },
   {
     label: "Partner Portal",
     href: "/partner-portal",
-    detail: "A partner assignment workspace showing approved care needs, shared timeline, and report-back actions only."
+    detail: "Receive approved assignments, see only partner-safe context, and report outcomes through structured actions."
   },
   {
     label: "Owner/Admin",
     href: "/pilot",
-    detail: "The broader control layer for access, organizations, roles, requests, and pilot administration."
+    detail: "Manage organizations, access, roles, requests, and operational oversight from one control layer."
   }
 ];
 
@@ -37,7 +37,7 @@ export function LandingPageV1() {
               <span className="block font-serif text-3xl font-semibold leading-none tracking-[-0.04em] text-white">
                 Church<span className="text-[#3f806e]">Work</span>
               </span>
-              <span className="mt-1 block text-xs font-medium tracking-wide text-[#d4dedc]">Controlled Team Workspace</span>
+              <span className="mt-1 block text-xs font-medium tracking-wide text-[#d4dedc]">Spiritual-care operations</span>
             </span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
@@ -67,7 +67,7 @@ export function LandingPageV1() {
           <div className="relative z-10 mx-auto flex min-h-[720px] max-w-7xl items-center px-6 pb-24 pt-32">
             <div className="max-w-3xl">
               <div className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#d7e7b7] shadow-sm backdrop-blur">
-                ChurchWork pilot access
+                Spiritual-care operations
               </div>
               <h1 className="mt-5 font-serif text-5xl font-semibold leading-[1.05] tracking-[-0.04em] md:text-6xl lg:text-7xl">
                 One controlled workspace for facilities and partners.
@@ -122,10 +122,10 @@ export function LandingPageV1() {
 
         <section id="guardrails" className="px-6 pb-20">
           <div className="mx-auto max-w-7xl rounded-[2rem] border border-[#d8d0c0] bg-[#173b2d] p-8 text-white shadow-xl">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Pilot guardrails</p>
+            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Operational guardrails</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold">Controlled access first. Human review before anything external.</h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              ChurchWork remains one coordinated workspace with requester, facility, partner, and owner/admin access. Pilot access is gated, structured, and policy-aware. Public demo actions remain preview-only.
+              ChurchWork remains one coordinated workspace with requester, facility, partner, and owner/admin access. Access is gated, actions are structured, and external sharing stays under review.
             </p>
           </div>
         </section>

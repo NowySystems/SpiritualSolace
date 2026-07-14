@@ -25,6 +25,11 @@ function isIosSafari() {
   return isIos && isSafari;
 }
 
+function isAdminInstallPath() {
+  if (typeof window === "undefined") return false;
+  return window.location.pathname === "/admin" || window.location.pathname === "/pilot";
+}
+
 export function ChurchWorkInstallPrompt() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -32,10 +37,12 @@ export function ChurchWorkInstallPrompt() {
   const [dismissedPersistently, setDismissedPersistently] = useState(false);
   const [standalone, setStandalone] = useState(false);
   const [accountState, setAccountState] = useState<AccountState>("checking");
+  const [adminInstallPath, setAdminInstallPath] = useState(false);
   const showIosHelp = useMemo(() => isIosSafari(), []);
 
   useEffect(() => {
     setStandalone(isStandaloneMode());
+    setAdminInstallPath(isAdminInstallPath());
     setDismissedPersistently(window.localStorage.getItem(INSTALL_DISMISSAL_KEY) === "true");
 
     let isMounted = true;
@@ -70,7 +77,7 @@ export function ChurchWorkInstallPrompt() {
   }, [supabase]);
 
   const isSignedOut = accountState === "signed_out";
-  const shouldRespectPersistentDismissal = accountState === "signed_in";
+  const shouldRespectPersistentDismissal = accountState === "signed_in" && !adminInstallPath;
   const dismissed = dismissedThisVisit || (shouldRespectPersistentDismissal && dismissedPersistently);
 
   async function handleInstall() {
@@ -80,7 +87,7 @@ export function ChurchWorkInstallPrompt() {
     setDeferredPrompt(null);
     setDismissedThisVisit(true);
 
-    if (!isSignedOut) {
+    if (!isSignedOut && !adminInstallPath) {
       setDismissedPersistently(true);
       window.localStorage.setItem(INSTALL_DISMISSAL_KEY, "true");
     }
@@ -89,7 +96,7 @@ export function ChurchWorkInstallPrompt() {
   function handleDismiss() {
     setDismissedThisVisit(true);
 
-    if (!isSignedOut) {
+    if (!isSignedOut && !adminInstallPath) {
       setDismissedPersistently(true);
       window.localStorage.setItem(INSTALL_DISMISSAL_KEY, "true");
     }
@@ -106,7 +113,9 @@ export function ChurchWorkInstallPrompt() {
           {deferredPrompt
             ? isSignedOut
               ? "Add ChurchWork to this device before creating an account. It helps us validate real app use during the pilot."
-              : "Add ChurchWork to this device for a cleaner pilot app experience."
+              : adminInstallPath
+                ? "Install or reinstall ChurchWork from this admin device for the cleanest app-style testing path."
+                : "Add ChurchWork to this device for a cleaner pilot app experience."
             : isSignedOut
               ? "On iPhone or iPad, use Share, then Add to Home Screen before creating an account. It helps validate the app-style pilot."
               : "On iPhone or iPad, use Share, then Add to Home Screen for the app-style experience."}

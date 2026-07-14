@@ -29,9 +29,10 @@ export function ChurchWorkInstallPrompt() {
   useEffect(() => {
     setStandalone(isStandaloneMode());
 
-    const capturedPrompt = readCapturedPrompt();
-    if (capturedPrompt) {
-      setDeferredPrompt(capturedPrompt);
+    function adoptCapturedPrompt() {
+      const installEvent = readCapturedPrompt();
+      if (!installEvent) return;
+      setDeferredPrompt(installEvent);
       setDismissedThisVisit(false);
     }
 
@@ -43,13 +44,6 @@ export function ChurchWorkInstallPrompt() {
       setDismissedThisVisit(false);
     }
 
-    function handleCapturedInstallPrompt() {
-      const installEvent = readCapturedPrompt();
-      if (!installEvent) return;
-      setDeferredPrompt(installEvent);
-      setDismissedThisVisit(false);
-    }
-
     function handleAppInstalled() {
       (window as InstallWindow).__churchworkInstallPrompt = undefined;
       setDeferredPrompt(null);
@@ -57,13 +51,21 @@ export function ChurchWorkInstallPrompt() {
       setStandalone(true);
     }
 
+    adoptCapturedPrompt();
+    const retryOne = window.setTimeout(adoptCapturedPrompt, 500);
+    const retryTwo = window.setTimeout(adoptCapturedPrompt, 1500);
+    const retryThree = window.setTimeout(adoptCapturedPrompt, 3000);
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    window.addEventListener("churchwork-install-prompt-ready", handleCapturedInstallPrompt);
+    window.addEventListener("churchwork-install-prompt-ready", adoptCapturedPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
+      window.clearTimeout(retryOne);
+      window.clearTimeout(retryTwo);
+      window.clearTimeout(retryThree);
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-      window.removeEventListener("churchwork-install-prompt-ready", handleCapturedInstallPrompt);
+      window.removeEventListener("churchwork-install-prompt-ready", adoptCapturedPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);

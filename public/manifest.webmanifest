@@ -1,11 +1,12 @@
 {
+  "id": "/pilot",
   "name": "ChurchWork",
   "short_name": "ChurchWork",
   "description": "Spiritual-care operations for requesters, facilities, and partner care teams.",
-  "start_url": "/pilot",
+  "start_url": "/pilot?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "browser"],
+  "display_override": ["standalone", "browser"],
   "orientation": "any",
   "background_color": "#edf4f0",
   "theme_color": "#082838",
@@ -29,28 +30,28 @@
       "name": "Pilot Launchpad",
       "short_name": "Pilot",
       "description": "Open the internal ChurchWork pilot launchpad.",
-      "url": "/pilot",
+      "url": "/pilot?source=pwa-shortcut",
       "icons": [{ "src": "/brand/churchwork-corner-logo.png", "sizes": "192x192" }]
     },
     {
       "name": "Requester Portal",
       "short_name": "Requester",
       "description": "Open the requester portal.",
-      "url": "/requester-portal",
+      "url": "/requester-portal?source=pwa-shortcut",
       "icons": [{ "src": "/brand/churchwork-corner-logo.png", "sizes": "192x192" }]
     },
     {
       "name": "Facility Portal",
       "short_name": "Facility",
       "description": "Open the facility workspace.",
-      "url": "/facility-portal",
+      "url": "/facility-portal?source=pwa-shortcut",
       "icons": [{ "src": "/brand/churchwork-corner-logo.png", "sizes": "192x192" }]
     },
     {
       "name": "Partner Portal",
       "short_name": "Partner",
       "description": "Open the partner workspace.",
-      "url": "/partner-portal",
+      "url": "/partner-portal?source=pwa-shortcut",
       "icons": [{ "src": "/brand/churchwork-corner-logo.png", "sizes": "192x192" }]
     }
   ]

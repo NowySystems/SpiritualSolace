@@ -37,10 +37,21 @@ export const viewport: Viewport = {
   themeColor: "#082838"
 };
 
+const installPromptCaptureScript = `
+(function () {
+  window.addEventListener("beforeinstallprompt", function (event) {
+    event.preventDefault();
+    window.__churchworkInstallPrompt = event;
+    window.dispatchEvent(new Event("churchwork-install-prompt-ready"));
+  });
+})();
+`;
+
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="en">
       <body>
+        <script dangerouslySetInnerHTML={{ __html: installPromptCaptureScript }} />
         <ChurchWorkPwaRegister />
         <ChurchWorkInstallPrompt />
         <ChurchWorkDemoFlowSkipper />

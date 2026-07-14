@@ -1,0 +1,127 @@
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: #edf4f0;
+}
+
+body {
+  min-height: 100dvh;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: rgba(214, 169, 67, 0.2);
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+.churchwork-install-prompt {
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 35;
+  display: flex;
+  width: min(31rem, calc(100vw - 2rem));
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(217, 223, 215, 0.95);
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1.25rem 3rem rgba(13, 43, 59, 0.18), 0 0.35rem 1rem rgba(15, 63, 53, 0.1);
+  color: #0d2b3b;
+  backdrop-filter: blur(16px);
+}
+
+body:has(.churchwork-demo-active) .churchwork-install-prompt {
+  display: none;
+}
+
+.churchwork-install-prompt__eyebrow {
+  margin: 0;
+  color: #7a5b20;
+  font-size: 0.66rem;
+  font-weight: 950;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.churchwork-install-prompt__copy {
+  margin: 0.25rem 0 0;
+  color: #4f6259;
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.churchwork-install-prompt__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.churchwork-install-prompt__primary,
+.churchwork-install-prompt__secondary {
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 0.85rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 950;
+}
+
+.churchwork-install-prompt__primary {
+  background: #0f3f35;
+  color: white;
+  padding: 0 0.95rem;
+}
+
+.churchwork-install-prompt__secondary {
+  background: #f4f7f2;
+  color: #506a49;
+  padding: 0 0.75rem;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+
+  header.sticky.top-0 {
+    top: env(safe-area-inset-top);
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    background-color: #edf4f0;
+  }
+}
+
+@media (max-width: 640px) {
+  .churchwork-install-prompt {
+    left: max(0.75rem, env(safe-area-inset-left));
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    width: auto;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .churchwork-install-prompt__actions {
+    width: 100%;
+  }
+
+  .churchwork-install-prompt__primary,
+  .churchwork-install-prompt__secondary {
+    flex: 1;
+  }
+}

@@ -22,7 +22,7 @@ textarea {
   position: fixed;
   right: max(1rem, env(safe-area-inset-right));
   bottom: max(1rem, env(safe-area-inset-bottom));
-  z-index: 35;
+  z-index: 9999;
   display: flex;
   width: min(31rem, calc(100vw - 2rem));
   align-items: center;
@@ -35,10 +35,6 @@ textarea {
   box-shadow: 0 1.25rem 3rem rgba(13, 43, 59, 0.18), 0 0.35rem 1rem rgba(15, 63, 53, 0.1);
   color: #0d2b3b;
   backdrop-filter: blur(16px);
-}
-
-body:has(.churchwork-demo-active) .churchwork-install-prompt {
-  display: none;
 }
 
 .churchwork-install-prompt__eyebrow {

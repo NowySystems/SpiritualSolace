@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import { ChurchWorkDemoBalloonAnimator } from "@/components/ChurchWorkDemoBalloonAnimator";
 import { ChurchWorkDemoFlowSkipper } from "@/components/ChurchWorkDemoFlowSkipper";
+import { ChurchWorkInstallPrompt } from "@/components/ChurchWorkInstallPrompt";
 import { ChurchWorkPwaRegister } from "@/components/ChurchWorkPwaRegister";
 import "./globals.css";
 import "./demo-polish.css";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en">
       <body>
         <ChurchWorkPwaRegister />
+        <ChurchWorkInstallPrompt />
         <ChurchWorkDemoFlowSkipper />
         <ChurchWorkDemoBalloonAnimator />
         {children}

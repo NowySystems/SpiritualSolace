@@ -1,5 +1,6 @@
 import { pilotCareRequest } from "./data";
 import { PilotTopBar } from "./PilotTopBar";
+import { RequesterIntakePanel } from "./RequesterIntakePanel";
 import { StatusPath } from "./StatusPath";
 
 function InfoRow({ label, value }: { label: string; value: string }) {
@@ -30,10 +31,10 @@ export function RequesterPortalFinal() {
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#9a6b16]">Requester portal</p>
                 <h1 className="mt-4 max-w-3xl font-serif text-5xl font-semibold tracking-[-0.06em] text-[#0d2b3b] md:text-6xl">
-                  Good evening, Jane.
+                  Good evening, Sarah.
                 </h1>
                 <p className="mt-4 max-w-2xl text-base leading-7 text-[#4f6259]">
-                  Here is the latest approved status for your spiritual-care request.
+                  Complete your profile, submit a structured spiritual-care request, and return here for approved updates.
                 </p>
               </div>
 
@@ -51,12 +52,13 @@ export function RequesterPortalFinal() {
 
           <div className="grid gap-6 p-5 md:p-7 lg:grid-cols-[1fr_22rem]">
             <div className="space-y-6">
+              <RequesterIntakePanel />
               <StatusPath currentStatus={request.currentStatus} />
 
               <section className="rounded-[1.5rem] border border-[#d9dfd7] bg-white p-6 shadow-sm shadow-[#0d2b3b]/5">
                 <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                   <div>
-                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Your request</p>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Current request</p>
                     <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">{request.personName}</h2>
                     <p className="mt-2 text-sm font-bold text-[#4f6259]">
                       Room {request.room} · {request.requestType}

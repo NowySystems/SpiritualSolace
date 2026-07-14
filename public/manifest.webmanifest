@@ -1,9 +1,9 @@
 {
-  "id": "/pilot",
+  "id": "/admin",
   "name": "ChurchWork",
   "short_name": "ChurchWork",
   "description": "Spiritual-care operations for requesters, facilities, and partner care teams.",
-  "start_url": "/pilot?source=pwa",
+  "start_url": "/admin?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "browser"],
@@ -27,10 +27,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Pilot Launchpad",
-      "short_name": "Pilot",
-      "description": "Open the internal ChurchWork pilot launchpad.",
-      "url": "/pilot?source=pwa-shortcut",
+      "name": "Admin Portal",
+      "short_name": "Admin",
+      "description": "Open the ChurchWork admin access hub.",
+      "url": "/admin?source=pwa-shortcut",
       "icons": [{ "src": "/brand/churchwork-corner-logo.png", "sizes": "192x192" }]
     },
     {

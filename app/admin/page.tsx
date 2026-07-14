@@ -4,7 +4,7 @@ import { AdminPortalAccessHub } from "@/components/AdminPortalAccessHub";
 import { PilotAuthGate } from "@/components/PilotAuthGate";
 import { PolicyAcceptanceGate } from "@/components/PolicyAcceptanceGate";
 
-export default function PilotPage() {
+export default function AdminPortalPage() {
   return (
     <PilotAuthGate>
       {(session) => (

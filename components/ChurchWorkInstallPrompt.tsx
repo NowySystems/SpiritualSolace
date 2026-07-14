@@ -25,6 +25,12 @@ function isIosSafari() {
   return isIos && isSafari;
 }
 
+function isAndroidChrome() {
+  if (typeof window === "undefined") return false;
+  const ua = window.navigator.userAgent.toLowerCase();
+  return ua.includes("android") && ua.includes("chrome") && !ua.includes("edg") && !ua.includes("opr");
+}
+
 function isAdminInstallPath() {
   if (typeof window === "undefined") return false;
   return window.location.pathname === "/admin" || window.location.pathname === "/pilot";
@@ -38,11 +44,13 @@ export function ChurchWorkInstallPrompt() {
   const [standalone, setStandalone] = useState(false);
   const [accountState, setAccountState] = useState<AccountState>("checking");
   const [adminInstallPath, setAdminInstallPath] = useState(false);
+  const [androidChrome, setAndroidChrome] = useState(false);
   const showIosHelp = useMemo(() => isIosSafari(), []);
 
   useEffect(() => {
     setStandalone(isStandaloneMode());
     setAdminInstallPath(isAdminInstallPath());
+    setAndroidChrome(isAndroidChrome());
     setDismissedPersistently(window.localStorage.getItem(INSTALL_DISMISSAL_KEY) === "true");
 
     let isMounted = true;
@@ -79,6 +87,8 @@ export function ChurchWorkInstallPrompt() {
   const isSignedOut = accountState === "signed_out";
   const shouldRespectPersistentDismissal = accountState === "signed_in" && !adminInstallPath;
   const dismissed = dismissedThisVisit || (shouldRespectPersistentDismissal && dismissedPersistently);
+  const showManualAndroidHelp = androidChrome && (adminInstallPath || isSignedOut);
+  const canShowPrompt = Boolean(deferredPrompt) || showIosHelp || showManualAndroidHelp;
 
   async function handleInstall() {
     if (!deferredPrompt) return;
@@ -102,23 +112,26 @@ export function ChurchWorkInstallPrompt() {
     }
   }
 
-  if (standalone || accountState === "checking" || dismissed) return null;
-  if (!deferredPrompt && !showIosHelp) return null;
+  if (standalone || accountState === "checking" || dismissed || !canShowPrompt) return null;
+
+  const hasNativeInstallPrompt = Boolean(deferredPrompt);
 
   return (
     <aside className="churchwork-install-prompt" aria-label="Install ChurchWork app">
       <div>
         <p className="churchwork-install-prompt__eyebrow">Install ChurchWork</p>
         <p className="churchwork-install-prompt__copy">
-          {deferredPrompt
+          {hasNativeInstallPrompt
             ? isSignedOut
               ? "Add ChurchWork to this device before creating an account. It helps us validate real app use during the pilot."
               : adminInstallPath
                 ? "Install or reinstall ChurchWork from this admin device for the cleanest app-style testing path."
                 : "Add ChurchWork to this device for a cleaner pilot app experience."
-            : isSignedOut
-              ? "On iPhone or iPad, use Share, then Add to Home Screen before creating an account. It helps validate the app-style pilot."
-              : "On iPhone or iPad, use Share, then Add to Home Screen for the app-style experience."}
+            : showManualAndroidHelp
+              ? "Chrome has not opened the native install button yet. Tap the three-dot menu, then choose Install app or Add to Home screen."
+              : isSignedOut
+                ? "On iPhone or iPad, use Share, then Add to Home Screen before creating an account. It helps validate the app-style pilot."
+                : "On iPhone or iPad, use Share, then Add to Home Screen for the app-style experience."}
         </p>
       </div>
       <div className="churchwork-install-prompt__actions">
@@ -128,7 +141,7 @@ export function ChurchWorkInstallPrompt() {
           </button>
         ) : null}
         <button type="button" onClick={handleDismiss} className="churchwork-install-prompt__secondary" aria-label="Dismiss install prompt">
-          Not now
+          {hasNativeInstallPrompt ? "Not now" : "Got it"}
         </button>
       </div>
     </aside>

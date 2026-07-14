@@ -10,7 +10,8 @@
     "preview:cloudflare": "opennextjs-cloudflare build && wrangler dev",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:pwa": "node scripts/pwa-self-test.mjs"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.11",

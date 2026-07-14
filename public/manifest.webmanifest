@@ -1,9 +1,9 @@
 {
-  "id": "/install",
+  "id": "/admin",
   "name": "ChurchWork",
   "short_name": "ChurchWork",
   "description": "Spiritual-care operations for requesters, facilities, and partner care teams.",
-  "start_url": "/install?source=pwa",
+  "start_url": "/admin?source=pwa",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "browser"],

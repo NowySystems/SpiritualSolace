@@ -17,7 +17,9 @@ export function PilotTopBar({ role, userName, userContext }: PilotTopBarProps) {
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#082838] text-white shadow-lg shadow-[#0d2b3b]/15">
       <div className="mx-auto flex max-w-[118rem] items-center justify-between gap-6 px-6 py-4">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-16 items-center justify-center rounded-2xl bg-white text-xl font-black text-[#0d2b3b] shadow-sm">CW</div>
+          <div className="flex h-14 w-20 items-center justify-center rounded-2xl bg-white p-2 shadow-sm">
+            <img src="/brand/churchwork-corner-logo.png" alt="ChurchWork logo" className="h-full w-full object-contain" />
+          </div>
           <div>
             <p className="font-serif text-2xl font-semibold tracking-[-0.03em]">Church<span className="text-[#8dbd9e]">Work</span></p>
             <p className="text-xs font-semibold text-[#d9e7df]">Spiritual-care operations</p>

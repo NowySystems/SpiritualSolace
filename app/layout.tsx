@@ -5,6 +5,8 @@ import { ChurchWorkDemoFlowSkipper } from "@/components/ChurchWorkDemoFlowSkippe
 import "./globals.css";
 import "./demo-polish.css";
 import "./demo-focus-field.css";
+import "./mvp-polish.css";
+import "./pilot-ready-polish.css";
 
 export const metadata: Metadata = {
   title: "ChurchWork | Spiritual care operations for churches",

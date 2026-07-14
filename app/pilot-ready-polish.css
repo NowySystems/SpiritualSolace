@@ -1,0 +1,179 @@
+/* ChurchWork pilot-ready polish
+   Purpose: remove placeholder-looking surfaces, add calm contrast, and make the MVP feel like an operating workspace. */
+
+:root {
+  --cw-deep-navy: #082838;
+  --cw-forest: #123926;
+  --cw-moss: #506a49;
+  --cw-teal: #2d6f66;
+  --cw-sky: #e6eef1;
+  --cw-mint: #e9f2ed;
+  --cw-wheat: #f3e2b7;
+  --cw-cream: #faf5e7;
+  --cw-card: #ffffff;
+  --cw-border-strong: rgba(8, 40, 56, 0.16);
+}
+
+body,
+main.min-h-screen.bg-\[\#f7f3ea\],
+body > div.min-h-screen.bg-\[\#f7f3ea\] {
+  background:
+    radial-gradient(circle at 9% 9%, rgba(45, 111, 102, 0.16), transparent 24rem),
+    radial-gradient(circle at 88% 18%, rgba(214, 169, 67, 0.14), transparent 26rem),
+    linear-gradient(135deg, #e5eeec 0%, #f2eee1 48%, #e8efea 100%) !important;
+}
+
+/* Remove/flatten placeholder-looking badges. */
+header div.rounded-full:not(:has(button)):not(:has(a)),
+section#workspace div.inline-flex.rounded-full {
+  display: none !important;
+}
+
+/* Header should feel like product chrome, not a tag bar. */
+header.bg-\[\#0d2b3b\],
+header.bg-\[\#0d2b3b\]\/88 {
+  background: linear-gradient(90deg, #061f2e 0%, #0b3040 54%, #123926 100%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 0.75rem 2rem rgba(6, 31, 46, 0.18) !important;
+}
+
+header a[aria-label="ChurchWork home"] span.block.text-xs {
+  color: #e0ebe7 !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* Better page rhythm: cards sit on color, not endless white. */
+main.min-h-screen section.mx-auto,
+body > div.min-h-screen main section:not(#workspace) {
+  position: relative;
+}
+
+main.min-h-screen section.mx-auto > div.rounded-\[2rem\],
+main.min-h-screen section.space-y-6 > div.rounded-\[2rem\],
+main.min-h-screen aside > section.rounded-\[2rem\],
+body > div.min-h-screen section article.rounded-3xl,
+body > div.min-h-screen section a.rounded-3xl {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: var(--cw-border-strong) !important;
+  box-shadow: 0 1.15rem 3.2rem rgba(8, 40, 56, 0.1) !important;
+}
+
+/* Hero/identity panel gets warmer contrast while keeping the product calm. */
+main.min-h-screen section.mx-auto > div:first-of-type.rounded-\[2rem\] {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(232, 242, 237, 0.96) 52%, rgba(243, 226, 183, 0.78) 100%) !important;
+  border-color: rgba(80, 106, 73, 0.24) !important;
+}
+
+main.min-h-screen section.mx-auto > div:first-of-type.rounded-\[2rem\] h1 {
+  color: #082838 !important;
+}
+
+/* Status card should be the only strong dark block in the requester hero. */
+main.min-h-screen div.rounded-\[1\.5rem\].bg-\[\#173b2d\] {
+  background: linear-gradient(160deg, #0f3d33 0%, #092e35 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+}
+
+/* Make the case file feel like an actual working record. */
+main.min-h-screen section.space-y-6 > div.rounded-\[2rem\] {
+  overflow: hidden !important;
+}
+
+main.min-h-screen section.space-y-6 > div.rounded-\[2rem\] > div:first-child {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(230, 238, 241, 0.72)) !important;
+}
+
+main.min-h-screen section.space-y-6 > div.rounded-\[2rem\] aside {
+  background: linear-gradient(180deg, rgba(232, 242, 237, 0.72), rgba(255, 255, 255, 0.68)) !important;
+}
+
+/* Request snapshot: make it useful, not visually dead. */
+main.min-h-screen aside p.text-sm.font-black,
+main.min-h-screen aside p.text-xs.font-black.uppercase {
+  color: #092e35 !important;
+}
+
+main.min-h-screen aside span.rounded-full.bg-\[\#f0f5e8\] {
+  background: #dcebdd !important;
+  color: #123926 !important;
+}
+
+/* Ledger gets a cooler lane so it separates from snapshot and visibility. */
+main.min-h-screen section[class*="p-6"]:has(article.relative.grid.border-l-2) {
+  background: linear-gradient(180deg, rgba(246, 249, 248, 0.88), rgba(255, 255, 255, 0.88)) !important;
+}
+
+main.min-h-screen article.relative.grid div.rounded-\[1\.25rem\] {
+  background: #ffffff !important;
+  border-color: rgba(8, 40, 56, 0.13) !important;
+  box-shadow: 0 0.8rem 2rem rgba(8, 40, 56, 0.07) !important;
+}
+
+/* Checklist rail: keep only real actions looking clickable. */
+main.min-h-screen aside > section:first-child {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(232, 242, 237, 0.72)) !important;
+}
+
+main.min-h-screen aside button.rounded-\[1\.15rem\]:not(:first-child) {
+  background: rgba(255, 255, 255, 0.82) !important;
+}
+
+/* Remove the role visibility explainer panels from normal MVP view. They are demo/training copy, not pilot surface. */
+main.min-h-screen aside section.bg-\[\#fff8e7\] {
+  display: none !important;
+}
+
+/* Form panels: less purple, more operating-system neutral. */
+form.rounded-\[1\.5rem\] {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: rgba(8, 40, 56, 0.16) !important;
+}
+
+form.rounded-\[1\.5rem\] > div.sticky {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(232, 242, 237, 0.92)) !important;
+}
+
+form.rounded-\[1\.5rem\] p.text-\[\#5b4a83\] {
+  color: #506a49 !important;
+}
+
+form label {
+  background: #f7faf8 !important;
+  border-color: rgba(8, 40, 56, 0.13) !important;
+}
+
+select {
+  background: #ffffff !important;
+  border-color: rgba(8, 40, 56, 0.2) !important;
+}
+
+/* Landing page: remove placeholder feel and add sectional contrast. */
+body > div.min-h-screen section#portals,
+body > div.min-h-screen section#guardrails {
+  background: transparent !important;
+}
+
+body > div.min-h-screen section#flow {
+  background: linear-gradient(180deg, rgba(232, 242, 237, 0.36), rgba(255, 255, 255, 0)) !important;
+}
+
+body > div.min-h-screen section#portals a.rounded-3xl,
+body > div.min-h-screen section#flow article.rounded-3xl {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(8, 40, 56, 0.14) !important;
+}
+
+body > div.min-h-screen section#guardrails > div {
+  background: linear-gradient(135deg, #0b3040 0%, #123926 100%) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 1.6rem 4rem rgba(8, 40, 56, 0.18) !important;
+}
+
+/* Tone down anything that only labels state. */
+span.rounded-full.border:not(:has(a)):not(:has(button)),
+div.rounded-full.border:not(:has(a)):not(:has(button)) {
+  border-radius: 999px !important;
+  box-shadow: none !important;
+}

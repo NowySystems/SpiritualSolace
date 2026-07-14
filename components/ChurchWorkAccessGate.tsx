@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, ReactNode, useEffect, useState } from "react";
+import { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 const ACCESS_SESSION_KEY = "churchwork:pilot-access";
 
@@ -9,6 +10,7 @@ type ChurchWorkAccessGateProps = {
 };
 
 export function ChurchWorkAccessGate({ children }: ChurchWorkAccessGateProps) {
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [accessGranted, setAccessGranted] = useState(false);
   const [accessChecked, setAccessChecked] = useState(false);
   const [accessCode, setAccessCode] = useState("");
@@ -16,9 +18,31 @@ export function ChurchWorkAccessGate({ children }: ChurchWorkAccessGateProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    setAccessGranted(sessionStorage.getItem(ACCESS_SESSION_KEY) === "granted");
-    setAccessChecked(true);
-  }, []);
+    let isMounted = true;
+
+    async function checkAccess() {
+      const hasLegacyAccessCode = sessionStorage.getItem(ACCESS_SESSION_KEY) === "granted";
+      const { data } = await supabase.auth.getSession();
+      const hasPilotSession = Boolean(data.session);
+
+      if (!isMounted) return;
+      setAccessGranted(hasLegacyAccessCode || hasPilotSession);
+      setAccessChecked(true);
+    }
+
+    void checkAccess();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!isMounted) return;
+      setAccessGranted(sessionStorage.getItem(ACCESS_SESSION_KEY) === "granted" || Boolean(nextSession));
+      setAccessChecked(true);
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +93,7 @@ export function ChurchWorkAccessGate({ children }: ChurchWorkAccessGateProps) {
           <p className="mt-6 text-xs font-black uppercase tracking-[0.22em] text-[#789052]">ChurchWork</p>
           <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em] text-[#102b3a]">Private pilot access</h1>
           <p className="mt-4 text-sm leading-6 text-[#4d5d55]">
-            Enter the pilot access code to continue into the ChurchWork portal experience.
+            Sign in through the pilot workspace or enter the access code to continue into the ChurchWork portal experience.
           </p>
         </div>
 

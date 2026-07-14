@@ -6,6 +6,7 @@ import { ChurchWorkPwaRegister } from "@/components/ChurchWorkPwaRegister";
 import "./globals.css";
 import "./demo-polish.css";
 import "./demo-focus-field.css";
+import "./pwa.css";
 
 export const metadata: Metadata = {
   title: "ChurchWork | Spiritual care operations for churches",

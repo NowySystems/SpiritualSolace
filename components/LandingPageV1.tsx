@@ -18,9 +18,9 @@ const flow = [
     detail: "A partner assignment workspace showing approved care needs, shared timeline, and report-back actions only."
   },
   {
-    label: "Owner/Admin",
-    href: "/pilot",
-    detail: "The broader control layer for access, organizations, roles, requests, and pilot administration."
+    label: "Admin Portal",
+    href: "/admin",
+    detail: "The operator launchpad for Cole and Sam: open all role portals, use pilot tools, and keep access controlled."
   }
 ];
 
@@ -46,8 +46,8 @@ export function LandingPageV1() {
             <a href="#flow" className="hover:text-[#d7e7b7]">Role Views</a>
             <a href="#guardrails" className="hover:text-[#d7e7b7]">Guardrails</a>
           </nav>
-          <Link href="/facility-portal" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
-            Facility Portal
+          <Link href="/admin" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
+            Admin Portal
           </Link>
         </div>
       </header>
@@ -76,7 +76,10 @@ export function LandingPageV1() {
                 ChurchWork keeps spiritual support coordination in one app: each portal is simple, access is gated, and the shared timeline shows only the right information for that user.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link href="/requester-portal" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                <Link href="/admin" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                  Admin Portal
+                </Link>
+                <Link href="/requester-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
                   Requester Portal
                 </Link>
                 <Link href="/facility-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">

@@ -1,13 +1,10 @@
 import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { ChurchWorkAwesomeGuidedPortalDashboard } from "@/components/ChurchWorkAwesomeGuidedPortalDashboard";
-import { ChurchWorkDemoAutoScroll } from "@/components/ChurchWorkDemoAutoScroll";
+import { PartnerPortalFinal } from "@/components/pilot-final/PartnerPortalFinal";
 
 export default function PartnerPortalPage() {
   return (
     <ChurchWorkAccessGate>
-      <ChurchWorkDemoAutoScroll>
-        <ChurchWorkAwesomeGuidedPortalDashboard portal="partner" />
-      </ChurchWorkDemoAutoScroll>
+      <PartnerPortalFinal />
     </ChurchWorkAccessGate>
   );
 }

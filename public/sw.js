@@ -1,4 +1,4 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v4";
+const CHURCHWORK_CACHE = "churchwork-shell-v5";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
@@ -21,6 +21,12 @@ self.addEventListener("install", (event) => {
     caches.open(CHURCHWORK_CACHE).then((cache) => cache.addAll(SHELL_ASSETS)).catch(() => undefined)
   );
   self.skipWaiting();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {

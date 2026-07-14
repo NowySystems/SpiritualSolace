@@ -1,10 +1,12 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v1";
+const CHURCHWORK_CACHE = "churchwork-shell-v2";
+const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
   "/pilot",
   "/requester-portal",
   "/facility-portal",
   "/partner-portal",
+  OFFLINE_URL,
   "/manifest.webmanifest",
   "/brand/churchwork-corner-logo.png"
 ];
@@ -38,11 +40,23 @@ self.addEventListener("fetch", (event) => {
     fetch(request)
       .then((response) => {
         const copy = response.clone();
-        if (response.ok && (request.destination === "document" || request.destination === "style" || request.destination === "script" || request.destination === "image" || url.pathname === "/manifest.webmanifest")) {
+        if (
+          response.ok &&
+          (request.destination === "document" ||
+            request.destination === "style" ||
+            request.destination === "script" ||
+            request.destination === "image" ||
+            url.pathname === "/manifest.webmanifest")
+        ) {
           caches.open(CHURCHWORK_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
         }
         return response;
       })
-      .catch(() => caches.match(request).then((cached) => cached || caches.match("/pilot")))
+      .catch(() => {
+        if (request.destination === "document") {
+          return caches.match(OFFLINE_URL).then((cached) => cached || caches.match("/pilot"));
+        }
+        return caches.match(request);
+      })
   );
 });

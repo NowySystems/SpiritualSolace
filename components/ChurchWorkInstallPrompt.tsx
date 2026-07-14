@@ -7,9 +7,18 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+type InstallWindow = Window & {
+  __churchworkInstallPrompt?: BeforeInstallPromptEvent;
+};
+
 function isStandaloneMode() {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(display-mode: standalone)").matches || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
+}
+
+function readCapturedPrompt() {
+  if (typeof window === "undefined") return null;
+  return (window as InstallWindow).__churchworkInstallPrompt ?? null;
 }
 
 export function ChurchWorkInstallPrompt() {
@@ -20,31 +29,52 @@ export function ChurchWorkInstallPrompt() {
   useEffect(() => {
     setStandalone(isStandaloneMode());
 
+    const capturedPrompt = readCapturedPrompt();
+    if (capturedPrompt) {
+      setDeferredPrompt(capturedPrompt);
+      setDismissedThisVisit(false);
+    }
+
     function handleBeforeInstallPrompt(event: Event) {
       event.preventDefault();
-      setDeferredPrompt(event as BeforeInstallPromptEvent);
+      const installEvent = event as BeforeInstallPromptEvent;
+      (window as InstallWindow).__churchworkInstallPrompt = installEvent;
+      setDeferredPrompt(installEvent);
+      setDismissedThisVisit(false);
+    }
+
+    function handleCapturedInstallPrompt() {
+      const installEvent = readCapturedPrompt();
+      if (!installEvent) return;
+      setDeferredPrompt(installEvent);
       setDismissedThisVisit(false);
     }
 
     function handleAppInstalled() {
+      (window as InstallWindow).__churchworkInstallPrompt = undefined;
       setDeferredPrompt(null);
       setDismissedThisVisit(true);
       setStandalone(true);
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    window.addEventListener("churchwork-install-prompt-ready", handleCapturedInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("churchwork-install-prompt-ready", handleCapturedInstallPrompt);
       window.removeEventListener("appinstalled", handleAppInstalled);
     };
   }, []);
 
   async function handleInstall() {
-    if (!deferredPrompt) return;
-    await deferredPrompt.prompt();
-    await deferredPrompt.userChoice.catch(() => undefined);
+    const installEvent = deferredPrompt ?? readCapturedPrompt();
+    if (!installEvent) return;
+
+    await installEvent.prompt();
+    await installEvent.userChoice.catch(() => undefined);
+    (window as InstallWindow).__churchworkInstallPrompt = undefined;
     setDeferredPrompt(null);
     setDismissedThisVisit(true);
   }

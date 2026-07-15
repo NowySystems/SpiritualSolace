@@ -7,6 +7,7 @@ const swPath = join(root, "public", "sw.js");
 const installPromptPath = join(root, "components", "ChurchWorkInstallPrompt.tsx");
 const layoutPath = join(root, "app", "layout.tsx");
 const pwaRegisterPath = join(root, "components", "ChurchWorkPwaRegister.tsx");
+const pwaCheckPath = join(root, "app", "pwa-check", "page.tsx");
 
 function fail(message) {
   console.error(`❌ ${message}`);
@@ -41,6 +42,7 @@ const sw = readFileSync(swPath, "utf8");
 const installPrompt = readFileSync(installPromptPath, "utf8");
 const layout = readFileSync(layoutPath, "utf8");
 const pwaRegister = readFileSync(pwaRegisterPath, "utf8");
+const pwaCheck = readFileSync(pwaCheckPath, "utf8");
 
 assert(manifest.name === "ChurchWork", "Manifest name is ChurchWork");
 assert(manifest.short_name === "ChurchWork", "Manifest short_name is ChurchWork");
@@ -76,13 +78,19 @@ assert(pwaRegister.includes('navigator.serviceWorker.register("/sw.js", { scope:
 assert(pwaRegister.includes('window.location.pathname === "/"'), "Landing page participates in controlled reload flow");
 assert(pwaRegister.includes("churchwork:pwa-controller-reload-v4"), "Controlled reload key is current");
 assert(pwaRegister.includes("controllerchange"), "Registration listens for service-worker controller changes");
-assert(sw.includes("churchwork-shell-v17"), "Service worker cache version is current");
+assert(sw.includes("churchwork-shell-v18"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");
+assert(sw.includes('"/pwa-check"'), "Service worker caches PWA diagnostics page");
 assert(!sw.includes('"/install"'), "Service worker no longer caches removed install experiment path");
 assert(sw.includes('"/manifest.webmanifest"'), "Service worker caches manifest");
 assert(sw.includes('"/brand/churchwork-app-icon-512.png"'), "Service worker caches 512 app icon");
 assert(sw.includes('"/brand/churchwork-app-icon-maskable-512.png"'), "Service worker caches maskable 512 app icon");
+assert(pwaCheck.includes("Live installability check"), "PWA diagnostics page exists");
+assert(pwaCheck.includes("Native install event"), "PWA diagnostics checks native install event");
+assert(pwaCheck.includes("Page controlled by service worker"), "PWA diagnostics checks service-worker controller state");
+assert(pwaCheck.includes("Manifest start_url"), "PWA diagnostics checks manifest start URL");
+assert(pwaCheck.includes("createImageBitmap"), "PWA diagnostics decodes icon dimensions in browser");
 
 if (process.exitCode) {
   console.error("\nPWA self-test failed.");

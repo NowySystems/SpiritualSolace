@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-const PWA_RELOAD_KEY = "churchwork:pwa-controller-reload-v2";
+const PWA_RELOAD_KEY = "churchwork:pwa-controller-reload-v3";
 
 function isPwaEntryPath() {
   if (typeof window === "undefined") return false;
@@ -48,12 +48,11 @@ export function ChurchWorkPwaRegister() {
       }
     }
 
-    window.addEventListener("load", registerServiceWorker);
+    void registerServiceWorker();
 
     navigator.serviceWorker.addEventListener("controllerchange", reloadOnceWhenControlled);
 
     return () => {
-      window.removeEventListener("load", registerServiceWorker);
       navigator.serviceWorker.removeEventListener("controllerchange", reloadOnceWhenControlled);
     };
   }, []);

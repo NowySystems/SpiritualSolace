@@ -44,9 +44,11 @@ const pwaRegister = readFileSync(pwaRegisterPath, "utf8");
 
 assert(manifest.name === "ChurchWork", "Manifest name is ChurchWork");
 assert(manifest.short_name === "ChurchWork", "Manifest short_name is ChurchWork");
-assert(manifest.start_url === "/admin?source=pwa", "Manifest starts installed app at /admin");
+assert(manifest.id === "/", "Manifest app id is rooted at /");
+assert(manifest.start_url === "/?source=pwa", "Manifest starts installed app from public landing page");
 assert(manifest.scope === "/", "Manifest scope covers the full app");
 assert(manifest.display === "standalone", "Manifest display is standalone");
+assert(!Object.hasOwn(manifest, "display_override"), "Manifest does not include a display_override fallback");
 
 const icons = Array.isArray(manifest.icons) ? manifest.icons : [];
 const any192 = icons.find((icon) => icon.src === "/brand/churchwork-app-icon-192.png" && icon.sizes === "192x192" && icon.type === "image/png");
@@ -73,10 +75,13 @@ assert(installPrompt.includes("Status:"), "Landing install card renders a visibl
 assert(installPrompt.includes("Waiting for Chrome to release the install prompt"), "Landing install card reports waiting state instead of disappearing");
 assert(!installPrompt.includes("three-dot"), "Install prompt does not tell users to use the three-dot menu");
 assert(pwaRegister.includes('window.location.pathname === "/"'), "Landing page participates in PWA controlled reload flow");
-assert(pwaRegister.includes("churchwork:pwa-controller-reload-v2"), "PWA controlled reload key was bumped after landing-page fix");
-assert(sw.includes("churchwork-shell-v13"), "Service worker cache version is current");
+assert(pwaRegister.includes("churchwork:pwa-controller-reload-v3"), "PWA controlled reload key was bumped after root install target fix");
+assert(pwaRegister.includes("void registerServiceWorker();"), "Service worker registration runs immediately");
+assert(!pwaRegister.includes('window.addEventListener("load", registerServiceWorker)'), "Service worker registration no longer waits for window load");
+assert(sw.includes("churchwork-shell-v14"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");
+assert(!sw.includes('"/install"'), "Service worker no longer caches removed install experiment path");
 assert(sw.includes('"/manifest.webmanifest"'), "Service worker caches manifest");
 assert(sw.includes('"/brand/churchwork-app-icon-512.png"'), "Service worker caches 512 app icon");
 assert(sw.includes('"/brand/churchwork-app-icon-maskable-512.png"'), "Service worker caches maskable 512 app icon");

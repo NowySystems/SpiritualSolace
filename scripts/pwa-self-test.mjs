@@ -6,6 +6,7 @@ const manifestPath = join(root, "public", "manifest.webmanifest");
 const swPath = join(root, "public", "sw.js");
 const installPromptPath = join(root, "components", "ChurchWorkInstallPrompt.tsx");
 const layoutPath = join(root, "app", "layout.tsx");
+const pwaRegisterPath = join(root, "components", "ChurchWorkPwaRegister.tsx");
 
 function fail(message) {
   console.error(`❌ ${message}`);
@@ -39,6 +40,7 @@ const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
 const sw = readFileSync(swPath, "utf8");
 const installPrompt = readFileSync(installPromptPath, "utf8");
 const layout = readFileSync(layoutPath, "utf8");
+const pwaRegister = readFileSync(pwaRegisterPath, "utf8");
 
 assert(manifest.name === "ChurchWork", "Manifest name is ChurchWork");
 assert(manifest.short_name === "ChurchWork", "Manifest short_name is ChurchWork");
@@ -70,6 +72,8 @@ assert(installPrompt.includes('window.location.pathname === "/"'), "Install card
 assert(installPrompt.includes("Status:"), "Landing install card renders a visible readiness status");
 assert(installPrompt.includes("Waiting for Chrome to release the install prompt"), "Landing install card reports waiting state instead of disappearing");
 assert(!installPrompt.includes("three-dot"), "Install prompt does not tell users to use the three-dot menu");
+assert(pwaRegister.includes('window.location.pathname === "/"'), "Landing page participates in PWA controlled reload flow");
+assert(pwaRegister.includes("churchwork:pwa-controller-reload-v2"), "PWA controlled reload key was bumped after landing-page fix");
 assert(sw.includes("churchwork-shell-v13"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");

@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 
+const PWA_CHECK_BUILD = "pwa-check-marker-v1-v4-v7-icons";
+const EXPECTED_MANIFEST_ID = "/churchwork-app-v4";
+const EXPECTED_START_URL = "/admin?source=pwa-v4";
+
 type CheckState = "checking" | "pass" | "fail" | "warn";
 
 type Check = {
@@ -86,7 +90,7 @@ function stateLabel(state: CheckState) {
 
 export default function PwaCheckPage() {
   const [checks, setChecks] = useState<Check[]>([
-    { label: "Page loaded", state: "checking", detail: "Running browser-side PWA checks…" }
+    { label: "Page loaded", state: "checking", detail: `Running browser-side PWA checks… build=${PWA_CHECK_BUILD}` }
   ]);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [installResult, setInstallResult] = useState<string>("");
@@ -108,6 +112,12 @@ export default function PwaCheckPage() {
 
     async function runChecks() {
       const next: Check[] = [];
+
+      next.push({
+        label: "Build marker",
+        state: "pass",
+        detail: `build=${PWA_CHECK_BUILD}; expectedManifest=${EXPECTED_MANIFEST_ID}; expectedStart=${EXPECTED_START_URL}`
+      });
 
       next.push({
         label: "Secure context",
@@ -133,7 +143,7 @@ export default function PwaCheckPage() {
         manifest = await fetchJson<ManifestShape>(linkedManifest);
         next.push({
           label: "Manifest fetch",
-          state: manifest.id === "/churchwork-app-v2" ? "pass" : "warn",
+          state: manifest.id === EXPECTED_MANIFEST_ID ? "pass" : "warn",
           detail: `Loaded manifest. id=${manifest.id ?? "missing"}, start_url=${manifest.start_url ?? "missing"}, display=${manifest.display ?? "missing"}`
         });
       } catch (error) {
@@ -148,9 +158,9 @@ export default function PwaCheckPage() {
         });
 
         try {
-          const startUrl = absoluteUrl(manifest.start_url ?? "/admin?source=pwa-v2", linkedManifest);
+          const startUrl = absoluteUrl(manifest.start_url ?? EXPECTED_START_URL, linkedManifest);
           await fetchOk(startUrl);
-          next.push({ label: "Manifest start_url", state: "pass", detail: `${manifest.start_url ?? "/admin?source=pwa-v2"} is reachable.` });
+          next.push({ label: "Manifest start_url", state: "pass", detail: `${manifest.start_url ?? EXPECTED_START_URL} is reachable.` });
         } catch (error) {
           next.push({ label: "Manifest start_url", state: "fail", detail: error instanceof Error ? error.message : "start_url failed to load." });
         }
@@ -242,6 +252,7 @@ export default function PwaCheckPage() {
       <section className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/10 p-8 shadow-2xl">
         <p className="text-sm font-black uppercase tracking-[0.35em] text-emerald-300">ChurchWork PWA Diagnostics</p>
         <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Live installability check</h1>
+        <p className="mt-3 rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-emerald-200">Build marker: {PWA_CHECK_BUILD}</p>
         <p className="mt-6 text-lg font-semibold leading-8 text-white/80">
           This page checks the actual browser session on this phone. Green checks mean the live site is meeting that install gate. The native Install button only appears after Chrome fires <code>beforeinstallprompt</code>.
         </p>

@@ -1,4 +1,4 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v21";
+const CHURCHWORK_CACHE = "churchwork-shell-v22";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",

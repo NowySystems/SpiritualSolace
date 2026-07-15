@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description:
     "Spiritual care operations for churches, volunteers, and care teams coordinating prayer requests, visits, follow-ups, volunteer care, and church connections.",
   applicationName: "ChurchWork",
-  manifest: "/manifest.webmanifest",
+  manifest: "/manifest-v2.webmanifest",
   icons: {
     icon: "/brand/churchwork-install-icon-v4-192.png",
     shortcut: "/brand/churchwork-install-icon-v4-192.png",

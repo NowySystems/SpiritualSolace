@@ -73,8 +73,10 @@ assert(!installPrompt.includes("Status:"), "Install prompt does not render disab
 assert(!installPrompt.includes("Waiting for Chrome"), "Install prompt does not show Chrome waiting text");
 assert(!installPrompt.includes("three-dot"), "Install prompt does not tell users to use the three-dot menu");
 assert(pwaRegister.includes('navigator.serviceWorker.register("/sw.js", { scope: "/" })'), "Service worker registers at root scope");
-assert(pwaRegister.includes('window.addEventListener("load", registerServiceWorker)'), "Service worker registration uses the stable load hook");
-assert(sw.includes("churchwork-shell-v16"), "Service worker cache version is current");
+assert(pwaRegister.includes('window.location.pathname === "/"'), "Landing page participates in controlled reload flow");
+assert(pwaRegister.includes("churchwork:pwa-controller-reload-v4"), "Controlled reload key is current");
+assert(pwaRegister.includes("controllerchange"), "Registration listens for service-worker controller changes");
+assert(sw.includes("churchwork-shell-v17"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");
 assert(!sw.includes('"/install"'), "Service worker no longer caches removed install experiment path");

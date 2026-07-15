@@ -46,8 +46,8 @@ const pwaCheck = readFileSync(pwaCheckPath, "utf8");
 
 assert(manifest.name === "ChurchWork", "Manifest name is ChurchWork");
 assert(manifest.short_name === "ChurchWork", "Manifest short_name is ChurchWork");
-assert(manifest.id === "/churchwork-app", "Manifest app id is fresh /churchwork-app");
-assert(manifest.start_url === "/admin?source=pwa", "Manifest starts installed app at /admin");
+assert(manifest.id === "/churchwork-app-v2", "Manifest app id is bumped to /churchwork-app-v2");
+assert(manifest.start_url === "/admin?source=pwa-v2", "Manifest starts installed app at /admin with v2 source");
 assert(manifest.scope === "/", "Manifest scope covers the full app");
 assert(manifest.display === "standalone", "Manifest display is standalone");
 
@@ -79,7 +79,7 @@ assert(pwaRegister.includes('navigator.serviceWorker.register("/sw.js", { scope:
 assert(pwaRegister.includes('window.location.pathname === "/"'), "Landing page participates in controlled reload flow");
 assert(pwaRegister.includes("churchwork:pwa-controller-reload-v4"), "Controlled reload key is current");
 assert(pwaRegister.includes("controllerchange"), "Registration listens for service-worker controller changes");
-assert(sw.includes("churchwork-shell-v21"), "Service worker cache version is current");
+assert(sw.includes("churchwork-shell-v22"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");
 assert(sw.includes('"/pwa-check"'), "Service worker caches PWA diagnostics page");

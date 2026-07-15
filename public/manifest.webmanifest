@@ -1,9 +1,9 @@
 {
-  "id": "/churchwork-app",
+  "id": "/churchwork-app-v2",
   "name": "ChurchWork",
   "short_name": "ChurchWork",
   "description": "Spiritual-care operations for requesters, facilities, and partner care teams.",
-  "start_url": "/admin?source=pwa",
+  "start_url": "/admin?source=pwa-v2",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
@@ -35,28 +35,28 @@
       "name": "Admin Portal",
       "short_name": "Admin",
       "description": "Open the ChurchWork admin access hub.",
-      "url": "/admin?source=pwa-shortcut",
+      "url": "/admin?source=pwa-shortcut-v2",
       "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Requester Portal",
       "short_name": "Requester",
       "description": "Open the requester portal.",
-      "url": "/requester-portal?source=pwa-shortcut",
+      "url": "/requester-portal?source=pwa-shortcut-v2",
       "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Facility Portal",
       "short_name": "Facility",
       "description": "Open the facility workspace.",
-      "url": "/facility-portal?source=pwa-shortcut",
+      "url": "/facility-portal?source=pwa-shortcut-v2",
       "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Partner Portal",
       "short_name": "Partner",
       "description": "Open the partner workspace.",
-      "url": "/partner-portal?source=pwa-shortcut",
+      "url": "/partner-portal?source=pwa-shortcut-v2",
       "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]

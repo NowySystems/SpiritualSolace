@@ -12,25 +12,19 @@
   "categories": ["productivity", "lifestyle"],
   "icons": [
     {
-      "src": "/brand/churchwork-install-icon-v5.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/brand/churchwork-install-icon-v2-192.png",
+      "src": "/brand/churchwork-install-icon-v4-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/brand/churchwork-install-icon-v2-512.png",
+      "src": "/brand/churchwork-install-icon-v4-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/brand/churchwork-install-icon-v2-maskable-512.png",
+      "src": "/brand/churchwork-install-icon-v4-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -42,28 +36,28 @@
       "short_name": "Admin",
       "description": "Open the ChurchWork admin access hub.",
       "url": "/admin?source=pwa-shortcut",
-      "icons": [{ "src": "/brand/churchwork-install-icon-v5.svg", "sizes": "512x512", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Requester Portal",
       "short_name": "Requester",
       "description": "Open the requester portal.",
       "url": "/requester-portal?source=pwa-shortcut",
-      "icons": [{ "src": "/brand/churchwork-install-icon-v5.svg", "sizes": "512x512", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Facility Portal",
       "short_name": "Facility",
       "description": "Open the facility workspace.",
       "url": "/facility-portal?source=pwa-shortcut",
-      "icons": [{ "src": "/brand/churchwork-install-icon-v5.svg", "sizes": "512x512", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Partner Portal",
       "short_name": "Partner",
       "description": "Open the partner workspace.",
       "url": "/partner-portal?source=pwa-shortcut",
-      "icons": [{ "src": "/brand/churchwork-install-icon-v5.svg", "sizes": "512x512", "type": "image/svg+xml" }]
+      "icons": [{ "src": "/brand/churchwork-install-icon-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

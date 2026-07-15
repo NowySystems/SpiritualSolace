@@ -54,6 +54,14 @@ textarea {
   line-height: 1.35;
 }
 
+.churchwork-install-prompt__status {
+  margin: 0.35rem 0 0;
+  color: #7a5b20;
+  font-size: 0.76rem;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
 .churchwork-install-prompt__actions {
   display: flex;
   flex-shrink: 0;
@@ -75,6 +83,12 @@ textarea {
   background: #0f3f35;
   color: white;
   padding: 0 0.95rem;
+}
+
+.churchwork-install-prompt__primary:disabled {
+  cursor: not-allowed;
+  background: #cfd9d2;
+  color: #65756c;
 }
 
 .churchwork-install-prompt__secondary {

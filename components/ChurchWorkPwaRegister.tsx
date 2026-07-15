@@ -2,11 +2,11 @@
 
 import { useEffect } from "react";
 
-const PWA_RELOAD_KEY = "churchwork:pwa-controller-reload-v1";
+const PWA_RELOAD_KEY = "churchwork:pwa-controller-reload-v2";
 
 function isPwaEntryPath() {
   if (typeof window === "undefined") return false;
-  return window.location.pathname === "/admin" || window.location.pathname === "/pilot";
+  return window.location.pathname === "/" || window.location.pathname === "/admin" || window.location.pathname === "/pilot";
 }
 
 function reloadOnceWhenControlled() {

@@ -37,27 +37,35 @@ function isStandaloneMode() {
   return window.matchMedia("(display-mode: standalone)").matches || Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone);
 }
 
-function absoluteUrl(path: string) {
-  return new URL(path, window.location.origin).toString();
+function absoluteUrl(path: string, base = window.location.origin) {
+  return new URL(path, base).toString();
 }
 
-async function fetchJson<T>(path: string) {
-  const response = await fetch(path, { cache: "no-store" });
-  if (!response.ok) throw new Error(`${path} returned HTTP ${response.status}`);
+function manifestHref() {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+  return link?.href ?? absoluteUrl("/manifest-v2.webmanifest");
+}
+
+async function fetchJson<T>(url: string) {
+  const busted = `${url}${url.includes("?") ? "&" : "?"}pwaCheck=${Date.now()}`;
+  const response = await fetch(busted, { cache: "no-store" });
+  if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
   return (await response.json()) as T;
 }
 
-async function fetchOk(path: string) {
-  const response = await fetch(path, { cache: "no-store" });
-  if (!response.ok) throw new Error(`${path} returned HTTP ${response.status}`);
+async function fetchOk(url: string) {
+  const busted = `${url}${url.includes("?") ? "&" : "?"}pwaCheck=${Date.now()}`;
+  const response = await fetch(busted, { cache: "no-store" });
+  if (!response.ok) throw new Error(`${url} returned HTTP ${response.status}`);
   return response;
 }
 
-async function imageDimensions(path: string) {
-  const response = await fetchOk(path);
+async function imageDimensions(path: string, base: string) {
+  const absolute = absoluteUrl(path, base);
+  const response = await fetchOk(absolute);
   const blob = await response.blob();
   const bitmap = await createImageBitmap(blob);
-  const dimensions = { width: bitmap.width, height: bitmap.height, type: response.headers.get("content-type") ?? "unknown" };
+  const dimensions = { width: bitmap.width, height: bitmap.height, type: response.headers.get("content-type") ?? "unknown", absolute };
   bitmap.close();
   return dimensions;
 }
@@ -113,12 +121,19 @@ export default function PwaCheckPage() {
         detail: isStandaloneMode() ? "Already running as an installed app." : "Running in browser tab, so install prompt may appear if eligible."
       });
 
+      const linkedManifest = manifestHref();
+      next.push({
+        label: "Linked manifest",
+        state: linkedManifest.includes("manifest-v2.webmanifest") ? "pass" : "warn",
+        detail: linkedManifest
+      });
+
       let manifest: ManifestShape | null = null;
       try {
-        manifest = await fetchJson<ManifestShape>("/manifest.webmanifest");
+        manifest = await fetchJson<ManifestShape>(linkedManifest);
         next.push({
           label: "Manifest fetch",
-          state: "pass",
+          state: manifest.id === "/churchwork-app-v2" ? "pass" : "warn",
           detail: `Loaded manifest. id=${manifest.id ?? "missing"}, start_url=${manifest.start_url ?? "missing"}, display=${manifest.display ?? "missing"}`
         });
       } catch (error) {
@@ -133,8 +148,9 @@ export default function PwaCheckPage() {
         });
 
         try {
-          await fetchOk(manifest.start_url ?? "/admin?source=pwa");
-          next.push({ label: "Manifest start_url", state: "pass", detail: `${manifest.start_url ?? "/admin?source=pwa"} is reachable.` });
+          const startUrl = absoluteUrl(manifest.start_url ?? "/admin?source=pwa-v2", linkedManifest);
+          await fetchOk(startUrl);
+          next.push({ label: "Manifest start_url", state: "pass", detail: `${manifest.start_url ?? "/admin?source=pwa-v2"} is reachable.` });
         } catch (error) {
           next.push({ label: "Manifest start_url", state: "fail", detail: error instanceof Error ? error.message : "start_url failed to load." });
         }
@@ -153,11 +169,11 @@ export default function PwaCheckPage() {
         for (const icon of [icon192, icon512, maskable512].filter(Boolean) as ManifestIcon[]) {
           const src = icon.src ?? "";
           try {
-            const dimensions = await imageDimensions(src);
+            const dimensions = await imageDimensions(src, linkedManifest);
             next.push({
               label: `Icon ${icon.sizes ?? src}`,
               state: `${dimensions.width}x${dimensions.height}` === icon.sizes ? "pass" : "fail",
-              detail: `${src} decoded as ${dimensions.width}x${dimensions.height}; content-type=${dimensions.type}; absolute=${absoluteUrl(src)}`
+              detail: `${src} decoded as ${dimensions.width}x${dimensions.height}; content-type=${dimensions.type}; absolute=${dimensions.absolute}`
             });
           } catch (error) {
             next.push({ label: `Icon ${icon.sizes ?? src}`, state: "fail", detail: error instanceof Error ? error.message : `${src} failed to decode.` });
@@ -221,49 +237,42 @@ export default function PwaCheckPage() {
     setInstallEvent(null);
   }
 
-  function refreshPage() {
-    window.location.reload();
-  }
-
   return (
-    <main className="min-h-screen bg-slate-950 px-5 py-8 text-white">
-      <section className="mx-auto max-w-3xl space-y-6">
-        <div className="rounded-3xl border border-white/10 bg-white/10 p-6 shadow-2xl">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-200">ChurchWork PWA diagnostics</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight">Live installability check</h1>
-          <p className="mt-3 text-sm font-semibold leading-6 text-slate-200">
-            This page checks the actual browser session on this phone. Green checks mean the live site is meeting that install gate.
-            The native Install button only appears after Chrome fires <code>beforeinstallprompt</code>.
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-            <button
-              type="button"
-              onClick={handleInstall}
-              disabled={!installEvent}
-              className="rounded-2xl bg-emerald-300 px-5 py-3 text-sm font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-500 disabled:text-slate-300"
-            >
-              {installEvent ? "Install ChurchWork" : "Install not available yet"}
-            </button>
-            <button type="button" onClick={refreshPage} className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-950">
-              Refresh check
-            </button>
-          </div>
-          {installResult ? <p className="mt-3 text-sm font-bold text-emerald-200">{installResult}</p> : null}
-        </div>
+    <main className="min-h-screen bg-[#020719] px-5 py-12 text-white">
+      <section className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/10 p-8 shadow-2xl">
+        <p className="text-sm font-black uppercase tracking-[0.35em] text-emerald-300">ChurchWork PWA Diagnostics</p>
+        <h1 className="mt-6 text-4xl font-black tracking-tight sm:text-5xl">Live installability check</h1>
+        <p className="mt-6 text-lg font-semibold leading-8 text-white/80">
+          This page checks the actual browser session on this phone. Green checks mean the live site is meeting that install gate. The native Install button only appears after Chrome fires <code>beforeinstallprompt</code>.
+        </p>
+        <button
+          type="button"
+          onClick={handleInstall}
+          disabled={!installEvent}
+          className="mt-8 w-full rounded-3xl bg-emerald-300 px-6 py-5 text-lg font-black text-slate-950 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:text-slate-700"
+        >
+          {installEvent ? "Install ChurchWork" : "Install not available yet"}
+        </button>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 w-full rounded-3xl bg-white px-6 py-5 text-lg font-black text-slate-950"
+        >
+          Refresh check
+        </button>
+        {installResult ? <p className="mt-4 text-sm font-bold text-white/75">{installResult}</p> : null}
+      </section>
 
-        <div className="space-y-3">
-          {checks.map((check) => (
-            <article key={check.label} className={`rounded-2xl border p-4 ${rowStateClasses(check.state)}`}>
-              <div className="flex items-start justify-between gap-4">
-                <h2 className="text-sm font-black">{check.label}</h2>
-                <span className="rounded-full bg-white/70 px-3 py-1 text-[0.65rem] font-black tracking-wide text-slate-900">
-                  {stateLabel(check.state)}
-                </span>
-              </div>
-              <p className="mt-2 break-words text-sm font-semibold leading-6">{check.detail}</p>
-            </article>
-          ))}
-        </div>
+      <section className="mx-auto mt-8 grid max-w-3xl gap-5">
+        {checks.map((check) => (
+          <article key={`${check.label}-${check.detail}`} className={`rounded-[1.75rem] border p-6 shadow-lg ${rowStateClasses(check.state)}`}>
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="text-xl font-black">{check.label}</h2>
+              <span className="rounded-full bg-white/80 px-4 py-2 text-xs font-black text-slate-900">{stateLabel(check.state)}</span>
+            </div>
+            <p className="mt-4 break-words text-lg font-bold leading-8">{check.detail}</p>
+          </article>
+        ))}
       </section>
     </main>
   );

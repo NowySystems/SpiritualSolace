@@ -1,4 +1,4 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v22";
+const CHURCHWORK_CACHE = "churchwork-shell-v23";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
@@ -10,6 +10,7 @@ const SHELL_ASSETS = [
   "/partner-portal",
   OFFLINE_URL,
   "/manifest.webmanifest",
+  "/manifest-v2.webmanifest",
   "/brand/churchwork-install-icon-v4-192.png",
   "/brand/churchwork-install-icon-v4-512.png",
   "/brand/churchwork-install-icon-v4-maskable-512.png",
@@ -58,7 +59,7 @@ self.addEventListener("fetch", (event) => {
             request.destination === "style" ||
             request.destination === "script" ||
             request.destination === "image" ||
-            url.pathname === "/manifest.webmanifest")
+            url.pathname.endsWith(".webmanifest"))
         ) {
           caches.open(CHURCHWORK_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
         }

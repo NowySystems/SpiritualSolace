@@ -66,8 +66,11 @@ assert(layout.includes('manifest: "/manifest.webmanifest"'), "Next metadata poin
 assert(layout.includes("churchwork-install-prompt-ready"), "Early install prompt capture script is present");
 assert(installPrompt.includes("beforeinstallprompt"), "Install prompt listens for beforeinstallprompt");
 assert(installPrompt.includes("installEvent.prompt()"), "Install button calls the native prompt() API");
+assert(installPrompt.includes('window.location.pathname === "/"'), "Install card is scoped to the landing page");
+assert(installPrompt.includes("Status:"), "Landing install card renders a visible readiness status");
+assert(installPrompt.includes("Waiting for Chrome to release the install prompt"), "Landing install card reports waiting state instead of disappearing");
 assert(!installPrompt.includes("three-dot"), "Install prompt does not tell users to use the three-dot menu");
-assert(sw.includes("churchwork-shell-v12"), "Service worker cache version is current");
+assert(sw.includes("churchwork-shell-v13"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");
 assert(sw.includes('"/manifest.webmanifest"'), "Service worker caches manifest");

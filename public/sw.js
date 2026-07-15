@@ -1,4 +1,4 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v24";
+const CHURCHWORK_CACHE = "churchwork-shell-v25";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
@@ -11,10 +11,10 @@ const SHELL_ASSETS = [
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/manifest-v2.webmanifest",
-  "/brand/churchwork-install-icon-v6-192.png",
-  "/brand/churchwork-install-icon-v6-512.png",
-  "/brand/churchwork-install-icon-v6-maskable-512.png",
-  "/brand/churchwork-install-icon-v6-apple.png",
+  "/brand/churchwork-install-icon-v7-192.png",
+  "/brand/churchwork-install-icon-v7-512.png",
+  "/brand/churchwork-install-icon-v7-maskable-512.png",
+  "/brand/churchwork-install-icon-v7-apple.png",
   "/brand/churchwork-corner-logo.png"
 ];
 

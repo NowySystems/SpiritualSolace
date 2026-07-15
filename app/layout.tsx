@@ -16,9 +16,9 @@ export const metadata: Metadata = {
   applicationName: "ChurchWork",
   manifest: "/manifest-v2.webmanifest",
   icons: {
-    icon: "/brand/churchwork-install-icon-v4-192.png",
-    shortcut: "/brand/churchwork-install-icon-v4-192.png",
-    apple: "/brand/churchwork-install-icon-v4-apple.png"
+    icon: "/brand/churchwork-install-icon-v6-192.png",
+    shortcut: "/brand/churchwork-install-icon-v6-192.png",
+    apple: "/brand/churchwork-install-icon-v6-apple.png"
   },
   appleWebApp: {
     capable: true,

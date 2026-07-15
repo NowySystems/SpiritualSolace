@@ -1,4 +1,4 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v18";
+const CHURCHWORK_CACHE = "churchwork-shell-v19";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
@@ -10,10 +10,10 @@ const SHELL_ASSETS = [
   "/partner-portal",
   OFFLINE_URL,
   "/manifest.webmanifest",
-  "/brand/churchwork-app-icon-192.png",
-  "/brand/churchwork-app-icon-512.png",
-  "/brand/churchwork-app-icon-maskable-512.png",
-  "/brand/apple-touch-icon.png",
+  "/brand/churchwork-install-icon-v2-192.png",
+  "/brand/churchwork-install-icon-v2-512.png",
+  "/brand/churchwork-install-icon-v2-maskable-512.png",
+  "/brand/churchwork-install-icon-v2-apple.png",
   "/brand/churchwork-corner-logo.png"
 ];
 
@@ -66,7 +66,7 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() => {
         if (request.destination === "document") {
-          return caches.match(OFFLINE_URL).then((cached) => cached || caches.match("/admin") || caches.match("/pilot") || caches.match("/pwa-check"));
+          return caches.match(OFFLINE_URL).then((cached) => cached || caches.match("/admin") || caches.match("/pilot"));
         }
         return caches.match(request);
       })

@@ -44,11 +44,10 @@ const pwaRegister = readFileSync(pwaRegisterPath, "utf8");
 
 assert(manifest.name === "ChurchWork", "Manifest name is ChurchWork");
 assert(manifest.short_name === "ChurchWork", "Manifest short_name is ChurchWork");
-assert(manifest.id === "/", "Manifest app id is rooted at /");
-assert(manifest.start_url === "/?source=pwa", "Manifest starts installed app from public landing page");
+assert(manifest.id === "/admin", "Manifest app id is /admin");
+assert(manifest.start_url === "/admin?source=pwa", "Manifest starts installed app at /admin");
 assert(manifest.scope === "/", "Manifest scope covers the full app");
 assert(manifest.display === "standalone", "Manifest display is standalone");
-assert(!Object.hasOwn(manifest, "display_override"), "Manifest does not include a display_override fallback");
 
 const icons = Array.isArray(manifest.icons) ? manifest.icons : [];
 const any192 = icons.find((icon) => icon.src === "/brand/churchwork-app-icon-192.png" && icon.sizes === "192x192" && icon.type === "image/png");
@@ -67,18 +66,15 @@ for (const icon of [any192, any512, maskable512].filter(Boolean)) {
 }
 
 assert(layout.includes('manifest: "/manifest.webmanifest"'), "Next metadata points to manifest.webmanifest");
-assert(layout.includes("churchwork-install-prompt-ready"), "Early install prompt capture script is present");
+assert(!layout.includes("churchwork-install-prompt-ready"), "Experimental install prompt capture script is removed");
 assert(installPrompt.includes("beforeinstallprompt"), "Install prompt listens for beforeinstallprompt");
-assert(installPrompt.includes("installEvent.prompt()"), "Install button calls the native prompt() API");
-assert(installPrompt.includes('window.location.pathname === "/"'), "Install card is scoped to the landing page");
-assert(installPrompt.includes("Status:"), "Landing install card renders a visible readiness status");
-assert(installPrompt.includes("Waiting for Chrome to release the install prompt"), "Landing install card reports waiting state instead of disappearing");
+assert(installPrompt.includes("deferredPrompt.prompt()"), "Install button calls the native prompt() API");
+assert(!installPrompt.includes("Status:"), "Install prompt does not render disabled waiting status");
+assert(!installPrompt.includes("Waiting for Chrome"), "Install prompt does not show Chrome waiting text");
 assert(!installPrompt.includes("three-dot"), "Install prompt does not tell users to use the three-dot menu");
-assert(pwaRegister.includes('window.location.pathname === "/"'), "Landing page participates in PWA controlled reload flow");
-assert(pwaRegister.includes("churchwork:pwa-controller-reload-v3"), "PWA controlled reload key was bumped after root install target fix");
-assert(pwaRegister.includes("void registerServiceWorker();"), "Service worker registration runs immediately");
-assert(!pwaRegister.includes('window.addEventListener("load", registerServiceWorker)'), "Service worker registration no longer waits for window load");
-assert(sw.includes("churchwork-shell-v14"), "Service worker cache version is current");
+assert(pwaRegister.includes('navigator.serviceWorker.register("/sw.js", { scope: "/" })'), "Service worker registers at root scope");
+assert(pwaRegister.includes('window.addEventListener("load", registerServiceWorker)'), "Service worker registration uses the stable load hook");
+assert(sw.includes("churchwork-shell-v15"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");
 assert(!sw.includes('"/install"'), "Service worker no longer caches removed install experiment path");

@@ -44,7 +44,7 @@ const pwaRegister = readFileSync(pwaRegisterPath, "utf8");
 
 assert(manifest.name === "ChurchWork", "Manifest name is ChurchWork");
 assert(manifest.short_name === "ChurchWork", "Manifest short_name is ChurchWork");
-assert(manifest.id === "/admin", "Manifest app id is /admin");
+assert(manifest.id === "/churchwork-app", "Manifest app id is fresh /churchwork-app");
 assert(manifest.start_url === "/admin?source=pwa", "Manifest starts installed app at /admin");
 assert(manifest.scope === "/", "Manifest scope covers the full app");
 assert(manifest.display === "standalone", "Manifest display is standalone");
@@ -74,7 +74,7 @@ assert(!installPrompt.includes("Waiting for Chrome"), "Install prompt does not s
 assert(!installPrompt.includes("three-dot"), "Install prompt does not tell users to use the three-dot menu");
 assert(pwaRegister.includes('navigator.serviceWorker.register("/sw.js", { scope: "/" })'), "Service worker registers at root scope");
 assert(pwaRegister.includes('window.addEventListener("load", registerServiceWorker)'), "Service worker registration uses the stable load hook");
-assert(sw.includes("churchwork-shell-v15"), "Service worker cache version is current");
+assert(sw.includes("churchwork-shell-v16"), "Service worker cache version is current");
 assert(sw.includes('"/"'), "Service worker caches landing page");
 assert(sw.includes('"/admin"'), "Service worker caches admin app entry");
 assert(!sw.includes('"/install"'), "Service worker no longer caches removed install experiment path");

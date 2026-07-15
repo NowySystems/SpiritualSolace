@@ -1,4 +1,4 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v19";
+const CHURCHWORK_CACHE = "churchwork-shell-v20";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
@@ -10,6 +10,7 @@ const SHELL_ASSETS = [
   "/partner-portal",
   OFFLINE_URL,
   "/manifest.webmanifest",
+  "/brand/churchwork-install-icon-v5.svg",
   "/brand/churchwork-install-icon-v2-192.png",
   "/brand/churchwork-install-icon-v2-512.png",
   "/brand/churchwork-install-icon-v2-maskable-512.png",

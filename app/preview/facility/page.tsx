@@ -1,5 +1,5 @@
-import { SafePreviewCanvas } from "@/components/SafePreviewCanvas";
+import { FacilityPreviewExperience } from "@/components/FacilityPreviewExperience";
 
 export default function FacilityPreviewPage() {
-  return <SafePreviewCanvas role="facility" />;
+  return <FacilityPreviewExperience />;
 }

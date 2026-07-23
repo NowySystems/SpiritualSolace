@@ -3,7 +3,8 @@ import { NextResponse } from "next/server";
 const expectedRoutes = {
   public: ["/", "/admin", "/requester-portal", "/facility-portal", "/partner-portal"],
   preview: ["/preview", "/preview/admin", "/preview/requester", "/preview/facility", "/preview/partner", "/preview/pilot"],
-  diagnostics: ["/ai-map", "/synthetic-smoke", "/pwa-check", "/pwa-reset", "/pilot-auth-check"],
+  demo: ["/demo/synthetic"],
+  diagnostics: ["/ai-map", "/synthetic-smoke", "/pwa-check", "/pwa-reset", "/pilot-auth-check", "/pilot-auth-server-check"],
   gated: ["/pilot"]
 };
 
@@ -13,18 +14,21 @@ const smokeContract = {
   repo: "LL-COLE-J/SpiritualSolace",
   productFamily: "NowySystems",
   status: "pilot-preview",
-  buildMarker: "churchwork-safe-preview-chain-v1",
+  buildMarker: "churchwork-synthetic-demo-v1",
   nsb: {
     sourceOfTruth: true,
     governingRule: "rules/nsb-build-flow-governance.md",
-    pattern: "safe-preview-ai-readable-synthetic-smoke"
+    pattern: "safe-preview-ai-readable-synthetic-smoke-demo"
   },
   expectations: {
     safePreviewChainComplete: true,
+    syntheticDemoAvailable: true,
     aiMapAvailable: true,
     adminHubAvailable: true,
     previewRoutesRequireAuth: false,
     previewRoutesWriteData: false,
+    demoRoutesRequireAuth: false,
+    demoRoutesWriteData: false,
     realWritesBehindPilotAuth: true,
     syntheticSmokeWritesData: false,
     syntheticSmokeRequiresAuth: false
@@ -33,7 +37,15 @@ const smokeContract = {
   routeChecks: [
     {
       path: "/ai-map",
-      expect: "JSON contract for BI/NSB route discovery, roles, safety flags, and known issues."
+      expect: "JSON contract for BI/NSB route discovery, roles, safety flags, demo entry, and known issues."
+    },
+    {
+      path: "/synthetic-smoke",
+      expect: "JSON smoke contract for expected routes, safety assertions, known issues, and future Playwright targets."
+    },
+    {
+      path: "/demo/synthetic",
+      expect: "Static synthetic super demo that auto-plays requester, facility, partner, requester update, and BI readout without auth or writes."
     },
     {
       path: "/preview",
@@ -57,12 +69,13 @@ const smokeContract = {
     }
   ],
   safetyAssertions: [
-    "Preview routes must not collect diagnosis, treatment, medication, insurance, emergency, or medical record details.",
-    "Preview routes must not write data.",
+    "Preview and demo routes must not collect diagnosis, treatment, medication, insurance, emergency, or medical record details.",
+    "Preview and demo routes must not write data.",
     "Partner routes must show approved context only.",
     "Facility review must remain the approval boundary before partner release.",
     "Requester updates must be approved and limited.",
-    "Diagnostics must stay separate from the product workflow."
+    "Diagnostics must stay separate from the product workflow.",
+    "The synthetic demo is staged playback, not a real auth/session runner."
   ],
   knownIssues: [
     {
@@ -75,7 +88,7 @@ const smokeContract = {
       key: "pilot-supabase-auth-fetch",
       severity: "high",
       status: "under-diagnosis",
-      summary: "/pilot sign-in can return Failed to fetch; /pilot-auth-check is the diagnostic path."
+      summary: "/pilot sign-in can return Failed to fetch; /pilot-auth-check and /pilot-auth-server-check are diagnostic paths."
     },
     {
       key: "text-reader-client-shell-limitation",
@@ -88,7 +101,8 @@ const smokeContract = {
     target: "Playwright runner",
     capabilities: [
       "open routes in a real browser",
-      "capture screenshots",
+      "run the same path as /demo/synthetic against rendered screens",
+      "capture screenshots and video",
       "read rendered DOM text",
       "record console errors",
       "record failed network requests",

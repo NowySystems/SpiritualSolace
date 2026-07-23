@@ -8,7 +8,7 @@ import { OwnerAdminAccessCenter } from "@/components/OwnerAdminAccessCenter";
 import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 
 type AdminPortalAccessHubProps = {
-  session: Session;
+  session?: Session | null;
 };
 
 type ToolKey = "overview" | "owner" | "facility" | "requester";
@@ -90,9 +90,10 @@ function StatusPill({ children }: { children: string }) {
   );
 }
 
-export function AdminPortalAccessHub({ session }: AdminPortalAccessHubProps) {
+export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubProps) {
   const [activeTool, setActiveTool] = useState<ToolKey>("overview");
-  const userEmail = useMemo(() => session.user.email ?? "Signed-in operator", [session.user.email]);
+  const userEmail = useMemo(() => session?.user.email ?? "Local operator preview", [session?.user.email]);
+  const accessLabel = session ? "Signed in" : "Preview mode";
 
   return (
     <main className="min-h-screen bg-[#edf4f0] text-[#0d2b3b]">
@@ -109,7 +110,7 @@ export function AdminPortalAccessHub({ session }: AdminPortalAccessHubProps) {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <StatusPill>Signed in</StatusPill>
+            <StatusPill>{accessLabel}</StatusPill>
             <div className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-bold text-[#d9e7df]">
               {userEmail}
             </div>
@@ -224,19 +225,23 @@ export function AdminPortalAccessHub({ session }: AdminPortalAccessHubProps) {
                     </div>
                   </div>
                 </section>
+
+                {!session ? (
+                  <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-6 text-sm font-semibold leading-7 text-[#5f4b1f] shadow-sm shadow-[#0d2b3b]/5">
+                    Admin is temporarily in local preview mode so the PWA home base stays accessible while Supabase auth/network issues are handled. Use /pilot for the gated pilot sign-in flow.
+                  </section>
+                ) : null}
               </div>
-            ) : null}
-
-            {activeTool === "owner" ? <OwnerAdminAccessCenter session={session} /> : null}
-
-            {activeTool === "facility" ? (
-              <>
-                <FacilitySignupCard session={session} />
-                <FacilityUserManagementCard session={session} />
-              </>
-            ) : null}
-
-            {activeTool === "requester" ? <StructuredRequesterIntake session={session} /> : null}
+            ) : activeTool === "owner" ? (
+              <OwnerAdminAccessCenter />
+            ) : activeTool === "facility" ? (
+              <div className="space-y-6">
+                <FacilitySignupCard />
+                <FacilityUserManagementCard />
+              </div>
+            ) : (
+              <StructuredRequesterIntake />
+            )}
           </section>
         </div>
       </section>

@@ -23,8 +23,8 @@ const aiMap = {
     allowsOpenChat: false,
     allowsUncontrolledPartnerRouting: false,
     notes: [
-      "ChurchWork preview routes are for visual and workflow review only.",
-      "No Supabase writes are performed by preview routes.",
+      "ChurchWork preview and demo routes are for visual and workflow review only.",
+      "No Supabase writes are performed by preview or demo routes.",
       "No medical records, diagnosis, symptoms, medications, treatment details, insurance, or emergency information should be collected."
     ]
   },
@@ -66,13 +66,17 @@ const aiMap = {
       { path: "/preview/partner", label: "Partner preview", authRequired: false, writesData: false },
       { path: "/preview/pilot", label: "Pilot flow preview", authRequired: false, writesData: false }
     ],
+    demo: [
+      { path: "/demo/synthetic", label: "Synthetic super demo", authRequired: false, writesData: false }
+    ],
     gated: [
       { path: "/pilot", label: "Gated pilot sign-in path", authRequired: true, writesData: true }
     ],
     diagnostics: [
       { path: "/pwa-check", label: "PWA install diagnostics", authRequired: false },
       { path: "/pwa-reset", label: "PWA browser state reset", authRequired: false },
-      { path: "/pilot-auth-check", label: "Supabase auth diagnostics", authRequired: false },
+      { path: "/pilot-auth-check", label: "Supabase browser auth diagnostics", authRequired: false },
+      { path: "/pilot-auth-server-check", label: "Supabase server auth diagnostics", authRequired: false },
       { path: "/ai-map", label: "AI-readable project map", authRequired: false },
       { path: "/synthetic-smoke", label: "Synthetic smoke contract", authRequired: false }
     ]
@@ -88,7 +92,7 @@ const aiMap = {
       key: "pilot-supabase-auth-fetch",
       status: "under-diagnosis",
       severity: "high",
-      summary: "/pilot sign-in can return Failed to fetch; /pilot-auth-check exists to isolate auth/network/env issues."
+      summary: "/pilot sign-in can return Failed to fetch; auth diagnostic routes exist to isolate browser, server, env, and upstream issues."
     },
     {
       key: "text-reader-client-shell-limitation",
@@ -102,11 +106,14 @@ const aiMap = {
     preferredEntry: "/ai-map",
     preferredSmokeEntry: "/synthetic-smoke",
     preferredVisualEntry: "/preview",
+    preferredDemoEntry: "/demo/synthetic",
     compareAgainstNSB: true,
     syntheticSmokeReady: true,
+    syntheticDemoReady: true,
     syntheticUserReady: false,
     syntheticUserFutureUse: [
       "open safe preview routes",
+      "play the synthetic super demo route",
       "capture screenshots",
       "read DOM text",
       "record console errors",

@@ -10,6 +10,20 @@ type ToolKey = "overview" | "owner" | "facility" | "requester";
 
 const portalCards = [
   {
+    label: "Safe Preview Hub",
+    href: "/preview",
+    eyebrow: "AI / visual review",
+    description: "Open safe static previews for every ChurchWork role without login, Supabase, real writes, or private data.",
+    status: "NSB pattern"
+  },
+  {
+    label: "AI Map",
+    href: "/ai-map",
+    eyebrow: "BI-readable contract",
+    description: "Open the machine-readable ChurchWork project map that BI can inspect before visual review.",
+    status: "Live JSON"
+  },
+  {
     label: "Requester Portal",
     href: "/requester-portal",
     eyebrow: "Family/requester view",
@@ -31,10 +45,24 @@ const portalCards = [
     status: "Final surface live"
   },
   {
+    label: "Pilot Auth Check",
+    href: "/pilot-auth-check",
+    eyebrow: "Supabase diagnostic",
+    description: "Check browser-side Supabase connectivity and auth preflight without guessing from a failed sign-in screen.",
+    status: "Diagnostic"
+  },
+  {
+    label: "PWA Check",
+    href: "/pwa-check",
+    eyebrow: "Install diagnostic",
+    description: "Check manifest, icon, service worker, start URL, and native install event status.",
+    status: "Diagnostic"
+  },
+  {
     label: "Landing Page",
     href: "/",
     eyebrow: "Public front door",
-    description: "Return to the public ChurchWork presentation/portal entry page.",
+    description: "Return to the public ChurchWork presentation and portal entry page.",
     status: "Public route"
   }
 ];
@@ -75,6 +103,13 @@ const wiringPath = [
   "Facility releases approved context to partner assignment.",
   "Partner logs a safe update/outcome.",
   "Requester sees approved updates only."
+];
+
+const reviewPath = [
+  "BI reads /ai-map to identify ChurchWork routes, roles, known issues, and NSB rule compliance.",
+  "Human or AI reviewer opens /preview to inspect safe role screens without auth or private data.",
+  "Real public portals stay available for demo and workflow review.",
+  "Gated /pilot remains reserved for Supabase-backed tests after auth is stable."
 ];
 
 function StatusPill({ children }: { children: string }) {
@@ -138,10 +173,10 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
             <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-end">
               <div>
                 <h1 className="max-w-4xl font-serif text-4xl font-semibold tracking-[-0.05em] md:text-6xl">
-                  One place to open every pilot role.
+                  One place to open, inspect, and debug every pilot role.
                 </h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-[#d9e7df]">
-                  Use this as the installed app landing screen for Cole and Sam. It is not the future analytics dashboard; it is the operator launchpad for testing, demos, and controlled pilot access.
+                  Use this as the installed app landing screen for Cole and Sam. It now exposes the NSB-governed preview and AI map tools so BI can inspect ChurchWork without touching auth or private data.
                 </p>
               </div>
 
@@ -236,6 +271,23 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
                         ))}
                       </ol>
                     </div>
+                  </div>
+                </section>
+
+                <section className="rounded-[1.5rem] border border-[#cfe4d8] bg-[#f4fbf6] p-6 shadow-sm shadow-[#0d2b3b]/5">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0f6b54]">NSB / BI review path</p>
+                  <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">ChurchWork now exposes safe inspection surfaces.</h2>
+                  <ol className="mt-5 grid gap-3 text-sm font-semibold leading-6 text-[#4f6259] md:grid-cols-2">
+                    {reviewPath.map((step, index) => (
+                      <li key={step} className="rounded-2xl border border-[#d9dfd7] bg-white p-4">
+                        <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0f6b54] text-xs font-black text-white">{index + 1}</span>
+                        {step}
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <a href="/ai-map" className="rounded-xl bg-[#082838] px-5 py-3 text-sm font-black text-white hover:bg-[#0f3f35]">Open AI map</a>
+                    <a href="/preview" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open safe preview</a>
                   </div>
                 </section>
 

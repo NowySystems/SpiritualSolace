@@ -2,214 +2,432 @@
 
 import { useEffect, useMemo, useState } from "react";
 
-type DemoTone = "green" | "blue" | "gold" | "slate";
+type Scene = "requester" | "facility" | "partner" | "status" | "bi";
 
-type DemoStep = {
-  id: string;
+type Action = {
+  scene: Scene;
   actor: string;
-  title: string;
-  action: string;
-  screenEyebrow: string;
-  screenTitle: string;
-  primaryBadge: string;
-  screenItems: string[];
-  timeline: string[];
-  locked: string[];
-  biCheck: string;
-  result: string;
-  cta: string;
-  tone: DemoTone;
+  verb: string;
+  detail: string;
+  focus: string;
+  x: number;
+  y: number;
+  click?: boolean;
 };
 
-const STEP_MS = 10000;
+const ACTION_MS = 1700;
 
-const demoSteps: DemoStep[] = [
+const actions: Action[] = [
   {
-    id: "requester-start",
+    scene: "requester",
     actor: "Synthetic requester",
-    title: "Family opens intake",
-    action: "The synthetic requester chooses safe spiritual-care options instead of typing an open medical story.",
-    screenEyebrow: "Requester view",
-    screenTitle: "What kind of support would help?",
-    primaryBadge: "Guided request",
-    screenItems: ["Prayer", "Friendly visit", "Encouragement", "Facility reviews before sharing"],
-    timeline: ["Opened", "Choosing support", "Not submitted yet"],
-    locked: ["No diagnosis field", "No emergency path", "No open chat"],
-    biCheck: "No diagnosis, treatment, emergency, medication, insurance, or open-chat language is requested.",
-    result: "PASS · Structured request",
-    cta: "Continue to safe context",
-    tone: "green"
+    verb: "opens requester intake",
+    detail: "The test user lands on a guided spiritual-care request instead of an open chat box.",
+    focus: "open",
+    x: 22,
+    y: 19
   },
   {
-    id: "requester-submit",
+    scene: "requester",
     actor: "Synthetic requester",
-    title: "Safe context prepared",
-    action: "The request becomes a limited spiritual-care note that Grandview can review before anything leaves the facility.",
-    screenEyebrow: "Safe note",
-    screenTitle: "They would appreciate prayer and a calm visit this week.",
-    primaryBadge: "Facility review required",
-    screenItems: ["Prayer requested", "Calm visit requested", "Requester can track status", "Grandview controls release"],
-    timeline: ["Drafted", "Submitted", "Waiting on facility"],
-    locked: ["Medical details hidden", "Partner cannot see yet", "No direct routing"],
-    biCheck: "Requester copy explains that partner routing is controlled by the facility.",
-    result: "PASS · Facility boundary",
-    cta: "Send to facility review",
-    tone: "blue"
+    verb: "taps Prayer",
+    detail: "The request stays in safe support categories.",
+    focus: "prayer",
+    x: 26,
+    y: 38,
+    click: true
   },
   {
-    id: "facility-review",
+    scene: "requester",
+    actor: "Synthetic requester",
+    verb: "taps Friendly visit",
+    detail: "The second choice adds a visit request without adding medical details.",
+    focus: "visit",
+    x: 72,
+    y: 38,
+    click: true
+  },
+  {
+    scene: "requester",
+    actor: "Synthetic requester",
+    verb: "types safe context",
+    detail: "Only a limited spiritual-care note is prepared for Grandview review.",
+    focus: "note",
+    x: 36,
+    y: 62,
+    click: true
+  },
+  {
+    scene: "requester",
+    actor: "Synthetic requester",
+    verb: "presses Submit to Grandview",
+    detail: "The request moves to facility review. It does not route directly to Hope Church.",
+    focus: "submit",
+    x: 72,
+    y: 83,
+    click: true
+  },
+  {
+    scene: "facility",
     actor: "Synthetic facility reviewer",
-    title: "Grandview reviews",
-    action: "The facility reviewer sees the request, checks sharing rules, and decides what can be released.",
-    screenEyebrow: "Facility console",
-    screenTitle: "Review before partner release",
-    primaryBadge: "Human approval",
-    screenItems: ["Incoming request", "Consent/share state", "Hold unclear details", "Activity log"],
-    timeline: ["Received", "Under review", "Release pending"],
-    locked: ["Internal notes held", "No auto-assignment", "No bypassing Grandview"],
-    biCheck: "Facility approval is required before partner access.",
-    result: "PASS · Human review",
-    cta: "Approve safe version",
-    tone: "gold"
+    verb: "opens incoming request",
+    detail: "Grandview sees the request snapshot, share boundary, and activity trail.",
+    focus: "incoming",
+    x: 28,
+    y: 29,
+    click: true
   },
   {
-    id: "facility-release",
+    scene: "facility",
     actor: "Synthetic facility reviewer",
-    title: "Partner-safe release",
-    action: "Grandview releases only the approved spiritual-care need and basic coordination guidance to Hope Church.",
-    screenEyebrow: "Approved release",
-    screenTitle: "Partner-safe context only",
-    primaryBadge: "Released by Grandview",
-    screenItems: ["Prayer requested", "Friendly visit requested", "Basic coordination", "No clinical details"],
-    timeline: ["Reviewed", "Approved", "Sent to partner"],
-    locked: ["No internal facility notes", "No diagnosis", "No private details"],
-    biCheck: "Partner receives approved context only and cannot see internal facility notes.",
-    result: "PASS · Scoped partner view",
-    cta: "Send to Hope Church",
-    tone: "green"
+    verb: "checks what is hidden",
+    detail: "Internal notes and unclear details stay inside the facility workspace.",
+    focus: "hidden",
+    x: 72,
+    y: 49,
+    click: true
   },
   {
-    id: "partner-assignment",
+    scene: "facility",
+    actor: "Synthetic facility reviewer",
+    verb: "approves partner-safe release",
+    detail: "Only approved spiritual-care context is released to Hope Church.",
+    focus: "approve",
+    x: 64,
+    y: 74,
+    click: true
+  },
+  {
+    scene: "partner",
     actor: "Synthetic partner",
-    title: "Hope Church receives",
-    action: "The partner sees enough to prepare for care, but not enough to become a medical or counseling record.",
-    screenEyebrow: "Partner workspace",
-    screenTitle: "Prepare for a calm visit",
-    primaryBadge: "Approved context",
-    screenItems: ["Assignment summary", "Visit preparation", "Safe outcome choices", "Report-back lane"],
-    timeline: ["Assigned", "Preparing", "Visit not logged yet"],
-    locked: ["Private details hidden", "No counseling chart", "No open messaging"],
-    biCheck: "Partner page does not become a counseling chart, medical record, or uncontrolled messaging lane.",
-    result: "PASS · Partner guardrails",
-    cta: "Log safe outcome",
-    tone: "blue"
+    verb: "opens approved assignment",
+    detail: "Hope Church receives only the scoped request and coordination guidance.",
+    focus: "assignment",
+    x: 38,
+    y: 31,
+    click: true
   },
   {
-    id: "partner-report",
+    scene: "partner",
     actor: "Synthetic partner",
-    title: "Safe outcome logged",
-    action: "The partner reports a structured outcome instead of writing private details into a free-form thread.",
-    screenEyebrow: "Report back",
-    screenTitle: "Visited · follow-up welcomed",
-    primaryBadge: "Structured outcome",
-    screenItems: ["Contacted", "Visited", "Unable to reach", "Follow-up requested"],
-    timeline: ["Visited", "Outcome selected", "Update sent for approval"],
-    locked: ["No private narrative", "No medical documentation", "No sensitive detail"],
-    biCheck: "Report-back does not expose private details or create medical documentation.",
-    result: "PASS · Safe report-back",
-    cta: "Send approved update",
-    tone: "gold"
+    verb: "reviews hidden-data guardrail",
+    detail: "The partner can prepare for care, but cannot see facility-only information.",
+    focus: "guardrail",
+    x: 73,
+    y: 53,
+    click: true
   },
   {
-    id: "requester-update",
+    scene: "partner",
+    actor: "Synthetic partner",
+    verb: "marks Visited",
+    detail: "The outcome is structured and safe instead of becoming a private journal or chart.",
+    focus: "visited",
+    x: 34,
+    y: 77,
+    click: true
+  },
+  {
+    scene: "status",
     actor: "Synthetic requester",
-    title: "Requester update shown",
-    action: "The requester sees progress without internal facility notes or partner-only details.",
-    screenEyebrow: "Requester status",
-    screenTitle: "Your request has an approved update",
-    primaryBadge: "Approved update",
-    screenItems: ["Request received", "Facility reviewed", "Partner assigned", "Update available"],
-    timeline: ["Received", "Reviewed", "Updated"],
-    locked: ["Internal notes hidden", "Partner details hidden", "Only approved status"],
-    biCheck: "Requester sees approved updates only; internal review details stay hidden.",
-    result: "PASS · Approved status only",
-    cta: "View status path",
-    tone: "green"
+    verb: "sees approved update",
+    detail: "The requester sees progress, not internal review notes.",
+    focus: "update",
+    x: 72,
+    y: 66,
+    click: true
   },
   {
-    id: "bi-readout",
+    scene: "bi",
     actor: "BI synthetic inspector",
-    title: "Run summary generated",
-    action: "BI compares the visible path against /ai-map, /synthetic-smoke, and NSB guardrails.",
-    screenEyebrow: "BI readout",
-    screenTitle: "Synthetic demo pass",
-    primaryBadge: "Inspection complete",
-    screenItems: ["Preview chain complete", "No writes", "No medical workflow", "Auth remains separate"],
-    timeline: ["Routes found", "Guardrails checked", "Report ready"],
-    locked: ["Known auth issue isolated", "PWA issue tracked", "Playwright later"],
-    biCheck: "Safe preview chain is complete; real writes remain behind /pilot.",
-    result: "PASS · Demo ready",
-    cta: "Open inspection surfaces",
-    tone: "slate"
+    verb: "lights up the checks",
+    detail: "The path passes the safe-preview contract and leaves real writes behind /pilot.",
+    focus: "checks",
+    x: 50,
+    y: 52,
+    click: false
   }
 ];
 
-const validationRows = [
-  "No auth required",
-  "No Supabase calls or writes",
+const checks = [
+  "No auth",
+  "No Supabase writes",
   "No medical workflow",
-  "Facility approves before partner release",
+  "Facility approval boundary",
   "Partner sees approved context only",
-  "Requester sees approved updates only"
+  "Requester sees approved update only"
 ];
 
-function toneClasses(tone: DemoTone) {
-  if (tone === "green") return "border-[#cfe4d5] bg-[#f1f8f3] text-[#173b2d]";
-  if (tone === "blue") return "border-[#c9dbe5] bg-[#f0f7fa] text-[#082838]";
-  if (tone === "gold") return "border-[#eed9a8] bg-[#fff8e7] text-[#5f4b1f]";
-  return "border-[#d9dfd7] bg-white text-[#0d2b3b]";
+function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
 }
 
-function dotClasses(active: boolean, complete: boolean) {
-  if (active) return "w-12 bg-[#d6a943]";
-  if (complete) return "w-6 bg-[#0f6b54]";
-  return "w-6 bg-white/25";
+function ProgressDots({ index, setIndex }: { index: number; setIndex: (value: number) => void }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {actions.map((action, actionIndex) => (
+        <button
+          key={`${action.scene}-${action.focus}-${actionIndex}`}
+          type="button"
+          aria-label={`Jump to action ${actionIndex + 1}`}
+          onClick={() => setIndex(actionIndex)}
+          className={cx(
+            "h-2.5 rounded-full transition-all",
+            actionIndex === index ? "w-10 bg-[#d6a943]" : actionIndex < index ? "w-5 bg-[#0f6b54]" : "w-5 bg-white/20"
+          )}
+        />
+      ))}
+    </div>
+  );
+}
+
+function Cursor({ action }: { action: Action }) {
+  return (
+    <div
+      className="pointer-events-none absolute z-30 transition-all duration-700 ease-out"
+      style={{ left: `${action.x}%`, top: `${action.y}%`, transform: "translate(-20%, -10%)" }}
+    >
+      {action.click ? <span className="absolute -left-4 -top-4 h-10 w-10 animate-ping rounded-full bg-[#d6a943]/45" /> : null}
+      <div className="relative h-9 w-9 rotate-[-18deg] rounded-tl-sm bg-[#082838] shadow-xl shadow-black/25" style={{ clipPath: "polygon(0 0, 0 100%, 30% 72%, 48% 100%, 66% 91%, 48% 64%, 84% 64%)" }} />
+    </div>
+  );
+}
+
+function Shell({ action, children }: { action: Action; children: React.ReactNode }) {
+  const label = action.scene === "requester" ? "Requester" : action.scene === "facility" ? "Grandview" : action.scene === "partner" ? "Hope Church" : action.scene === "status" ? "Requester status" : "BI inspector";
+  return (
+    <div className="relative mx-auto w-full max-w-[27rem] overflow-hidden rounded-[2.25rem] border-[10px] border-[#102b3a] bg-[#edf4f0] shadow-2xl shadow-black/25 md:max-w-[34rem]">
+      <div className="flex items-center justify-between bg-[#082838] px-4 py-3 text-white">
+        <div>
+          <p className="text-[0.65rem] font-black uppercase tracking-[0.18em] text-[#c7e2d0]">ChurchWork</p>
+          <p className="font-serif text-xl font-semibold tracking-[-0.04em]">{label}</p>
+        </div>
+        <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black">demo</span>
+      </div>
+      <div className="relative min-h-[35rem] bg-[#f8fbf8] p-4 md:min-h-[38rem] md:p-5">
+        {children}
+        <Cursor action={action} />
+      </div>
+    </div>
+  );
+}
+
+function RequesterScreen({ index, action }: { index: number; action: Action }) {
+  const prayer = index >= 1;
+  const visit = index >= 2;
+  const note = index >= 3;
+  const submitted = index >= 4;
+
+  return (
+    <Shell action={action}>
+      <div className="space-y-4">
+        <section className="rounded-3xl border border-[#d9dfd7] bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Guided intake</p>
+          <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">What kind of support would help?</h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#4f6259]">Choose safe spiritual-care support. Grandview reviews before anything is shared.</p>
+        </section>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Choice active={prayer} focus={action.focus === "prayer"} title="Prayer" sub="Safe support" />
+          <Choice active={visit} focus={action.focus === "visit"} title="Friendly visit" sub="Calm presence" />
+          <Choice active={false} focus={false} title="Encouragement" sub="Message only" />
+          <Choice active={false} focus={false} title="Pastoral call" sub="Facility reviewed" />
+        </div>
+
+        <section className={cx("rounded-3xl border bg-white p-4 transition", action.focus === "note" ? "border-[#d6a943] shadow-lg" : "border-[#d9dfd7]")}>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">Safe context note</p>
+          <div className="mt-3 min-h-[7rem] rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-4 text-sm font-semibold leading-6 text-[#0d2b3b]">
+            {note ? "They would appreciate prayer and a calm visit this week." : <span className="text-[#8b9991]">Synthetic user will type safe context here…</span>}
+            {action.focus === "note" ? <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-[#0d2b3b] align-middle" /> : null}
+          </div>
+        </section>
+
+        <button className={cx("w-full rounded-2xl px-5 py-4 text-sm font-black shadow-lg transition", submitted || action.focus === "submit" ? "bg-[#d6a943] text-[#082838]" : "bg-[#082838] text-white")}>
+          {submitted ? "Submitted to Grandview" : "Submit for facility review"}
+        </button>
+      </div>
+    </Shell>
+  );
+}
+
+function Choice({ title, sub, active, focus }: { title: string; sub: string; active: boolean; focus: boolean }) {
+  return (
+    <div className={cx("rounded-2xl border p-4 transition", active ? "border-[#0f6b54] bg-[#e7f1eb]" : focus ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
+      <div className={cx("mb-3 flex h-8 w-8 items-center justify-center rounded-full text-xs font-black", active ? "bg-[#0f6b54] text-white" : "bg-[#edf4f0] text-[#4f6259]")}>{active ? "✓" : ""}</div>
+      <p className="font-black text-[#0d2b3b]">{title}</p>
+      <p className="mt-1 text-xs font-semibold text-[#4f6259]">{sub}</p>
+    </div>
+  );
+}
+
+function FacilityScreen({ index, action }: { index: number; action: Action }) {
+  const reviewed = index >= 6;
+  const approved = index >= 7;
+
+  return (
+    <Shell action={action}>
+      <div className="space-y-4">
+        <section className={cx("rounded-3xl border bg-white p-5 shadow-sm", action.focus === "incoming" ? "border-[#d6a943]" : "border-[#d9dfd7]")}>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9a6b16]">Incoming request</p>
+              <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Prayer + friendly visit</h2>
+            </div>
+            <span className="rounded-full bg-[#fff8e7] px-3 py-1 text-xs font-black text-[#7a5b20]">Review</span>
+          </div>
+          <p className="mt-4 rounded-2xl bg-[#f8fbf8] p-4 text-sm font-semibold leading-6 text-[#4f6259]">They would appreciate prayer and a calm visit this week.</p>
+        </section>
+
+        <div className="grid gap-3">
+          <FacilityRow label="Approved to share" value={approved ? "Yes" : "Pending"} active={approved} focus={action.focus === "approve"} />
+          <FacilityRow label="Internal notes" value="Held back" active={reviewed} focus={action.focus === "hidden"} />
+          <FacilityRow label="Medical details" value="Not collected" active focus={false} />
+        </div>
+
+        <section className={cx("rounded-3xl border bg-white p-4 transition", action.focus === "approve" ? "border-[#d6a943] shadow-lg" : "border-[#d9dfd7]")}>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">Release decision</p>
+          <div className="mt-4 flex items-center justify-between rounded-2xl bg-[#f8fbf8] p-4">
+            <span className="font-black text-[#0d2b3b]">Release partner-safe context</span>
+            <span className={cx("h-8 w-14 rounded-full p-1 transition", approved ? "bg-[#0f6b54]" : "bg-[#cfd8d2]")}>
+              <span className={cx("block h-6 w-6 rounded-full bg-white transition", approved ? "translate-x-6" : "translate-x-0")} />
+            </span>
+          </div>
+        </section>
+      </div>
+    </Shell>
+  );
+}
+
+function FacilityRow({ label, value, active, focus }: { label: string; value: string; active: boolean; focus: boolean }) {
+  return (
+    <div className={cx("flex items-center justify-between rounded-2xl border p-4 transition", focus ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
+      <span className="font-black text-[#0d2b3b]">{label}</span>
+      <span className={cx("rounded-full px-3 py-1 text-xs font-black", active ? "bg-[#e7f1eb] text-[#0f6b54]" : "bg-[#edf4f0] text-[#506a49]")}>{value}</span>
+    </div>
+  );
+}
+
+function PartnerScreen({ index, action }: { index: number; action: Action }) {
+  const visited = index >= 10;
+  return (
+    <Shell action={action}>
+      <div className="space-y-4">
+        <section className={cx("rounded-3xl border bg-white p-5 shadow-sm", action.focus === "assignment" ? "border-[#d6a943]" : "border-[#d9dfd7]")}>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Approved assignment</p>
+          <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Prepare for a calm visit</h2>
+          <div className="mt-4 grid gap-2 text-sm font-semibold text-[#4f6259]">
+            <p className="rounded-2xl bg-[#f8fbf8] p-3">Prayer requested</p>
+            <p className="rounded-2xl bg-[#f8fbf8] p-3">Friendly visit requested</p>
+          </div>
+        </section>
+
+        <section className={cx("rounded-3xl border p-4 transition", action.focus === "guardrail" ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#9a6b16]">Hidden from partner</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-xs font-black text-[#5f4b1f]">
+            <span className="rounded-xl bg-white/70 px-3 py-2">Clinical details</span>
+            <span className="rounded-xl bg-white/70 px-3 py-2">Internal notes</span>
+            <span className="rounded-xl bg-white/70 px-3 py-2">Emergency lane</span>
+            <span className="rounded-xl bg-white/70 px-3 py-2">Open chat</span>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-[#d9dfd7] bg-white p-4">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">Outcome</p>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {['Contacted', 'Visited', 'Unable', 'Follow-up'].map((item) => (
+              <div key={item} className={cx("rounded-2xl border p-4 text-center text-sm font-black transition", item === 'Visited' && (visited || action.focus === 'visited') ? "border-[#0f6b54] bg-[#e7f1eb] text-[#0f6b54]" : "border-[#d9dfd7] bg-[#f8fbf8] text-[#4f6259]")}>{item}</div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </Shell>
+  );
+}
+
+function StatusScreen({ action }: { action: Action }) {
+  return (
+    <Shell action={action}>
+      <div className="space-y-4">
+        <section className="rounded-3xl border border-[#d9dfd7] bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Requester status</p>
+          <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Your request has an update</h2>
+        </section>
+        {['Received', 'Facility reviewed', 'Partner assigned', 'Approved update available'].map((item, itemIndex) => (
+          <div key={item} className={cx("flex items-center gap-4 rounded-2xl border p-4", itemIndex < 3 ? "border-[#cfe4d5] bg-[#e7f1eb]" : "border-[#d6a943] bg-[#fff8e7] shadow-lg")}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0f6b54] text-sm font-black text-white">✓</span>
+            <span className="font-black text-[#0d2b3b]">{item}</span>
+          </div>
+        ))}
+      </div>
+    </Shell>
+  );
+}
+
+function BiScreen({ index, action }: { index: number; action: Action }) {
+  return (
+    <Shell action={action}>
+      <div className="space-y-4">
+        <section className="rounded-3xl border border-[#d9dfd7] bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">BI readout</p>
+          <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Synthetic demo pass</h2>
+        </section>
+        {checks.map((check, checkIndex) => (
+          <div key={check} className="flex items-center justify-between rounded-2xl border border-[#cfe4d5] bg-[#e7f1eb] p-4">
+            <span className="font-black text-[#0d2b3b]">{check}</span>
+            <span className="rounded-full bg-[#0f6b54] px-3 py-1 text-xs font-black text-white">PASS</span>
+          </div>
+        ))}
+        <div className="rounded-3xl bg-[#082838] p-5 text-white">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#c7e2d0]">Next level</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#d9e7df]">Later this same path becomes a Playwright run with real clicks, screenshots, console logs, and video replay.</p>
+        </div>
+      </div>
+    </Shell>
+  );
+}
+
+function DemoScreen({ index, action }: { index: number; action: Action }) {
+  if (action.scene === "requester") return <RequesterScreen index={index} action={action} />;
+  if (action.scene === "facility") return <FacilityScreen index={index} action={action} />;
+  if (action.scene === "partner") return <PartnerScreen index={index} action={action} />;
+  if (action.scene === "status") return <StatusScreen action={action} />;
+  return <BiScreen index={index} action={action} />;
 }
 
 export default function SyntheticDemoPage() {
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const activeStep = demoSteps[activeIndex];
-  const progress = useMemo(() => Math.round(((activeIndex + 1) / demoSteps.length) * 100), [activeIndex]);
+  const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const action = actions[index];
+  const progress = useMemo(() => Math.round(((index + 1) / actions.length) * 100), [index]);
 
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!playing) return;
     const timer = window.setInterval(() => {
-      setActiveIndex((current) => {
-        if (current >= demoSteps.length - 1) {
-          setIsPlaying(false);
+      setIndex((current) => {
+        if (current >= actions.length - 1) {
+          setPlaying(false);
           return current;
         }
         return current + 1;
       });
-    }, STEP_MS);
+    }, ACTION_MS);
 
     return () => window.clearInterval(timer);
-  }, [isPlaying]);
+  }, [playing]);
 
-  function goNext() {
-    setIsPlaying(false);
-    setActiveIndex((current) => Math.min(current + 1, demoSteps.length - 1));
+  function next() {
+    setPlaying(false);
+    setIndex((current) => Math.min(current + 1, actions.length - 1));
   }
 
-  function goBack() {
-    setIsPlaying(false);
-    setActiveIndex((current) => Math.max(current - 1, 0));
+  function back() {
+    setPlaying(false);
+    setIndex((current) => Math.max(current - 1, 0));
   }
 
-  function restart() {
-    setIsPlaying(false);
-    setActiveIndex(0);
+  function reset() {
+    setPlaying(false);
+    setIndex(0);
   }
 
   return (
@@ -222,10 +440,9 @@ export default function SyntheticDemoPage() {
             </span>
             <span>
               <span className="block font-serif text-2xl font-semibold tracking-[-0.03em]">Church<span className="text-[#8dbd9e]">Work</span></span>
-              <span className="block text-xs font-semibold text-[#d9e7df]">Synthetic Super Demo · Manual theater</span>
+              <span className="block text-xs font-semibold text-[#d9e7df]">Synthetic user actor demo</span>
             </span>
           </a>
-
           <div className="flex flex-wrap gap-2">
             <a href="/preview" className="rounded-full border border-white/15 bg-white/8 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#d9e7df]">Preview</a>
             <a href="/synthetic-smoke" className="rounded-full border border-white/15 bg-white/8 px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#d9e7df]">Smoke</a>
@@ -235,155 +452,38 @@ export default function SyntheticDemoPage() {
       </nav>
 
       <section className="mx-auto max-w-[118rem] px-4 py-5 md:px-8 md:py-10">
-        <div className="grid gap-5 xl:grid-cols-[1.12fr_0.88fr] xl:items-start">
-          <section className="overflow-hidden rounded-[2rem] border border-[#d9dfd7] bg-[#082838] p-4 text-white shadow-xl shadow-[#0d2b3b]/15 md:p-7">
-            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c7e2d0]">Demo theater v2</p>
-                <h1 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.05em] md:text-5xl">Tap through the ChurchWork loop.</h1>
-              </div>
-              <span className="rounded-full bg-[#d6a943] px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#082838]">Step {activeIndex + 1} / {demoSteps.length}</span>
-            </div>
-
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/15">
-              <div className="h-full rounded-full bg-[#d6a943] transition-all duration-700" style={{ width: `${progress}%` }} />
-            </div>
-
-            <div className="mt-5 mx-auto max-w-[28rem] rounded-[2.4rem] border border-white/20 bg-[#0b1720] p-3 shadow-2xl shadow-black/30 md:max-w-[34rem]">
-              <div className="overflow-hidden rounded-[1.8rem] bg-[#f8fbf8] text-[#0d2b3b]">
-                <div className="flex items-center justify-between bg-white px-4 py-3 shadow-sm">
-                  <div>
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">{activeStep.screenEyebrow}</p>
-                    <p className="font-serif text-xl font-semibold tracking-[-0.04em]">ChurchWork</p>
-                  </div>
-                  <span className="rounded-full bg-[#e7f1eb] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#0f6b54]">Safe</span>
-                </div>
-
-                <div className="p-4 md:p-5">
-                  <div className={`rounded-[1.5rem] border p-5 ${toneClasses(activeStep.tone)}`}>
-                    <p className="text-xs font-black uppercase tracking-[0.16em]">{activeStep.primaryBadge}</p>
-                    <h2 className="mt-3 font-serif text-2xl font-semibold tracking-[-0.04em] md:text-3xl">{activeStep.screenTitle}</h2>
-                    <div className="mt-5 grid gap-3">
-                      {activeStep.screenItems.map((item) => (
-                        <div key={item} className="flex items-center gap-3 rounded-2xl border border-current/15 bg-white/70 p-3 text-sm font-black">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-base">✓</span>
-                          <span>{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 rounded-[1.25rem] border border-[#d9dfd7] bg-white p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Visible status path</p>
-                    <div className="mt-4 space-y-3">
-                      {activeStep.timeline.map((item, index) => (
-                        <div key={item} className="flex items-center gap-3 text-sm font-bold text-[#4f6259]">
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#0f6b54] text-xs font-black text-white">{index + 1}</span>
-                          <span>{item}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    {activeStep.locked.map((item) => (
-                      <div key={item} className="rounded-2xl border border-[#eed9a8] bg-[#fff8e7] p-3 text-center text-xs font-black uppercase tracking-[0.08em] text-[#5f4b1f]">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-
-                  <button type="button" onClick={goNext} className="mt-5 w-full rounded-2xl bg-[#082838] px-5 py-4 text-sm font-black text-white shadow-lg">
-                    {activeStep.cta}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-              {demoSteps.map((step, index) => (
-                <button key={step.id} type="button" onClick={() => { setIsPlaying(false); setActiveIndex(index); }} aria-label={`Go to step ${index + 1}`}>
-                  <span className={`block h-3 rounded-full transition-all ${dotClasses(index === activeIndex, index < activeIndex)}`} />
-                </button>
-              ))}
-            </div>
+        <div className="grid gap-6 xl:grid-cols-[1fr_25rem] xl:items-start">
+          <section className="order-2 xl:order-1">
+            <DemoScreen index={index} action={action} />
           </section>
 
-          <aside className="space-y-5">
-            <section className="rounded-[2rem] border border-[#d9dfd7] bg-white p-5 shadow-sm shadow-[#0d2b3b]/5 md:p-6">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Current synthetic user</p>
-              <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">{activeStep.actor}</h2>
-              <p className="mt-3 text-sm font-semibold leading-7 text-[#4f6259]">{activeStep.action}</p>
-              <div className="mt-4 rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-4">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">BI checking</p>
-                <p className="mt-2 text-sm font-semibold leading-6 text-[#4f6259]">{activeStep.biCheck}</p>
+          <aside className="order-1 space-y-4 xl:order-2">
+            <section className="rounded-[1.5rem] bg-[#0f3f35] p-5 text-white shadow-xl shadow-[#0d2b3b]/10">
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c7e2d0]">Now acting</p>
+              <h1 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.05em]">{action.actor}</h1>
+              <p className="mt-3 text-xl font-black text-[#d6a943]">{action.verb}</p>
+              <p className="mt-3 text-sm font-semibold leading-7 text-[#d9e7df]">{action.detail}</p>
+
+              <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/15">
+                <div className="h-full rounded-full bg-[#d6a943] transition-all duration-500" style={{ width: `${progress}%` }} />
               </div>
-              <div className="mt-4 rounded-2xl bg-[#173b2d] p-4 text-sm font-black uppercase tracking-[0.1em] text-white">
-                {activeStep.result}
+
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <button type="button" onClick={back} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Back</button>
+                <button type="button" onClick={next} className="rounded-xl bg-white px-4 py-3 text-sm font-black text-[#082838] shadow-lg">Next action</button>
+                <button type="button" onClick={() => setPlaying((value) => !value)} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">{playing ? "Pause" : "Watch run"}</button>
+                <button type="button" onClick={reset} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Reset</button>
+              </div>
+
+              <div className="mt-5">
+                <ProgressDots index={index} setIndex={(value) => { setPlaying(false); setIndex(value); }} />
               </div>
             </section>
 
-            <section className="rounded-[2rem] border border-[#d9dfd7] bg-white p-5 shadow-sm shadow-[#0d2b3b]/5 md:p-6">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Controls</p>
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <button type="button" onClick={goBack} className="rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-4 text-sm font-black text-[#0d2b3b]">Back</button>
-                <button type="button" onClick={goNext} className="rounded-xl bg-[#082838] px-4 py-4 text-sm font-black text-white shadow-lg">Next</button>
-                <button type="button" onClick={() => setIsPlaying((value) => !value)} className="rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-4 text-sm font-black text-[#0d2b3b]">
-                  {isPlaying ? "Pause" : "Slow play"}
-                </button>
-                <button type="button" onClick={restart} className="rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-4 text-sm font-black text-[#0d2b3b]">Restart</button>
-              </div>
-              <p className="mt-4 rounded-2xl bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">
-                Manual by default. Slow play advances every {STEP_MS / 1000} seconds and stops at the end.
-              </p>
-            </section>
-
-            <section className="rounded-[2rem] border border-[#d9dfd7] bg-white p-5 shadow-sm shadow-[#0d2b3b]/5 md:p-6">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Guardrails</p>
-              <div className="mt-4 grid gap-2">
-                {validationRows.map((row) => (
-                  <div key={row} className="flex items-center gap-3 rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-3 text-sm font-bold text-[#4f6259]">
-                    <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#0f6b54]" />
-                    <span>{row}</span>
-                  </div>
-                ))}
-              </div>
+            <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-5 text-sm font-semibold leading-6 text-[#5f4b1f] shadow-sm shadow-[#0d2b3b]/5">
+              This is still staged, but now the synthetic user visibly moves through the screen. No auth, no Supabase, no writes, no medical workflow.
             </section>
           </aside>
-        </div>
-
-        <section className="mt-5 rounded-[2rem] border border-[#d9dfd7] bg-white p-5 shadow-sm shadow-[#0d2b3b]/5 md:p-6">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Timeline</p>
-              <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">Pick any synthetic scene.</h2>
-            </div>
-            <span className="rounded-full bg-[#e7f1eb] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#0f6b54]">No real data</span>
-          </div>
-          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            {demoSteps.map((step, index) => {
-              const active = index === activeIndex;
-              return (
-                <button
-                  key={step.id}
-                  type="button"
-                  onClick={() => { setIsPlaying(false); setActiveIndex(index); }}
-                  className={`rounded-2xl border p-4 text-left transition ${active ? "border-[#0f3f35] bg-[#e7f1eb] shadow-md" : "border-[#d9dfd7] bg-[#f8fbf8] hover:bg-white"}`}
-                >
-                  <span className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">Step {index + 1}</span>
-                  <span className="mt-2 block font-serif text-xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">{step.title}</span>
-                  <span className="mt-2 block text-sm font-semibold leading-6 text-[#4f6259]">{step.actor}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-          <a href="/preview" className="rounded-xl bg-[#082838] px-5 py-3 text-center text-sm font-black text-white shadow-lg hover:bg-[#0f3f35]">Open preview chain</a>
-          <a href="/synthetic-smoke" className="rounded-xl border border-[#d9dfd7] bg-white px-5 py-3 text-center text-sm font-black text-[#0d2b3b]">Open smoke contract</a>
-          <a href="/ai-map" className="rounded-xl border border-[#d9dfd7] bg-white px-5 py-3 text-center text-sm font-black text-[#0d2b3b]">Open AI map</a>
-          <a href="/admin" className="rounded-xl border border-[#d9dfd7] bg-white px-5 py-3 text-center text-sm font-black text-[#0d2b3b]">Back to admin</a>
         </div>
       </section>
     </main>

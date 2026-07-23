@@ -24,6 +24,13 @@ const portalCards = [
     status: "Live JSON"
   },
   {
+    label: "Synthetic Smoke",
+    href: "/synthetic-smoke",
+    eyebrow: "BI smoke contract",
+    description: "Open the machine-readable smoke test contract for route expectations, safety assertions, and known issues.",
+    status: "Live JSON"
+  },
+  {
     label: "Requester Portal",
     href: "/requester-portal",
     eyebrow: "Family/requester view",
@@ -107,8 +114,8 @@ const wiringPath = [
 
 const reviewPath = [
   "BI reads /ai-map to identify ChurchWork routes, roles, known issues, and NSB rule compliance.",
+  "BI reads /synthetic-smoke to confirm expected route surfaces and smoke-test assertions.",
   "Human or AI reviewer opens /preview to inspect safe role screens without auth or private data.",
-  "Real public portals stay available for demo and workflow review.",
   "Gated /pilot remains reserved for Supabase-backed tests after auth is stable."
 ];
 
@@ -176,7 +183,7 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
                   One place to open, inspect, and debug every pilot role.
                 </h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-[#d9e7df]">
-                  Use this as the installed app landing screen for Cole and Sam. It now exposes the NSB-governed preview and AI map tools so BI can inspect ChurchWork without touching auth or private data.
+                  Use this as the installed app landing screen for Cole and Sam. It exposes the NSB-governed preview, AI map, and synthetic smoke tools so BI can inspect ChurchWork without touching auth or private data.
                 </p>
               </div>
 
@@ -287,6 +294,7 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
                   </ol>
                   <div className="mt-5 flex flex-wrap gap-3">
                     <a href="/ai-map" className="rounded-xl bg-[#082838] px-5 py-3 text-sm font-black text-white hover:bg-[#0f3f35]">Open AI map</a>
+                    <a href="/synthetic-smoke" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open synthetic smoke</a>
                     <a href="/preview" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open safe preview</a>
                   </div>
                 </section>

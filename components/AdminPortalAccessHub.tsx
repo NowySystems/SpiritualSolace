@@ -10,6 +10,13 @@ type ToolKey = "overview" | "owner" | "facility" | "requester";
 
 const portalCards = [
   {
+    label: "Synthetic Super Demo",
+    href: "/demo/synthetic",
+    eyebrow: "Watch the workflow",
+    description: "Open the staged synthetic-user demo that auto-plays requester, facility, partner, report-back, and BI validation.",
+    status: "Demo theater"
+  },
+  {
     label: "Safe Preview Hub",
     href: "/preview",
     eyebrow: "AI / visual review",
@@ -54,8 +61,15 @@ const portalCards = [
   {
     label: "Pilot Auth Check",
     href: "/pilot-auth-check",
-    eyebrow: "Supabase diagnostic",
+    eyebrow: "Browser diagnostic",
     description: "Check browser-side Supabase connectivity and auth preflight without guessing from a failed sign-in screen.",
+    status: "Diagnostic"
+  },
+  {
+    label: "Server Auth Check",
+    href: "/pilot-auth-server-check",
+    eyebrow: "Vercel diagnostic",
+    description: "Check whether the deployed server can reach Supabase auth endpoints without exposing secrets.",
     status: "Diagnostic"
   },
   {
@@ -115,6 +129,7 @@ const wiringPath = [
 const reviewPath = [
   "BI reads /ai-map to identify ChurchWork routes, roles, known issues, and NSB rule compliance.",
   "BI reads /synthetic-smoke to confirm expected route surfaces and smoke-test assertions.",
+  "Human or AI reviewer opens /demo/synthetic to watch the full staged workflow.",
   "Human or AI reviewer opens /preview to inspect safe role screens without auth or private data.",
   "Gated /pilot remains reserved for Supabase-backed tests after auth is stable."
 ];
@@ -180,10 +195,10 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
             <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-end">
               <div>
                 <h1 className="max-w-4xl font-serif text-4xl font-semibold tracking-[-0.05em] md:text-6xl">
-                  One place to open, inspect, and debug every pilot role.
+                  One place to open, inspect, demo, and debug every pilot role.
                 </h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-[#d9e7df]">
-                  Use this as the installed app landing screen for Cole and Sam. It exposes the NSB-governed preview, AI map, and synthetic smoke tools so BI can inspect ChurchWork without touching auth or private data.
+                  Use this as the installed app landing screen for Cole and Sam. It exposes the NSB-governed preview, AI map, synthetic smoke, and super-demo tools so BI can inspect ChurchWork without touching auth or private data.
                 </p>
               </div>
 
@@ -283,7 +298,7 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
 
                 <section className="rounded-[1.5rem] border border-[#cfe4d8] bg-[#f4fbf6] p-6 shadow-sm shadow-[#0d2b3b]/5">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0f6b54]">NSB / BI review path</p>
-                  <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">ChurchWork now exposes safe inspection surfaces.</h2>
+                  <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">ChurchWork now exposes safe inspection and demo surfaces.</h2>
                   <ol className="mt-5 grid gap-3 text-sm font-semibold leading-6 text-[#4f6259] md:grid-cols-2">
                     {reviewPath.map((step, index) => (
                       <li key={step} className="rounded-2xl border border-[#d9dfd7] bg-white p-4">
@@ -293,7 +308,8 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
                     ))}
                   </ol>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <a href="/ai-map" className="rounded-xl bg-[#082838] px-5 py-3 text-sm font-black text-white hover:bg-[#0f3f35]">Open AI map</a>
+                    <a href="/demo/synthetic" className="rounded-xl bg-[#082838] px-5 py-3 text-sm font-black text-white hover:bg-[#0f3f35]">Open super demo</a>
+                    <a href="/ai-map" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open AI map</a>
                     <a href="/synthetic-smoke" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open synthetic smoke</a>
                     <a href="/preview" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open safe preview</a>
                   </div>

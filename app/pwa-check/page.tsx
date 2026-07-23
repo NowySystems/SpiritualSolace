@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 
-const PWA_CHECK_BUILD = "pwa-check-uploaded-exact-v1";
-const EXPECTED_MANIFEST_ID = "/churchwork-uploaded-exact-v1";
-const EXPECTED_START_URL = "/admin?source=pwa-uploaded-exact-v1";
+const PWA_CHECK_BUILD = "pwa-check-uploaded-exact-v2";
+const EXPECTED_MANIFEST_ID = "/churchwork-uploaded-exact-v2";
+const EXPECTED_START_URL = "/admin?source=pwa-uploaded-exact-v2";
 
 type CheckState = "checking" | "pass" | "fail" | "warn";
 type Check = { label: string; state: CheckState; detail: string };

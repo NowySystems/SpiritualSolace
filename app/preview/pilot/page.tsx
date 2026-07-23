@@ -1,5 +1,5 @@
-import { SafePreviewCanvas } from "@/components/SafePreviewCanvas";
+import { PilotPreviewExperience } from "@/components/PilotPreviewExperience";
 
 export default function PilotPreviewPage() {
-  return <SafePreviewCanvas role="pilot" />;
+  return <PilotPreviewExperience />;
 }

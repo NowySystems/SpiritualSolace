@@ -1,14 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { FacilitySignupCard } from "@/components/FacilitySignupCard";
-import { FacilityUserManagementCard } from "@/components/FacilityUserManagementCard";
-import { OwnerAdminAccessCenter } from "@/components/OwnerAdminAccessCenter";
-import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 
 type AdminPortalAccessHubProps = {
-  session?: Session | null;
+  session?: { user?: { email?: string | null } } | null;
 };
 
 type ToolKey = "overview" | "owner" | "facility" | "requester";
@@ -53,17 +48,17 @@ const adminTools: { key: ToolKey; label: string; description: string }[] = [
   {
     key: "owner",
     label: "Owner/Admin tools",
-    description: "Use existing owner/admin access center while deeper admin KPIs wait."
+    description: "Gated operational tools move through /pilot while Supabase auth is being checked."
   },
   {
     key: "facility",
     label: "Facility setup",
-    description: "Use the existing facility signup and facility user management tools."
+    description: "Facility signup and user-management tools stay behind the gated pilot path."
   },
   {
     key: "requester",
     label: "Requester intake tool",
-    description: "Use the existing structured requester intake tool for sandbox testing."
+    description: "Structured test intake stays behind the gated pilot path."
   }
 ];
 
@@ -90,10 +85,28 @@ function StatusPill({ children }: { children: string }) {
   );
 }
 
+function GatedToolNotice({ label }: { label: string }) {
+  return (
+    <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-6 shadow-sm shadow-[#0d2b3b]/5">
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#9a6b16]">Temporarily gated</p>
+      <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">{label} stay on /pilot for now.</h2>
+      <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-[#5f4b1f]">
+        This open /admin route is the PWA/operator launchpad only. Supabase-backed write tools are intentionally not mounted here so an auth/network issue cannot break the app home base.
+      </p>
+      <a
+        href="/pilot"
+        className="mt-5 inline-flex rounded-xl bg-[#173b2d] px-5 py-3 text-sm font-black text-white shadow-lg hover:bg-[#102b3a]"
+      >
+        Open gated pilot path
+      </a>
+    </section>
+  );
+}
+
 export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubProps) {
   const [activeTool, setActiveTool] = useState<ToolKey>("overview");
-  const userEmail = useMemo(() => session?.user.email ?? "Local operator preview", [session?.user.email]);
-  const accessLabel = session ? "Signed in" : "Preview mode";
+  const userEmail = useMemo(() => session?.user?.email ?? "Operator launchpad", [session?.user?.email]);
+  const accessLabel = session ? "Signed in" : "Open hub";
 
   return (
     <main className="min-h-screen bg-[#edf4f0] text-[#0d2b3b]">
@@ -194,7 +207,7 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Operator overview</p>
-                      <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">Admin Portal is now the PWA home base.</h2>
+                      <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">Admin Portal is the PWA home base.</h2>
                     </div>
                     <StatusPill>PWA start target</StatusPill>
                   </div>
@@ -226,21 +239,16 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
                   </div>
                 </section>
 
-                {!session ? (
-                  <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-6 text-sm font-semibold leading-7 text-[#5f4b1f] shadow-sm shadow-[#0d2b3b]/5">
-                    Admin is temporarily in local preview mode so the PWA home base stays accessible while Supabase auth/network issues are handled. Use /pilot for the gated pilot sign-in flow.
-                  </section>
-                ) : null}
+                <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-6 text-sm font-semibold leading-7 text-[#5f4b1f] shadow-sm shadow-[#0d2b3b]/5">
+                  This /admin page intentionally avoids Supabase calls so the PWA home base stays accessible even when auth is failing. Use /pilot for gated testing after auth is stable.
+                </section>
               </div>
             ) : activeTool === "owner" ? (
-              <OwnerAdminAccessCenter />
+              <GatedToolNotice label="Owner/Admin tools" />
             ) : activeTool === "facility" ? (
-              <div className="space-y-6">
-                <FacilitySignupCard />
-                <FacilityUserManagementCard />
-              </div>
+              <GatedToolNotice label="Facility setup tools" />
             ) : (
-              <StructuredRequesterIntake />
+              <GatedToolNotice label="Requester intake tools" />
             )}
           </section>
         </div>

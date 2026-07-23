@@ -1,10 +1,18 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v27";
+const CHURCHWORK_CACHE = "churchwork-shell-v28";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
   "/admin",
   "/pilot",
+  "/preview",
+  "/preview/admin",
+  "/preview/requester",
+  "/preview/facility",
+  "/preview/partner",
+  "/preview/pilot",
+  "/ai-map",
   "/pwa-check",
+  "/pilot-auth-check",
   "/requester-portal",
   "/facility-portal",
   "/partner-portal",
@@ -59,7 +67,8 @@ self.addEventListener("fetch", (event) => {
             request.destination === "style" ||
             request.destination === "script" ||
             request.destination === "image" ||
-            url.pathname.endsWith(".webmanifest"))
+            url.pathname.endsWith(".webmanifest") ||
+            url.pathname === "/ai-map")
         ) {
           caches.open(CHURCHWORK_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
         }

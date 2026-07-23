@@ -11,7 +11,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:pwa": "node scripts/pwa-self-test.mjs"
+    "test:pwa": "node scripts/pwa-self-test.mjs",
+    "synthetic:churchwork": "playwright test --config=playwright.churchwork.config.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.19.11",

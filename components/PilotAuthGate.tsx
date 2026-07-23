@@ -11,6 +11,18 @@ type PilotAuthGateProps = {
 
 type AuthMode = "sign-in" | "sign-up" | "forgot-password";
 
+function authErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    if (error.message.toLowerCase().includes("failed to fetch")) {
+      return "Network error reaching Supabase auth. Open /pilot-auth-check to test the live browser connection, then retry sign-in.";
+    }
+
+    return error.message;
+  }
+
+  return "Unknown auth error. Open /pilot-auth-check to test the live browser connection.";
+}
+
 export function PilotAuthGate({ children }: PilotAuthGateProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [session, setSession] = useState<Session | null>(null);
@@ -25,11 +37,17 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
   useEffect(() => {
     let isMounted = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!isMounted) return;
-      setSession(data.session ?? null);
-      setStatus(data.session ? "Signed in." : "Sign in or create an approved pilot account.");
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!isMounted) return;
+        setSession(data.session ?? null);
+        setStatus(data.session ? "Signed in." : "Sign in or create an approved pilot account.");
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setStatus(authErrorMessage(error));
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession);
@@ -46,38 +64,42 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
     event.preventDefault();
     setIsBusy(true);
 
-    if (mode === "forgot-password") {
-      setStatus("Sending password reset email...");
-      const redirectTo = `${window.location.origin}/pilot/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+    try {
+      if (mode === "forgot-password") {
+        setStatus("Sending password reset email...");
+        const redirectTo = `${window.location.origin}/pilot/reset-password`;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
 
-      if (error) {
-        setStatus(error.message);
+        if (error) {
+          setStatus(authErrorMessage(error));
+          setIsBusy(false);
+          return;
+        }
+
+        setStatus("Check your email for the password reset link.");
         setIsBusy(false);
         return;
       }
 
-      setStatus("Check your email for the password reset link.");
-      setIsBusy(false);
-      return;
-    }
+      setStatus(mode === "sign-in" ? "Signing in..." : "Creating account...");
 
-    setStatus(mode === "sign-in" ? "Signing in..." : "Creating account...");
+      const action = mode === "sign-in" ? supabase.auth.signInWithPassword : supabase.auth.signUp;
+      const { data, error } = await action.bind(supabase.auth)({ email, password });
 
-    const action = mode === "sign-in" ? supabase.auth.signInWithPassword : supabase.auth.signUp;
-    const { data, error } = await action.bind(supabase.auth)({ email, password });
+      if (error) {
+        setStatus(authErrorMessage(error));
+        setIsBusy(false);
+        return;
+      }
 
-    if (error) {
-      setStatus(error.message);
-      setIsBusy(false);
-      return;
-    }
-
-    if (data.session) {
-      setSession(data.session);
-      setStatus("Signed in.");
-    } else {
-      setStatus("Check your email to confirm the account before signing in.");
+      if (data.session) {
+        setSession(data.session);
+        setStatus("Signed in.");
+      } else {
+        setStatus("Check your email to confirm the account before signing in.");
+      }
+    } catch (error) {
+      setStatus(authErrorMessage(error));
     }
 
     setIsBusy(false);
@@ -85,9 +107,13 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
 
   async function handleSignOut() {
     setIsBusy(true);
-    await supabase.auth.signOut();
-    setSession(null);
-    setStatus("Signed out.");
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+      setStatus("Signed out.");
+    } catch (error) {
+      setStatus(authErrorMessage(error));
+    }
     setIsBusy(false);
   }
 
@@ -199,6 +225,9 @@ export function PilotAuthGate({ children }: PilotAuthGateProps) {
             >
               {mode === "forgot-password" ? "Back to sign in" : "Forgot password?"}
             </button>
+            <a href="/pilot-auth-check" className="font-bold text-[#173b2d] underline-offset-4 hover:underline">
+              Run pilot auth check
+            </a>
           </div>
           <p className="font-semibold text-[#4d5d55]">{status}</p>
         </div>

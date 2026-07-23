@@ -1,0 +1,45 @@
+name: ChurchWork Super Synth Demo
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  super-synth:
+    name: Super synth / ChurchWork guided demo
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run ChurchWork super synth
+        run: npm run synthetic:churchwork
+
+      - name: Upload ChurchWork super synth report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: churchwork-super-synth-report
+          path: |
+            churchwork-playwright-report
+            test-results/churchwork-synthetic
+          if-no-files-found: ignore
+          retention-days: 30

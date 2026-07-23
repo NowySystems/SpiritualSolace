@@ -73,7 +73,8 @@ const aiMap = {
       { path: "/pwa-check", label: "PWA install diagnostics", authRequired: false },
       { path: "/pwa-reset", label: "PWA browser state reset", authRequired: false },
       { path: "/pilot-auth-check", label: "Supabase auth diagnostics", authRequired: false },
-      { path: "/ai-map", label: "AI-readable project map", authRequired: false }
+      { path: "/ai-map", label: "AI-readable project map", authRequired: false },
+      { path: "/synthetic-smoke", label: "Synthetic smoke contract", authRequired: false }
     ]
   },
   knownIssues: [
@@ -88,13 +89,21 @@ const aiMap = {
       status: "under-diagnosis",
       severity: "high",
       summary: "/pilot sign-in can return Failed to fetch; /pilot-auth-check exists to isolate auth/network/env issues."
+    },
+    {
+      key: "text-reader-client-shell-limitation",
+      status: "known-limitation",
+      severity: "low",
+      summary: "Text-only inspection can see the client shell before rendered portal UI; future Playwright synthetic user should validate rendered pages."
     }
   ],
   biContract: {
     canBeScannedByBI: true,
     preferredEntry: "/ai-map",
+    preferredSmokeEntry: "/synthetic-smoke",
     preferredVisualEntry: "/preview",
     compareAgainstNSB: true,
+    syntheticSmokeReady: true,
     syntheticUserReady: false,
     syntheticUserFutureUse: [
       "open safe preview routes",
@@ -102,7 +111,7 @@ const aiMap = {
       "read DOM text",
       "record console errors",
       "record failed network requests",
-      "compare route behavior against this ai-map and NSB rules"
+      "compare route behavior against this ai-map, /synthetic-smoke, and NSB rules"
     ]
   },
   generatedAt: "static-build-time"

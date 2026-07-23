@@ -1,5 +1,5 @@
-import { SafePreviewCanvas } from "@/components/SafePreviewCanvas";
+import { PartnerPreviewExperience } from "@/components/PartnerPreviewExperience";
 
 export default function PartnerPreviewPage() {
-  return <SafePreviewCanvas role="partner" />;
+  return <PartnerPreviewExperience />;
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 type Scene = "requester" | "facility" | "partner" | "status" | "bi";
 
@@ -15,138 +16,22 @@ type Action = {
   click?: boolean;
 };
 
-const ACTION_MS = 1700;
+const ACTION_MS = 2100;
 
 const actions: Action[] = [
-  {
-    scene: "requester",
-    actor: "Synthetic requester",
-    verb: "opens requester intake",
-    detail: "The test user lands on a guided spiritual-care request instead of an open chat box.",
-    focus: "open",
-    x: 22,
-    y: 19
-  },
-  {
-    scene: "requester",
-    actor: "Synthetic requester",
-    verb: "taps Prayer",
-    detail: "The request stays in safe support categories.",
-    focus: "prayer",
-    x: 26,
-    y: 38,
-    click: true
-  },
-  {
-    scene: "requester",
-    actor: "Synthetic requester",
-    verb: "taps Friendly visit",
-    detail: "The second choice adds a visit request without adding medical details.",
-    focus: "visit",
-    x: 72,
-    y: 38,
-    click: true
-  },
-  {
-    scene: "requester",
-    actor: "Synthetic requester",
-    verb: "types safe context",
-    detail: "Only a limited spiritual-care note is prepared for Grandview review.",
-    focus: "note",
-    x: 36,
-    y: 62,
-    click: true
-  },
-  {
-    scene: "requester",
-    actor: "Synthetic requester",
-    verb: "presses Submit to Grandview",
-    detail: "The request moves to facility review. It does not route directly to Hope Church.",
-    focus: "submit",
-    x: 72,
-    y: 83,
-    click: true
-  },
-  {
-    scene: "facility",
-    actor: "Synthetic facility reviewer",
-    verb: "opens incoming request",
-    detail: "Grandview sees the request snapshot, share boundary, and activity trail.",
-    focus: "incoming",
-    x: 28,
-    y: 29,
-    click: true
-  },
-  {
-    scene: "facility",
-    actor: "Synthetic facility reviewer",
-    verb: "checks what is hidden",
-    detail: "Internal notes and unclear details stay inside the facility workspace.",
-    focus: "hidden",
-    x: 72,
-    y: 49,
-    click: true
-  },
-  {
-    scene: "facility",
-    actor: "Synthetic facility reviewer",
-    verb: "approves partner-safe release",
-    detail: "Only approved spiritual-care context is released to Hope Church.",
-    focus: "approve",
-    x: 64,
-    y: 74,
-    click: true
-  },
-  {
-    scene: "partner",
-    actor: "Synthetic partner",
-    verb: "opens approved assignment",
-    detail: "Hope Church receives only the scoped request and coordination guidance.",
-    focus: "assignment",
-    x: 38,
-    y: 31,
-    click: true
-  },
-  {
-    scene: "partner",
-    actor: "Synthetic partner",
-    verb: "reviews hidden-data guardrail",
-    detail: "The partner can prepare for care, but cannot see facility-only information.",
-    focus: "guardrail",
-    x: 73,
-    y: 53,
-    click: true
-  },
-  {
-    scene: "partner",
-    actor: "Synthetic partner",
-    verb: "marks Visited",
-    detail: "The outcome is structured and safe instead of becoming a private journal or chart.",
-    focus: "visited",
-    x: 34,
-    y: 77,
-    click: true
-  },
-  {
-    scene: "status",
-    actor: "Synthetic requester",
-    verb: "sees approved update",
-    detail: "The requester sees progress, not internal review notes.",
-    focus: "update",
-    x: 72,
-    y: 66,
-    click: true
-  },
-  {
-    scene: "bi",
-    actor: "BI synthetic inspector",
-    verb: "lights up the checks",
-    detail: "The path passes the safe-preview contract and leaves real writes behind /pilot.",
-    focus: "checks",
-    x: 50,
-    y: 52,
-    click: false
-  }
+  { scene: "requester", actor: "Synthetic requester", verb: "opens requester intake", detail: "The test user lands on a guided spiritual-care request instead of an open chat box.", focus: "open", x: 22, y: 19 },
+  { scene: "requester", actor: "Synthetic requester", verb: "taps Prayer", detail: "The request stays in safe support categories.", focus: "prayer", x: 26, y: 38, click: true },
+  { scene: "requester", actor: "Synthetic requester", verb: "taps Friendly visit", detail: "The second choice adds a visit request without adding medical details.", focus: "visit", x: 72, y: 38, click: true },
+  { scene: "requester", actor: "Synthetic requester", verb: "types safe context", detail: "Only a limited spiritual-care note is prepared for Grandview review.", focus: "note", x: 36, y: 62, click: true },
+  { scene: "requester", actor: "Synthetic requester", verb: "presses Submit to Grandview", detail: "The request moves to facility review. It does not route directly to Hope Church.", focus: "submit", x: 72, y: 83, click: true },
+  { scene: "facility", actor: "Synthetic facility reviewer", verb: "opens incoming request", detail: "Grandview sees the request snapshot, share boundary, and activity trail.", focus: "incoming", x: 28, y: 29, click: true },
+  { scene: "facility", actor: "Synthetic facility reviewer", verb: "checks what is hidden", detail: "Internal notes and unclear details stay inside the facility workspace.", focus: "hidden", x: 72, y: 49, click: true },
+  { scene: "facility", actor: "Synthetic facility reviewer", verb: "approves partner-safe release", detail: "Only approved spiritual-care context is released to Hope Church.", focus: "approve", x: 64, y: 74, click: true },
+  { scene: "partner", actor: "Synthetic partner", verb: "opens approved assignment", detail: "Hope Church receives only the scoped request and coordination guidance.", focus: "assignment", x: 38, y: 31, click: true },
+  { scene: "partner", actor: "Synthetic partner", verb: "reviews hidden-data guardrail", detail: "The partner can prepare for care, but cannot see facility-only information.", focus: "guardrail", x: 73, y: 53, click: true },
+  { scene: "partner", actor: "Synthetic partner", verb: "marks Visited", detail: "The outcome is structured and safe instead of becoming a private journal or chart.", focus: "visited", x: 34, y: 77, click: true },
+  { scene: "status", actor: "Synthetic requester", verb: "sees approved update", detail: "The requester sees progress, not internal review notes.", focus: "update", x: 72, y: 66, click: true },
+  { scene: "bi", actor: "BI synthetic inspector", verb: "lights up the checks", detail: "The path passes the safe-preview contract and leaves real writes behind /pilot.", focus: "checks", x: 50, y: 52 }
 ];
 
 const checks = [
@@ -193,7 +78,7 @@ function Cursor({ action }: { action: Action }) {
   );
 }
 
-function Shell({ action, children }: { action: Action; children: React.ReactNode }) {
+function Shell({ action, children }: { action: Action; children: ReactNode }) {
   const label = action.scene === "requester" ? "Requester" : action.scene === "facility" ? "Grandview" : action.scene === "partner" ? "Hope Church" : action.scene === "status" ? "Requester status" : "BI inspector";
   return (
     <div className="relative mx-auto w-full max-w-[27rem] overflow-hidden rounded-[2.25rem] border-[10px] border-[#102b3a] bg-[#edf4f0] shadow-2xl shadow-black/25 md:max-w-[34rem]">
@@ -208,6 +93,16 @@ function Shell({ action, children }: { action: Action; children: React.ReactNode
         {children}
         <Cursor action={action} />
       </div>
+    </div>
+  );
+}
+
+function Choice({ title, sub, active, focus }: { title: string; sub: string; active: boolean; focus: boolean }) {
+  return (
+    <div className={cx("rounded-2xl border p-4 transition", active ? "border-[#0f6b54] bg-[#e7f1eb]" : focus ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
+      <div className={cx("mb-3 flex h-8 w-8 items-center justify-center rounded-full text-xs font-black", active ? "bg-[#0f6b54] text-white" : "bg-[#edf4f0] text-[#4f6259]")}>{active ? "✓" : ""}</div>
+      <p className="font-black text-[#0d2b3b]">{title}</p>
+      <p className="mt-1 text-xs font-semibold text-[#4f6259]">{sub}</p>
     </div>
   );
 }
@@ -250,12 +145,11 @@ function RequesterScreen({ index, action }: { index: number; action: Action }) {
   );
 }
 
-function Choice({ title, sub, active, focus }: { title: string; sub: string; active: boolean; focus: boolean }) {
+function FacilityRow({ label, value, active, focus }: { label: string; value: string; active: boolean; focus: boolean }) {
   return (
-    <div className={cx("rounded-2xl border p-4 transition", active ? "border-[#0f6b54] bg-[#e7f1eb]" : focus ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
-      <div className={cx("mb-3 flex h-8 w-8 items-center justify-center rounded-full text-xs font-black", active ? "bg-[#0f6b54] text-white" : "bg-[#edf4f0] text-[#4f6259]")}>{active ? "✓" : ""}</div>
-      <p className="font-black text-[#0d2b3b]">{title}</p>
-      <p className="mt-1 text-xs font-semibold text-[#4f6259]">{sub}</p>
+    <div className={cx("flex items-center justify-between rounded-2xl border p-4 transition", focus ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
+      <span className="font-black text-[#0d2b3b]">{label}</span>
+      <span className={cx("rounded-full px-3 py-1 text-xs font-black", active ? "bg-[#e7f1eb] text-[#0f6b54]" : "bg-[#edf4f0] text-[#506a49]")}>{value}</span>
     </div>
   );
 }
@@ -298,15 +192,6 @@ function FacilityScreen({ index, action }: { index: number; action: Action }) {
   );
 }
 
-function FacilityRow({ label, value, active, focus }: { label: string; value: string; active: boolean; focus: boolean }) {
-  return (
-    <div className={cx("flex items-center justify-between rounded-2xl border p-4 transition", focus ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
-      <span className="font-black text-[#0d2b3b]">{label}</span>
-      <span className={cx("rounded-full px-3 py-1 text-xs font-black", active ? "bg-[#e7f1eb] text-[#0f6b54]" : "bg-[#edf4f0] text-[#506a49]")}>{value}</span>
-    </div>
-  );
-}
-
 function PartnerScreen({ index, action }: { index: number; action: Action }) {
   const visited = index >= 10;
   return (
@@ -334,8 +219,8 @@ function PartnerScreen({ index, action }: { index: number; action: Action }) {
         <section className="rounded-3xl border border-[#d9dfd7] bg-white p-4">
           <p className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">Outcome</p>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            {['Contacted', 'Visited', 'Unable', 'Follow-up'].map((item) => (
-              <div key={item} className={cx("rounded-2xl border p-4 text-center text-sm font-black transition", item === 'Visited' && (visited || action.focus === 'visited') ? "border-[#0f6b54] bg-[#e7f1eb] text-[#0f6b54]" : "border-[#d9dfd7] bg-[#f8fbf8] text-[#4f6259]")}>{item}</div>
+            {["Contacted", "Visited", "Unable", "Follow-up"].map((item) => (
+              <div key={item} className={cx("rounded-2xl border p-4 text-center text-sm font-black transition", item === "Visited" && (visited || action.focus === "visited") ? "border-[#0f6b54] bg-[#e7f1eb] text-[#0f6b54]" : "border-[#d9dfd7] bg-[#f8fbf8] text-[#4f6259]")}>{item}</div>
             ))}
           </div>
         </section>
@@ -352,7 +237,7 @@ function StatusScreen({ action }: { action: Action }) {
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Requester status</p>
           <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Your request has an update</h2>
         </section>
-        {['Received', 'Facility reviewed', 'Partner assigned', 'Approved update available'].map((item, itemIndex) => (
+        {["Received", "Facility reviewed", "Partner assigned", "Approved update available"].map((item, itemIndex) => (
           <div key={item} className={cx("flex items-center gap-4 rounded-2xl border p-4", itemIndex < 3 ? "border-[#cfe4d5] bg-[#e7f1eb]" : "border-[#d6a943] bg-[#fff8e7] shadow-lg")}>
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0f6b54] text-sm font-black text-white">✓</span>
             <span className="font-black text-[#0d2b3b]">{item}</span>
@@ -363,7 +248,7 @@ function StatusScreen({ action }: { action: Action }) {
   );
 }
 
-function BiScreen({ index, action }: { index: number; action: Action }) {
+function BiScreen({ action }: { action: Action }) {
   return (
     <Shell action={action}>
       <div className="space-y-4">
@@ -371,7 +256,7 @@ function BiScreen({ index, action }: { index: number; action: Action }) {
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">BI readout</p>
           <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Synthetic demo pass</h2>
         </section>
-        {checks.map((check, checkIndex) => (
+        {checks.map((check) => (
           <div key={check} className="flex items-center justify-between rounded-2xl border border-[#cfe4d5] bg-[#e7f1eb] p-4">
             <span className="font-black text-[#0d2b3b]">{check}</span>
             <span className="rounded-full bg-[#0f6b54] px-3 py-1 text-xs font-black text-white">PASS</span>
@@ -391,14 +276,64 @@ function DemoScreen({ index, action }: { index: number; action: Action }) {
   if (action.scene === "facility") return <FacilityScreen index={index} action={action} />;
   if (action.scene === "partner") return <PartnerScreen index={index} action={action} />;
   if (action.scene === "status") return <StatusScreen action={action} />;
-  return <BiScreen index={index} action={action} />;
+  return <BiScreen action={action} />;
 }
 
 export default function SyntheticDemoPage() {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const audioRef = useRef<AudioContext | null>(null);
   const action = actions[index];
   const progress = useMemo(() => Math.round(((index + 1) / actions.length) * 100), [index]);
+
+  function getAudioContext() {
+    if (typeof window === "undefined") return null;
+    if (!audioRef.current) {
+      const AudioCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtor) return null;
+      audioRef.current = new AudioCtor();
+    }
+    return audioRef.current;
+  }
+
+  function playTone(kind: "tap" | "move" | "pass" | "on") {
+    if (!soundEnabled && kind !== "on") return;
+    const context = getAudioContext();
+    if (!context) return;
+
+    void context.resume();
+    const now = context.currentTime;
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const start = kind === "pass" ? 620 : kind === "move" ? 360 : kind === "on" ? 520 : 460;
+    const end = kind === "pass" ? 920 : kind === "move" ? 520 : kind === "on" ? 740 : 390;
+    const duration = kind === "pass" ? 0.22 : kind === "move" || kind === "on" ? 0.16 : 0.08;
+
+    oscillator.type = kind === "pass" ? "sine" : "triangle";
+    oscillator.frequency.setValueAtTime(start, now);
+    oscillator.frequency.exponentialRampToValueAtTime(end, now + duration);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(now);
+    oscillator.stop(now + duration + 0.03);
+  }
+
+  function soundFor(nextIndex: number) {
+    const nextAction = actions[nextIndex];
+    if (nextAction.scene === "bi") return "pass";
+    if (nextIndex > 0 && actions[nextIndex - 1]?.scene !== nextAction.scene) return "move";
+    return nextAction.click ? "tap" : "move";
+  }
+
+  function setActionIndex(nextIndex: number) {
+    const safeIndex = Math.max(0, Math.min(nextIndex, actions.length - 1));
+    setIndex(safeIndex);
+    playTone(soundFor(safeIndex));
+  }
 
   useEffect(() => {
     if (!playing) return;
@@ -408,26 +343,36 @@ export default function SyntheticDemoPage() {
           setPlaying(false);
           return current;
         }
-        return current + 1;
+        const nextIndex = current + 1;
+        playTone(soundFor(nextIndex));
+        return nextIndex;
       });
     }, ACTION_MS);
 
     return () => window.clearInterval(timer);
-  }, [playing]);
+  }, [playing, soundEnabled]);
 
   function next() {
     setPlaying(false);
-    setIndex((current) => Math.min(current + 1, actions.length - 1));
+    setActionIndex(index + 1);
   }
 
   function back() {
     setPlaying(false);
-    setIndex((current) => Math.max(current - 1, 0));
+    setActionIndex(index - 1);
   }
 
   function reset() {
     setPlaying(false);
-    setIndex(0);
+    setActionIndex(0);
+  }
+
+  function toggleSound() {
+    const nextState = !soundEnabled;
+    setSoundEnabled(nextState);
+    if (nextState) {
+      setTimeout(() => playTone("on"), 0);
+    }
   }
 
   return (
@@ -471,17 +416,20 @@ export default function SyntheticDemoPage() {
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <button type="button" onClick={back} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Back</button>
                 <button type="button" onClick={next} className="rounded-xl bg-white px-4 py-3 text-sm font-black text-[#082838] shadow-lg">Next action</button>
-                <button type="button" onClick={() => setPlaying((value) => !value)} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">{playing ? "Pause" : "Watch run"}</button>
+                <button type="button" onClick={() => { setPlaying((value) => !value); playTone("move"); }} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">{playing ? "Pause" : "Watch run"}</button>
                 <button type="button" onClick={reset} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Reset</button>
+                <button type="button" onClick={toggleSound} className={cx("col-span-2 rounded-xl px-4 py-3 text-sm font-black shadow-lg", soundEnabled ? "bg-[#d6a943] text-[#082838]" : "border border-white/20 bg-white/10 text-white")}>
+                  {soundEnabled ? "Sound On" : "Sound Off · Tap to enable"}
+                </button>
               </div>
 
               <div className="mt-5">
-                <ProgressDots index={index} setIndex={(value) => { setPlaying(false); setIndex(value); }} />
+                <ProgressDots index={index} setIndex={(value) => { setPlaying(false); setActionIndex(value); }} />
               </div>
             </section>
 
             <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-5 text-sm font-semibold leading-6 text-[#5f4b1f] shadow-sm shadow-[#0d2b3b]/5">
-              This is still staged, but now the synthetic user visibly moves through the screen. No auth, no Supabase, no writes, no medical workflow.
+              Audio is optional because phones block autoplay sound. Tap Sound Off to unlock soft demo cues. No audio files, tracking, auth, Supabase, writes, or medical workflow.
             </section>
           </aside>
         </div>

@@ -1,26 +1,8 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v34";
+const CHURCHWORK_CACHE = "churchwork-shell-v35";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
-  "/admin",
-  "/mvp",
-  "/pilot",
-  "/preview",
-  "/preview/admin",
-  "/preview/requester",
-  "/preview/facility",
-  "/preview/partner",
-  "/preview/pilot",
-  "/demo/synthetic",
-  "/ai-map",
-  "/synthetic-smoke",
-  "/pwa-check",
-  "/pwa-reset",
-  "/pilot-auth-check",
-  "/pilot-auth-server-check",
-  "/requester-portal",
-  "/facility-portal",
-  "/partner-portal",
+  "/internal-access",
   OFFLINE_URL,
   "/manifest.webmanifest",
   "/manifest-v2.webmanifest",
@@ -72,10 +54,7 @@ self.addEventListener("fetch", (event) => {
             request.destination === "style" ||
             request.destination === "script" ||
             request.destination === "image" ||
-            url.pathname.endsWith(".webmanifest") ||
-            url.pathname === "/ai-map" ||
-            url.pathname === "/synthetic-smoke" ||
-            url.pathname === "/pilot-auth-server-check")
+            url.pathname.endsWith(".webmanifest"))
         ) {
           caches.open(CHURCHWORK_CACHE).then((cache) => cache.put(request, copy)).catch(() => undefined);
         }
@@ -83,7 +62,7 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() => {
         if (request.destination === "document") {
-          return caches.match(OFFLINE_URL).then((cached) => cached || caches.match("/mvp") || caches.match("/admin") || caches.match("/pilot"));
+          return caches.match(OFFLINE_URL).then((cached) => cached || caches.match("/"));
         }
         return caches.match(request);
       })

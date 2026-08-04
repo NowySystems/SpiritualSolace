@@ -1,13 +1,13 @@
 {
-  "id": "/churchwork-uploaded-exact-v2",
+  "id": "/churchwork-uploaded-exact-public-v3",
   "name": "ChurchWork",
   "short_name": "ChurchWork",
-  "description": "Spiritual-care operations for requesters, facilities, and partner care teams.",
-  "start_url": "/admin?source=pwa-uploaded-exact-v2",
+  "description": "Spiritual-care coordination with facility-reviewed partner sharing.",
+  "start_url": "/?source=pwa-uploaded-exact-public-v3",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#edf4f0",
+  "background_color": "#f7f3ea",
   "theme_color": "#082838",
   "categories": ["productivity", "lifestyle"],
   "icons": [
@@ -28,36 +28,6 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Admin Portal",
-      "short_name": "Admin",
-      "description": "Open the ChurchWork admin access hub.",
-      "url": "/admin?source=pwa-shortcut-uploaded-exact-v2",
-      "icons": [{ "src": "/brand/churchwork-uploaded-exact-v1-192.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Requester Portal",
-      "short_name": "Requester",
-      "description": "Open the requester portal.",
-      "url": "/requester-portal?source=pwa-shortcut-uploaded-exact-v2",
-      "icons": [{ "src": "/brand/churchwork-uploaded-exact-v1-192.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Facility Portal",
-      "short_name": "Facility",
-      "description": "Open the facility workspace.",
-      "url": "/facility-portal?source=pwa-shortcut-uploaded-exact-v2",
-      "icons": [{ "src": "/brand/churchwork-uploaded-exact-v1-192.png", "sizes": "192x192", "type": "image/png" }]
-    },
-    {
-      "name": "Partner Portal",
-      "short_name": "Partner",
-      "description": "Open the partner workspace.",
-      "url": "/partner-portal?source=pwa-shortcut-uploaded-exact-v2",
-      "icons": [{ "src": "/brand/churchwork-uploaded-exact-v1-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ]
 }

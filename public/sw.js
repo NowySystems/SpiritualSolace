@@ -1,8 +1,9 @@
-const CHURCHWORK_CACHE = "churchwork-shell-v33";
+const CHURCHWORK_CACHE = "churchwork-shell-v34";
 const OFFLINE_URL = "/offline";
 const SHELL_ASSETS = [
   "/",
   "/admin",
+  "/mvp",
   "/pilot",
   "/preview",
   "/preview/admin",
@@ -82,7 +83,7 @@ self.addEventListener("fetch", (event) => {
       })
       .catch(() => {
         if (request.destination === "document") {
-          return caches.match(OFFLINE_URL).then((cached) => cached || caches.match("/admin") || caches.match("/pilot"));
+          return caches.match(OFFLINE_URL).then((cached) => cached || caches.match("/mvp") || caches.match("/admin") || caches.match("/pilot"));
         }
         return caches.match(request);
       })

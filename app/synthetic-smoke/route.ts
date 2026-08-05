@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
 const expectedRoutes = {
-  public: ["/"],
-  internalSandbox: ["/admin", "/mvp", "/requester-portal", "/facility-portal", "/partner-portal"],
+  public: ["/", "/requester-login", "/facility-login", "/partner-login"],
+  internalBackend: ["/admin", "/mvp", "/requester-portal", "/facility-portal", "/partner-portal"],
   preview: ["/preview", "/preview/admin", "/preview/requester", "/preview/facility", "/preview/partner", "/preview/pilot"],
   demo: ["/demo/synthetic"],
   diagnostics: ["/ai-map", "/synthetic-smoke", "/pwa-check", "/pwa-reset", "/pilot-auth-check", "/pilot-auth-server-check"],
@@ -14,20 +14,22 @@ const smokeContract = {
   project: "ChurchWork",
   repo: "LL-COLE-J/SpiritualSolace",
   productFamily: "NowySystems",
-  status: "private-mvp-sandbox",
-  buildMarker: "churchwork-private-mvp-v1",
+  status: "pilot-mvp-navigation",
+  buildMarker: "churchwork-role-login-mvp-v1",
   visibility: {
-    publicRoutes: ["/"],
-    internalAccessRequired: true,
-    summary: "Admin, MVP sandbox, role portals, previews, diagnostics, and pilot tools are internal-only surfaces."
+    publicRoutes: expectedRoutes.public,
+    backendRoutesRequireInternalAccess: true,
+    summary: "Public landing points to requester, facility, and partner login entrances. Backend, MVP sandbox, previews, demos, diagnostics, and BI routes are internal-only surfaces."
   },
   nsb: {
     sourceOfTruth: true,
     governingRule: "rules/nsb-build-flow-governance.md",
-    pattern: "private-mvp-sandbox-safe-preview-ai-readable-smoke-demo"
+    pattern: "role-login-public-entry-private-backend-ai-readable-smoke"
   },
   expectations: {
-    publicLandingOnly: true,
+    publicLandingHasThreeRoleLogins: true,
+    publicLandingHasNoBackendLinks: true,
+    roleLoginEntrancesAvailable: true,
     internalAccessGateAvailable: true,
     integratedMvpAvailable: true,
     safePreviewChainComplete: true,
@@ -40,47 +42,53 @@ const smokeContract = {
     previewRoutesWriteData: false,
     demoRoutesRequireInternalAccess: true,
     demoRoutesWriteData: false,
-    realWritesBehindPilotAuth: true,
     syntheticSmokeWritesData: false
   },
   expectedRoutes,
   routeChecks: [
-    { path: "/", expect: "Public landing page only. No public links into admin, MVP sandbox, role portals, diagnostics, or previews." },
-    { path: "/internal-access", expect: "Private access key screen for internal ChurchWork review routes." },
-    { path: "/mvp", expect: "Internal integrated one-device sandbox: requester creates a safe request, Grandview approves, Hope Church logs outcome, requester sees approved update, and BI guardrails display." },
-    { path: "/ai-map", expect: "Internal JSON contract for BI/NSB route discovery, roles, MVP entry, safety flags, demo entry, and known issues." },
-    { path: "/synthetic-smoke", expect: "Internal JSON smoke contract for expected routes, safety assertions, known issues, MVP path, and future Playwright targets." },
-    { path: "/demo/synthetic", expect: "Internal synthetic actor demo that shows the workflow without auth or writes." },
-    { path: "/preview", expect: "Internal safe preview index with no Supabase writes and links to role previews." }
+    { path: "/", expect: "Public landing with Requester Login, Facility Login, and Partner Login only. No admin, MVP, preview, demo, or diagnostic links." },
+    { path: "/requester-login", expect: "Public requester login entrance with role portal access gate." },
+    { path: "/facility-login", expect: "Public facility login entrance with role portal access gate." },
+    { path: "/partner-login", expect: "Public partner login entrance with role portal access gate." },
+    { path: "/internal-access", expect: "Private access screen for internal ChurchWork backend routes." },
+    { path: "/admin", expect: "Internal backend command center with links to pilot MVP, role logins, public site, and BI/test surfaces." },
+    { path: "/mvp", expect: "Internal integrated one-device sandbox: requester creates a safe request, facility approves, partner logs outcome, and requester sees approved update." },
+    { path: "/ai-map", expect: "Internal JSON contract for BI/NSB route discovery, roles, safety flags, and current synthetic checks." },
+    { path: "/synthetic-smoke", expect: "Internal JSON smoke contract for expected routes, safety assertions, known issues, and future Playwright targets." }
   ],
   safetyAssertions: [
-    "Only / is public.",
-    "Admin, MVP, preview, demo, diagnostics, pilot, and role portal routes must require internal access.",
+    "Public landing must expose only requester, facility, and partner login entrances.",
+    "Public landing must not expose admin, MVP, demo, preview, diagnostics, Cole, or Sam language.",
+    "Backend, MVP, preview, demo, diagnostics, pilot, and legacy role portal paths must require internal access.",
     "MVP, preview, and demo routes must not collect diagnosis, treatment, medication, insurance, emergency, or medical record details.",
     "MVP, preview, and demo routes must not write data.",
     "Partner routes must show approved context only.",
     "Facility review must remain the approval boundary before partner release.",
     "Requester updates must be approved and limited.",
-    "Diagnostics must stay separate from the public product workflow.",
-    "The synthetic demo is staged playback, not a real auth/session runner.",
-    "The MVP sandbox is an interactive local-state prototype, not production persistence."
+    "Diagnostics must stay separate from the public product workflow."
+  ],
+  currentSyntheticChecks: [
+    "Public landing has exactly the role login destinations needed for the pilot.",
+    "Role login entrances render without the internal backend gate.",
+    "Internal backend routes redirect to /internal-access.",
+    "Desktop and mobile layouts avoid horizontal overflow."
   ],
   knownIssues: [
-    { key: "chrome-install-event-suppressed", severity: "medium", status: "open", summary: "Android Chrome may suppress beforeinstallprompt even when manifest, icon, and service worker checks pass." },
+    { key: "role-login-access-code-not-full-auth", severity: "high", status: "open", summary: "Requester, facility, and partner login entrances still use the pilot access-code gate; replace with real role auth for pilot MVP." },
     { key: "pilot-supabase-auth-fetch", severity: "high", status: "under-diagnosis", summary: "/pilot sign-in can return Failed to fetch; /pilot-auth-check and /pilot-auth-server-check are diagnostic paths." },
-    { key: "text-reader-client-shell-limitation", severity: "low", status: "known-limitation", summary: "Non-browser text readers may see Preparing ChurchWork before client-rendered portal UI appears. Playwright will resolve this later." }
+    { key: "chrome-install-event-suppressed", severity: "medium", status: "open", summary: "Android Chrome may suppress beforeinstallprompt even when manifest, icon, and service worker checks pass." }
   ],
   nextSyntheticUserUpgrade: {
-    target: "Playwright runner",
+    target: "Role-auth Playwright runner",
     capabilities: [
-      "open /mvp with internal access in a real browser",
-      "execute requester submission, facility approval, partner outcome, and requester status checks",
-      "run the same path as /demo/synthetic against rendered screens",
+      "open / and verify only role login links are exposed",
+      "open /requester-login, /facility-login, and /partner-login",
+      "verify backend routes require /internal-access",
+      "after real auth, execute requester submission, facility approval, partner outcome, and requester status checks",
       "capture screenshots and video",
-      "read rendered DOM text",
       "record console errors",
       "record failed network requests",
-      "compare rendered output to /ai-map and /synthetic-smoke"
+      "compare rendered output to /ai-map, /synthetic-smoke, and NSB rules"
     ]
   },
   generatedAt: "static-build-time"

@@ -13,24 +13,24 @@ const primaryCards = [
     status: "Primary"
   },
   {
-    label: "Requester Portal",
-    href: "/requester-portal",
+    label: "Requester Login",
+    href: "/requester-login",
     eyebrow: "Role login",
-    description: "Open the requester-facing portal entrance exactly as a family or requester would see it.",
+    description: "Open the requester-facing login entrance exactly as a family or requester would see it.",
     status: "Portal"
   },
   {
-    label: "Facility Portal",
-    href: "/facility-portal",
+    label: "Facility Login",
+    href: "/facility-login",
     eyebrow: "Role login",
-    description: "Open the facility reviewer portal entrance for Grandview-style review and release control.",
+    description: "Open the facility reviewer login entrance for Grandview-style review and release control.",
     status: "Portal"
   },
   {
-    label: "Partner Portal",
-    href: "/partner-portal",
+    label: "Partner Login",
+    href: "/partner-login",
     eyebrow: "Role login",
-    description: "Open the approved partner portal entrance for assignment and safe report-back review.",
+    description: "Open the approved partner login entrance for assignment and safe report-back review.",
     status: "Portal"
   }
 ];
@@ -47,7 +47,7 @@ const backendCards = [
 ];
 
 const pilotPath = [
-  "Requester enters the correct role portal.",
+  "Requester enters the correct role login.",
   "Facility reviews the request before anything leaves the facility side.",
   "Partner sees only approved context.",
   "Partner logs a structured spiritual-care outcome.",
@@ -91,7 +91,7 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
               <div>
                 <h1 className="max-w-4xl font-serif text-4xl font-semibold tracking-[-0.05em] md:text-6xl">One place to run the pilot.</h1>
                 <p className="mt-4 max-w-3xl text-base leading-7 text-[#d9e7df]">
-                  This backend is for internal operators only. Use it to reach the pilot MVP, role portals, public site, and BI/test surfaces without getting lost.
+                  This backend is for internal operators only. Use it to reach the pilot MVP, role logins, public site, and BI/test surfaces without getting lost.
                 </p>
               </div>
               <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-5">

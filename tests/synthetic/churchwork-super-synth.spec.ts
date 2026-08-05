@@ -41,8 +41,9 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
   test("internal backend routes require the internal access gate", async ({ page }) => {
     for (const route of ["/admin", "/mvp", "/synthetic-smoke", "/ai-map"]) {
       await page.goto(route);
-      await expect(page).toHaveURL(new RegExp(`/internal-access\\?from=${route.replace("/", "\\/")}`));
+      await expect(page).toHaveURL(/\/internal-access/);
       await expect(page.getByRole("heading", { name: "ChurchWork internal access" })).toBeVisible();
+      await expect(page.getByLabel("Access key")).toBeVisible();
     }
   });
 

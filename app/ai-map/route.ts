@@ -6,7 +6,7 @@ const aiMap = {
     name: "ChurchWork",
     repo: "LL-COLE-J/SpiritualSolace",
     productFamily: "NowySystems",
-    status: "private-mvp-sandbox",
+    status: "pilot-mvp-navigation",
     description: "Spiritual-care operations workflow for requesters, facilities, partner care teams, and internal operators."
   },
   nsb: {
@@ -15,11 +15,13 @@ const aiMap = {
     ruleSummary: "Reusable build patterns, preview routes, AI-readable surfaces, workflow conventions, guardrails, and cross-project architecture ideas flow through NSB first."
   },
   visibility: {
-    publicRoutes: ["/"],
-    internalRoutesRequireAccessKey: true,
-    note: "Admin, MVP sandbox, role portals, previews, diagnostics, and BI inspection routes are internal review surfaces, not public demo pages."
+    publicRoutes: ["/", "/requester-login", "/facility-login", "/partner-login"],
+    publicLandingRule: "The public landing page should direct users only to the three role login entrances.",
+    backendRoutesRequireInternalAccess: true,
+    note: "Backend, MVP sandbox, preview, demo, diagnostics, and BI inspection routes are internal review surfaces, not public demo pages."
   },
   safety: {
+    roleLoginEntrancesAvailable: true,
     safePreviewAvailable: true,
     mvpSandboxAvailable: true,
     previewRoutesWriteData: false,
@@ -29,27 +31,31 @@ const aiMap = {
     allowsOpenChat: false,
     allowsUncontrolledPartnerRouting: false,
     notes: [
+      "Public users choose requester, facility, or partner login from the landing page.",
       "ChurchWork /mvp is an internal integrated one-device sandbox that demonstrates the real operating flow without persistence.",
       "Preview, demo, and MVP sandbox routes do not perform Supabase writes.",
       "No medical records, diagnosis, symptoms, medications, treatment details, insurance, or emergency information should be collected."
     ]
   },
   roles: [
-    { key: "requester", label: "Requester / family user", purpose: "Profile, structured spiritual-care intake, consent-aware status visibility, and approved updates." },
-    { key: "facility", label: "Facility reviewer", purpose: "Review requests, confirm consent/sharing state, and control what can move to partner care teams." },
-    { key: "partner", label: "Partner care team", purpose: "Receive approved context, coordinate assignment, and report safe non-medical updates." },
-    { key: "admin", label: "Admin / operator", purpose: "Cole/Sam operator launchpad, MVP navigation, demo navigation, and controlled pilot access." }
+    { key: "requester", label: "Requester / family user", purpose: "Role login, structured spiritual-care intake, consent-aware status visibility, and approved updates." },
+    { key: "facility", label: "Facility reviewer", purpose: "Role login, request review, consent/sharing control, and partner release control." },
+    { key: "partner", label: "Partner care team", purpose: "Role login, approved assignment visibility, coordination, and safe non-medical report-back." },
+    { key: "operator", label: "Internal operator", purpose: "Internal backend command center, MVP navigation, public-site link, diagnostics, and BI/test surfaces." }
   ],
   routes: {
     public: [
-      { path: "/", label: "Public landing page", authRequired: false }
+      { path: "/", label: "Public landing page", authRequired: false },
+      { path: "/requester-login", label: "Requester login entrance", authRequired: false },
+      { path: "/facility-login", label: "Facility login entrance", authRequired: false },
+      { path: "/partner-login", label: "Partner login entrance", authRequired: false }
     ],
-    internalSandbox: [
-      { path: "/admin", label: "Admin operator hub", internalAccessRequired: true },
+    internalBackend: [
+      { path: "/admin", label: "Internal backend command center", internalAccessRequired: true },
       { path: "/mvp", label: "Integrated MVP sandbox", internalAccessRequired: true, writesData: false },
-      { path: "/requester-portal", label: "Requester portal", internalAccessRequired: true },
-      { path: "/facility-portal", label: "Facility portal", internalAccessRequired: true },
-      { path: "/partner-portal", label: "Partner portal", internalAccessRequired: true }
+      { path: "/requester-portal", label: "Legacy/internal requester portal path", internalAccessRequired: true },
+      { path: "/facility-portal", label: "Legacy/internal facility portal path", internalAccessRequired: true },
+      { path: "/partner-portal", label: "Legacy/internal partner portal path", internalAccessRequired: true }
     ],
     preview: [
       { path: "/preview", label: "Preview index", internalAccessRequired: true, writesData: false },
@@ -74,32 +80,40 @@ const aiMap = {
       { path: "/synthetic-smoke", label: "Synthetic smoke contract", internalAccessRequired: true }
     ]
   },
+  currentSyntheticChecks: [
+    "Public landing has three role login links and no backend/demo links.",
+    "Role login entrances are reachable without the internal backend gate.",
+    "Internal backend, MVP, AI map, and smoke contract require internal access.",
+    "Desktop and mobile runs must have no horizontal overflow."
+  ],
   knownIssues: [
-    { key: "chrome-install-event-suppressed", status: "open", severity: "medium", summary: "Manifest/icons/service worker can pass while Android Chrome still suppresses beforeinstallprompt." },
+    { key: "role-login-access-code-not-full-auth", status: "open", severity: "high", summary: "Requester, facility, and partner login entrances still use the pilot access-code gate; replace with real role auth for pilot MVP." },
     { key: "pilot-supabase-auth-fetch", status: "under-diagnosis", severity: "high", summary: "/pilot sign-in can return Failed to fetch; auth diagnostic routes exist to isolate browser, server, env, and upstream issues." },
-    { key: "text-reader-client-shell-limitation", status: "known-limitation", severity: "low", summary: "Text-only inspection can see the client shell before rendered portal UI; future Playwright synthetic user should validate rendered pages." }
+    { key: "chrome-install-event-suppressed", status: "open", severity: "medium", summary: "Manifest/icons/service worker can pass while Android Chrome still suppresses beforeinstallprompt." }
   ],
   biContract: {
     canBeScannedByBI: true,
     preferredEntry: "/ai-map",
+    preferredPublicEntry: "/",
+    preferredRoleLoginEntries: ["/requester-login", "/facility-login", "/partner-login"],
     preferredMvpEntry: "/mvp",
     preferredSmokeEntry: "/synthetic-smoke",
-    preferredVisualEntry: "/preview",
-    preferredDemoEntry: "/demo/synthetic",
     compareAgainstNSB: true,
-    internalAccessRequired: true,
+    internalAccessRequiredForBackend: true,
     mvpSandboxReady: true,
     syntheticSmokeReady: true,
-    syntheticDemoReady: true,
-    syntheticUserReady: false,
+    syntheticUserReady: true,
+    syntheticUserCurrentUse: [
+      "open public landing and verify only role login links are exposed",
+      "open each role login entrance",
+      "verify internal backend routes redirect to /internal-access",
+      "capture public landing screenshot",
+      "check mobile and desktop overflow"
+    ],
     syntheticUserFutureUse: [
-      "open /mvp with internal access and execute the requester-facility-partner-status path",
-      "open safe preview routes with internal access",
-      "play the synthetic super demo route with internal access",
-      "capture screenshots",
-      "read DOM text",
-      "record console errors",
-      "record failed network requests",
+      "replace access-code gate checks with real role auth once pilot auth is wired",
+      "execute requester submission, facility approval, partner outcome, and requester status checks",
+      "record console errors and failed network requests",
       "compare route behavior against this ai-map, /synthetic-smoke, and NSB rules"
     ]
   },

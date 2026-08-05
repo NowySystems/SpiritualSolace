@@ -1,18 +1,39 @@
 import Image from "next/image";
 import Link from "next/link";
 
+const portalLinks = [
+  {
+    label: "Requester Login",
+    href: "/requester-portal",
+    role: "Families and requesters",
+    detail: "Start or check a spiritual-care request through the requester portal."
+  },
+  {
+    label: "Facility Login",
+    href: "/facility-portal",
+    role: "Facility reviewers",
+    detail: "Review requests, approve what may be shared, and manage facility-controlled release."
+  },
+  {
+    label: "Partner Login",
+    href: "/partner-portal",
+    role: "Churches and care partners",
+    detail: "View approved assignments and report safe, non-medical outcomes."
+  }
+];
+
 const publicFlow = [
   {
-    label: "Requester",
-    detail: "A family or requester asks for spiritual support through a structured, facility-reviewed path."
+    label: "Requester submits",
+    detail: "A requester asks for spiritual support through a structured path."
   },
   {
-    label: "Facility",
-    detail: "The facility reviews the request and controls what can be shared outside the care setting."
+    label: "Facility reviews",
+    detail: "The facility controls what can leave the care setting."
   },
   {
-    label: "Partner",
-    detail: "Approved churches or care partners receive only the context the facility has released."
+    label: "Partner responds",
+    detail: "Approved partners receive only released context and provide safe updates."
   }
 ];
 
@@ -42,12 +63,12 @@ export function LandingPageV1() {
             </span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
+            <a href="#portals" className="hover:text-[#d7e7b7]">Login portals</a>
             <a href="#how-it-works" className="hover:text-[#d7e7b7]">How it works</a>
             <a href="#guardrails" className="hover:text-[#d7e7b7]">Guardrails</a>
-            <a href="#pilot" className="hover:text-[#d7e7b7]">Pilot access</a>
           </nav>
-          <a href="#pilot" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
-            Pilot access
+          <a href="#portals" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
+            Login
           </a>
         </div>
       </header>
@@ -67,30 +88,50 @@ export function LandingPageV1() {
           <div className="relative z-10 mx-auto flex min-h-[720px] max-w-7xl items-center px-6 pb-24 pt-32">
             <div className="max-w-3xl">
               <div className="inline-flex items-center rounded-full border border-white/25 bg-white/10 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#d7e7b7] shadow-sm backdrop-blur">
-                Private pilot in development
+                ChurchWork pilot MVP
               </div>
               <h1 className="mt-5 font-serif text-5xl font-semibold leading-[1.05] tracking-[-0.04em] md:text-6xl lg:text-7xl">
-                Coordinated spiritual support without uncontrolled sharing.
+                The right spiritual-care request, in the right hands.
               </h1>
               <p className="mt-7 max-w-2xl text-lg leading-8 text-[#e8efef]">
-                ChurchWork helps facilities, families, and approved care partners coordinate spiritual support through a controlled, human-reviewed workflow.
+                ChurchWork gives requesters, facilities, and approved care partners separate portals for a controlled, human-reviewed spiritual-care workflow.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
-                <a href="#how-it-works" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
-                  See the model
-                </a>
-                <a href="#pilot" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
-                  Pilot access is private
-                </a>
+                <Link href="/requester-portal" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                  Requester Login
+                </Link>
+                <Link href="/facility-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                  Facility Login
+                </Link>
+                <Link href="/partner-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                  Partner Login
+                </Link>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="how-it-works" className="px-6 py-16">
+        <section id="portals" className="px-6 py-16">
+          <div className="mx-auto max-w-7xl">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Login portals</p>
+            <h2 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.03em]">Choose your ChurchWork portal.</h2>
+            <div className="mt-8 grid gap-4 md:grid-cols-3">
+              {portalLinks.map((portal) => (
+                <Link key={portal.href} href={portal.href} className="rounded-3xl border border-[#ded6c8] bg-white/80 p-6 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg">
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">{portal.role}</p>
+                  <h3 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#102b3a]">{portal.label}</h3>
+                  <p className="mt-3 text-sm leading-6 text-[#4d5d55]">{portal.detail}</p>
+                  <span className="mt-5 inline-flex text-sm font-black text-[#173b2d]">Open portal →</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="how-it-works" className="px-6 pb-16">
           <div className="mx-auto max-w-7xl">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">How it works</p>
-            <h2 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.03em]">One care request. Clear roles. Facility-controlled release.</h2>
+            <h2 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.03em]">One request path. Clear roles. Facility-controlled release.</h2>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {publicFlow.map((step, index) => (
                 <article key={step.label} className="rounded-3xl border border-[#ded6c8] bg-white/75 p-6 shadow-sm">
@@ -103,7 +144,7 @@ export function LandingPageV1() {
           </div>
         </section>
 
-        <section id="guardrails" className="px-6 pb-16">
+        <section id="guardrails" className="px-6 pb-20">
           <div className="mx-auto max-w-7xl rounded-[2rem] border border-[#d8d0c0] bg-white/75 p-8 shadow-sm">
             <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Guardrails</p>
             <h2 className="mt-3 font-serif text-3xl font-semibold">ChurchWork is spiritual-care coordination, not a clinical or emergency system.</h2>
@@ -114,16 +155,6 @@ export function LandingPageV1() {
                 </div>
               ))}
             </div>
-          </div>
-        </section>
-
-        <section id="pilot" className="px-6 pb-20">
-          <div className="mx-auto max-w-7xl rounded-[2rem] border border-[#d8d0c0] bg-[#173b2d] p-8 text-white shadow-xl">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Pilot access</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold">Pilot, admin, sandbox, preview, and diagnostic tools are private.</h2>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-[#edf5e6]">
-              Public visitors see this overview only. Internal ChurchWork review surfaces are not public demos and require a private access key.
-            </p>
           </div>
         </section>
       </main>

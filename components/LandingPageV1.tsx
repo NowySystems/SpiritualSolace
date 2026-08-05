@@ -4,19 +4,19 @@ import Link from "next/link";
 const portalLinks = [
   {
     label: "Requester Login",
-    href: "/requester-portal",
+    href: "/requester-login",
     role: "Families and requesters",
     detail: "Start or check a spiritual-care request through the requester portal."
   },
   {
     label: "Facility Login",
-    href: "/facility-portal",
+    href: "/facility-login",
     role: "Facility reviewers",
     detail: "Review requests, approve what may be shared, and manage facility-controlled release."
   },
   {
     label: "Partner Login",
-    href: "/partner-portal",
+    href: "/partner-login",
     role: "Churches and care partners",
     detail: "View approved assignments and report safe, non-medical outcomes."
   }
@@ -97,13 +97,13 @@ export function LandingPageV1() {
                 ChurchWork gives requesters, facilities, and approved care partners separate portals for a controlled, human-reviewed spiritual-care workflow.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link href="/requester-portal" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                <Link href="/requester-login" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
                   Requester Login
                 </Link>
-                <Link href="/facility-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                <Link href="/facility-login" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
                   Facility Login
                 </Link>
-                <Link href="/partner-portal" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
+                <Link href="/partner-login" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
                   Partner Login
                 </Link>
               </div>

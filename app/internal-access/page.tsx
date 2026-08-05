@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 const DEFAULT_FROM = "/admin";
@@ -11,7 +11,7 @@ function cleanReturnPath(value: string | null) {
   return value;
 }
 
-export default function InternalAccessPage() {
+function InternalAccessForm() {
   const searchParams = useSearchParams();
   const [accessKey, setAccessKey] = useState("");
   const returnPath = useMemo(() => cleanReturnPath(searchParams.get("from")), [searchParams]);
@@ -23,6 +23,28 @@ export default function InternalAccessPage() {
     window.location.href = nextUrl.toString();
   }
 
+  return (
+    <form onSubmit={submit} className="mt-7 space-y-5">
+      <label className="block">
+        <span className="text-sm font-black text-[#0d2b3b]">Access key</span>
+        <input
+          type="password"
+          value={accessKey}
+          onChange={(event) => setAccessKey(event.target.value)}
+          className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-[#f8fbf8] px-4 py-4 text-base font-bold outline-[#0f6b54]"
+          autoComplete="current-password"
+          autoFocus
+        />
+      </label>
+
+      <button type="submit" className="w-full rounded-2xl bg-[#173b2d] px-5 py-4 text-base font-black text-white shadow-lg hover:bg-[#102b3a]">
+        Continue to private workspace
+      </button>
+    </form>
+  );
+}
+
+export default function InternalAccessPage() {
   return (
     <main className="min-h-screen bg-[#f7f3ea] px-5 py-12 text-[#0d2b3b]">
       <section className="mx-auto max-w-2xl rounded-[2rem] border border-[#d8d0c0] bg-white p-7 shadow-2xl shadow-[#0d2b3b]/10 md:p-10">
@@ -40,23 +62,9 @@ export default function InternalAccessPage() {
           Admin, MVP sandbox, previews, diagnostics, and pilot tools are internal-only. Use the internal access key to continue.
         </p>
 
-        <form onSubmit={submit} className="mt-7 space-y-5">
-          <label className="block">
-            <span className="text-sm font-black text-[#0d2b3b]">Access key</span>
-            <input
-              type="password"
-              value={accessKey}
-              onChange={(event) => setAccessKey(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-[#d8d0c0] bg-[#f8fbf8] px-4 py-4 text-base font-bold outline-[#0f6b54]"
-              autoComplete="current-password"
-              autoFocus
-            />
-          </label>
-
-          <button type="submit" className="w-full rounded-2xl bg-[#173b2d] px-5 py-4 text-base font-black text-white shadow-lg hover:bg-[#102b3a]">
-            Continue to private workspace
-          </button>
-        </form>
+        <Suspense fallback={<div className="mt-7 rounded-2xl border border-[#d8d0c0] bg-[#f8fbf8] p-5 text-sm font-bold text-[#4d5d55]">Preparing access form…</div>}>
+          <InternalAccessForm />
+        </Suspense>
 
         <div className="mt-6 rounded-2xl border border-[#eed9a8] bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">
           Public visitors should only see the ChurchWork public landing page. This page does not unlock production data, auth, or Supabase writes.

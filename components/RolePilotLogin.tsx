@@ -1,0 +1,195 @@
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+
+type RoleKey = "requester" | "facility" | "partner";
+
+type RolePilotLoginProps = {
+  role: RoleKey;
+};
+
+const roleCopy = {
+  requester: {
+    eyebrow: "Requester portal",
+    title: "Requester login",
+    body: "Sign in to start or check a spiritual-care request. The requester portal will only show approved status updates.",
+    destination: "Requester workspace"
+  },
+  facility: {
+    eyebrow: "Facility portal",
+    title: "Facility login",
+    body: "Sign in to review requests and control what may be released to approved care partners.",
+    destination: "Facility review workspace"
+  },
+  partner: {
+    eyebrow: "Partner portal",
+    title: "Partner login",
+    body: "Sign in to view approved assignments and submit safe, non-medical report-backs.",
+    destination: "Partner assignment workspace"
+  }
+} satisfies Record<RoleKey, { eyebrow: string; title: string; body: string; destination: string }>;
+
+function authErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    if (error.message.toLowerCase().includes("failed to fetch")) {
+      return "Login service is temporarily unreachable. Please try again after the pilot auth connection is repaired.";
+    }
+
+    return error.message;
+  }
+
+  return "Unknown login error.";
+}
+
+export function RolePilotLogin({ role }: RolePilotLoginProps) {
+  const copy = roleCopy[role];
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [session, setSession] = useState<Session | null>(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [status, setStatus] = useState("Checking session...");
+  const [isBusy, setIsBusy] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!isMounted) return;
+        setSession(data.session ?? null);
+        setStatus(data.session ? "Signed in." : "Use your approved ChurchWork pilot account.");
+      })
+      .catch((error) => {
+        if (!isMounted) return;
+        setStatus(authErrorMessage(error));
+      });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setStatus(nextSession ? "Signed in." : "Use your approved ChurchWork pilot account.");
+    });
+
+    return () => {
+      isMounted = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsBusy(true);
+    setStatus("Signing in...");
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setStatus(authErrorMessage(error));
+        setIsBusy(false);
+        return;
+      }
+
+      setSession(data.session ?? null);
+      setStatus(data.session ? "Signed in." : "No active session returned. Please retry sign-in.");
+    } catch (error) {
+      setStatus(authErrorMessage(error));
+    }
+
+    setIsBusy(false);
+  }
+
+  async function handleSignOut() {
+    setIsBusy(true);
+    try {
+      await supabase.auth.signOut();
+      setSession(null);
+      setStatus("Signed out.");
+    } catch (error) {
+      setStatus(authErrorMessage(error));
+    }
+    setIsBusy(false);
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f7f3ea] px-5 py-8 text-[#102b3a]">
+      <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-8 lg:grid-cols-[1fr_28rem]">
+        <div>
+          <a href="/" className="inline-flex items-center gap-3 rounded-2xl bg-white/80 p-3 shadow-sm ring-1 ring-[#d8d0c0]" aria-label="Back to ChurchWork public site">
+            <span className="flex h-12 w-16 items-center justify-center rounded-xl bg-white p-1">
+              <img src="/brand/churchwork-corner-logo.png" alt="ChurchWork logo" className="h-full w-full object-contain" />
+            </span>
+            <span className="font-serif text-2xl font-semibold tracking-[-0.04em]">Church<span className="text-[#3f806e]">Work</span></span>
+          </a>
+
+          <p className="mt-10 text-xs font-black uppercase tracking-[0.22em] text-[#789052]">{copy.eyebrow}</p>
+          <h1 className="mt-3 max-w-3xl font-serif text-5xl font-semibold tracking-[-0.05em] md:text-6xl">{copy.title}</h1>
+          <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-[#4d5d55]">{copy.body}</p>
+
+          <div className="mt-8 rounded-[1.5rem] border border-[#d8d0c0] bg-white/75 p-5 text-sm leading-7 text-[#4d5d55]">
+            <strong className="text-[#173b2d]">Pilot boundary:</strong> this login page does not show sample patients, fake requesters, placeholder resident names, or demo assignments. Role dashboards appear only after real pilot auth and real pilot data are connected.
+          </div>
+        </div>
+
+        <section className="rounded-[2rem] border border-[#d8d0c0] bg-white p-7 shadow-2xl shadow-[#0d2b3b]/10">
+          {session ? (
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Signed in</p>
+              <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{copy.destination}</h2>
+              <p className="mt-4 text-sm font-semibold leading-7 text-[#4d5d55]">
+                You are signed in as {session.user.email}. The role dashboard will connect to the real pilot workflow next; no placeholder records are shown on this login route.
+              </p>
+              <div className="mt-6 grid gap-3">
+                <a href="/" className="rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-4 py-3 text-center text-sm font-black text-[#173b2d] hover:bg-white">Back to public site</a>
+                <button type="button" onClick={handleSignOut} disabled={isBusy} className="rounded-xl bg-[#173b2d] px-4 py-3 text-sm font-black text-white hover:bg-[#102b3a] disabled:opacity-60">
+                  Sign out
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Pilot account</p>
+                <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">Sign in</h2>
+                <p className="mt-3 text-sm font-semibold leading-6 text-[#4d5d55]">Use your approved ChurchWork pilot account for this role.</p>
+              </div>
+
+              <label className="block text-sm font-black text-[#173b2d]">
+                Email
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                  autoComplete="email"
+                  className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
+                />
+              </label>
+
+              <label className="block text-sm font-black text-[#173b2d]">
+                Password
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  minLength={8}
+                  autoComplete="current-password"
+                  className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
+                />
+              </label>
+
+              <button type="submit" disabled={isBusy} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">
+                {isBusy ? "Signing in..." : "Sign in"}
+              </button>
+
+              <p className="rounded-xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">{status}</p>
+            </form>
+          )}
+        </section>
+      </section>
+    </main>
+  );
+}

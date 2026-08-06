@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerEnv } from "@/lib/supabase/env";
 
@@ -38,19 +39,12 @@ function json(status: number, body: Record<string, unknown>) {
   });
 }
 
-async function readSupabaseError(response: Response) {
-  try {
-    const body = await response.json();
-    return typeof body?.msg === "string"
-      ? body.msg
-      : typeof body?.message === "string"
-        ? body.message
-        : typeof body?.error_description === "string"
-          ? body.error_description
-          : `Supabase auth returned ${response.status}`;
-  } catch {
-    return `Supabase auth returned ${response.status}`;
+function authErrorMessage(error: unknown) {
+  if (error && typeof error === "object" && "message" in error && typeof error.message === "string") {
+    return error.message;
   }
+
+  return "Supabase auth did not complete.";
 }
 
 export async function POST(request: NextRequest) {
@@ -76,7 +70,11 @@ export async function POST(request: NextRequest) {
   }
 
   if (mode === "sign-up" && role !== "requester") {
-    return json(403, { ok: false, code: "role-signup-blocked", message: "Only requester accounts can be created from the public pilot page. Facility and partner accounts must be approved/invited." });
+    return json(403, {
+      ok: false,
+      code: "role-signup-blocked",
+      message: "Only requester accounts can be created from the public pilot page. Facility and partner accounts must be approved/invited."
+    });
   }
 
   let env: ReturnType<typeof getSupabaseServerEnv>;
@@ -91,46 +89,36 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const endpoint = mode === "sign-up"
-    ? `${env.url}/auth/v1/signup`
-    : `${env.url}/auth/v1/token?grant_type=password`;
+  const supabase = createClient(env.url, env.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
 
-  const body = mode === "sign-up"
-    ? { email, password, data: { churchwork_role: role } }
-    : { email, password };
+  const { data, error } = mode === "sign-up"
+    ? await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            churchwork_role: role
+          }
+        }
+      })
+    : await supabase.auth.signInWithPassword({ email, password });
 
-  let response: Response;
-
-  try {
-    response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        apikey: env.anonKey,
-        Authorization: `Bearer ${env.anonKey}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(body),
-      cache: "no-store"
-    });
-  } catch {
-    return json(502, {
-      ok: false,
-      code: "server-auth-fetch-failed",
-      message: "Vercel/server could not reach Supabase auth. Check /pilot-auth-server-check and Vercel Supabase env values."
-    });
-  }
-
-  if (!response.ok) {
-    return json(response.status, {
+  if (error) {
+    return json(error.status || 401, {
       ok: false,
       code: "supabase-auth-rejected",
-      message: await readSupabaseError(response)
+      message: authErrorMessage(error)
     });
   }
 
-  const data = await response.json();
   const user = data?.user ?? null;
-  const session = data?.session ?? data;
+  const session = data?.session ?? null;
   const actualRole = roleFromUser(user);
 
   if (mode === "sign-in" && actualRole && actualRole !== role) {
@@ -151,7 +139,7 @@ export async function POST(request: NextRequest) {
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
     message: mode === "sign-up"
       ? "Requester account created. Check email confirmation settings if sign-in is not immediate."
-      : "Signed in through server auth bridge."
+      : "Signed in through Supabase auth."
   });
 
   if (session?.access_token) {

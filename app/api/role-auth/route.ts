@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerEnv } from "@/lib/supabase/env";
+import { getSupabaseEnvReport, getSupabaseServerEnv } from "@/lib/supabase/env";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up";
@@ -53,6 +53,32 @@ async function readSupabaseError(response: Response) {
   }
 }
 
+function safeErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Unknown server auth error.";
+}
+
+function authEnvHint() {
+  const report = getSupabaseEnvReport();
+
+  if (!report.hasServerUrl && !report.hasNextPublicUrl) {
+    return "Set SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL in Vercel.";
+  }
+
+  if (!report.hasServerAnonKey && !report.hasNextPublicAnonKey) {
+    return "Set SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY in Vercel.";
+  }
+
+  if ((report.hasServerUrl && !report.serverUrlLooksValid) || (report.hasNextPublicUrl && !report.nextPublicUrlLooksValid)) {
+    return "Check the Supabase project URL format. It should look like https://PROJECT.supabase.co.";
+  }
+
+  if ((report.hasServerAnonKey && !report.serverAnonKeyLooksValid) || (report.hasNextPublicAnonKey && !report.nextPublicAnonKeyLooksValid)) {
+    return "Check the Supabase anon key. It should be the long public anon JWT key, not the URL or project ref.";
+  }
+
+  return "Vercel has Supabase-looking env values, but the auth endpoint was not reachable from the server.";
+}
+
 export async function POST(request: NextRequest) {
   let payload: Record<string, unknown>;
 
@@ -86,8 +112,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return json(500, {
       ok: false,
-      code: "missing-env",
-      message: error instanceof Error ? error.message : "Missing Supabase environment configuration."
+      code: "supabase-env-invalid",
+      message: safeErrorMessage(error),
+      hint: authEnvHint(),
+      envReport: getSupabaseEnvReport()
     });
   }
 
@@ -112,11 +140,15 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
       cache: "no-store"
     });
-  } catch {
+  } catch (error) {
     return json(502, {
       ok: false,
       code: "server-auth-fetch-failed",
-      message: "Vercel/server could not reach Supabase auth. Check /pilot-auth-server-check and Vercel Supabase env values."
+      message: "Vercel/server could not reach Supabase auth.",
+      hint: authEnvHint(),
+      detail: safeErrorMessage(error),
+      envSource: env.source,
+      envReport: getSupabaseEnvReport()
     });
   }
 
@@ -124,7 +156,8 @@ export async function POST(request: NextRequest) {
     return json(response.status, {
       ok: false,
       code: "supabase-auth-rejected",
-      message: await readSupabaseError(response)
+      message: await readSupabaseError(response),
+      envSource: env.source
     });
   }
 
@@ -149,6 +182,7 @@ export async function POST(request: NextRequest) {
     userId: user?.id ?? null,
     roleVerified: actualRole === role,
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
+    envSource: env.source,
     message: mode === "sign-up"
       ? "Requester account created. Check email confirmation settings if sign-in is not immediate."
       : "Signed in through server auth bridge."

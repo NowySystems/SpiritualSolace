@@ -37,15 +37,6 @@ const publicFlow = [
   }
 ];
 
-const guardrails = [
-  "No emergency workflow",
-  "No medical records",
-  "No diagnosis or treatment details",
-  "No open chat",
-  "Facility review before partner sharing",
-  "Approved updates only"
-];
-
 export function LandingPageV1() {
   return (
     <div className="min-h-screen bg-[#f7f3ea] text-[#102b3a]">
@@ -65,7 +56,6 @@ export function LandingPageV1() {
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
             <a href="#portals" className="hover:text-[#d7e7b7]">Login portals</a>
             <a href="#how-it-works" className="hover:text-[#d7e7b7]">How it works</a>
-            <a href="#guardrails" className="hover:text-[#d7e7b7]">Guardrails</a>
           </nav>
           <a href="#portals" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
             Login
@@ -128,7 +118,7 @@ export function LandingPageV1() {
           </div>
         </section>
 
-        <section id="how-it-works" className="px-6 pb-16">
+        <section id="how-it-works" className="px-6 pb-20">
           <div className="mx-auto max-w-7xl">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">How it works</p>
             <h2 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.03em]">One request path. Clear roles. Facility-controlled release.</h2>
@@ -139,20 +129,6 @@ export function LandingPageV1() {
                   <p className="mt-5 text-xs font-black uppercase tracking-[0.18em] text-[#789052]">{step.label}</p>
                   <p className="mt-3 text-sm leading-6 text-[#4d5d55]">{step.detail}</p>
                 </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section id="guardrails" className="px-6 pb-20">
-          <div className="mx-auto max-w-7xl rounded-[2rem] border border-[#d8d0c0] bg-white/75 p-8 shadow-sm">
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">Guardrails</p>
-            <h2 className="mt-3 font-serif text-3xl font-semibold">ChurchWork is spiritual-care coordination, not a clinical or emergency system.</h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {guardrails.map((item) => (
-                <div key={item} className="rounded-2xl border border-[#ded6c8] bg-[#f8fbf8] px-4 py-4 text-sm font-black text-[#173b2d]">
-                  {item}
-                </div>
               ))}
             </div>
           </div>

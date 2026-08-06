@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseEnvReport, getSupabaseServerEnv } from "@/lib/supabase/env";
+import { getSupabaseEnvReport, getSupabaseServerEnv } from "@/lib/supabase/server-env";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up";

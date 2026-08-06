@@ -1,10 +1,5 @@
-import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { PartnerPortalFinal } from "@/components/pilot-final/PartnerPortalFinal";
+import { RolePilotLogin } from "@/components/RolePilotLogin";
 
 export default function PartnerLoginPage() {
-  return (
-    <ChurchWorkAccessGate>
-      <PartnerPortalFinal />
-    </ChurchWorkAccessGate>
-  );
+  return <RolePilotLogin role="partner" />;
 }

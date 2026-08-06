@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSupabaseEnvReport, getSupabaseServerEnv } from "@/lib/supabase/env";
+import { getSupabaseEnvReport, getSupabaseServerEnv } from "@/lib/supabase/server-env";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-const BUILD = "pilot-auth-server-check-v2";
+const BUILD = "pilot-auth-server-check-v3";
 
 type CheckState = "pass" | "fail" | "warn";
 type Check = { label: string; state: CheckState; detail: string };
@@ -56,7 +56,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      schema: "churchwork.pilot-auth-server-check.v2",
+      schema: "churchwork.pilot-auth-server-check.v3",
       status: "fail",
       build: BUILD,
       checks,
@@ -105,7 +105,7 @@ export async function GET() {
   const hasWarning = checks.some((check) => check.state === "warn");
 
   return NextResponse.json({
-    schema: "churchwork.pilot-auth-server-check.v2",
+    schema: "churchwork.pilot-auth-server-check.v3",
     status: hasFailure ? "fail" : hasWarning ? "warn" : "pass",
     build: BUILD,
     checks,

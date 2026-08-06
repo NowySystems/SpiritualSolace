@@ -1,8 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
-import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { FormEvent, useState } from "react";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up";
@@ -18,6 +16,12 @@ type RoleCopy = {
   destination: string;
   accountHelp: string;
   canCreateAccount: boolean;
+};
+
+type SignedInState = {
+  email: string;
+  role: RoleKey;
+  roleVerified: boolean;
 };
 
 const roleCopy = {
@@ -47,81 +51,53 @@ const roleCopy = {
   }
 } satisfies Record<RoleKey, RoleCopy>;
 
-function authErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    if (error.message.toLowerCase().includes("failed to fetch")) {
-      return "Login service is temporarily unreachable. Please try again after the pilot auth connection is repaired.";
-    }
-
-    return error.message;
+function messageFromResponse(body: unknown, fallback: string) {
+  if (body && typeof body === "object" && "message" in body && typeof body.message === "string") {
+    return body.message;
   }
 
-  return "Unknown login error.";
+  return fallback;
 }
 
 export function RolePilotLogin({ role }: RolePilotLoginProps) {
   const copy = roleCopy[role];
-  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
-  const [session, setSession] = useState<Session | null>(null);
+  const [signedIn, setSignedIn] = useState<SignedInState | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<AuthMode>("sign-in");
-  const [status, setStatus] = useState("Checking session...");
+  const [status, setStatus] = useState(copy.accountHelp);
   const [isBusy, setIsBusy] = useState(false);
 
   const isRequesterSignup = role === "requester" && mode === "sign-up";
 
-  useEffect(() => {
-    let isMounted = true;
-
-    supabase.auth
-      .getSession()
-      .then(({ data }) => {
-        if (!isMounted) return;
-        setSession(data.session ?? null);
-        setStatus(data.session ? "Signed in." : copy.accountHelp);
-      })
-      .catch((error) => {
-        if (!isMounted) return;
-        setStatus(authErrorMessage(error));
-      });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setStatus(nextSession ? "Signed in." : copy.accountHelp);
-    });
-
-    return () => {
-      isMounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, [copy.accountHelp, supabase]);
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsBusy(true);
-    setStatus(isRequesterSignup ? "Creating requester account..." : "Signing in...");
+    setStatus(isRequesterSignup ? "Creating requester account through server auth..." : "Signing in through server auth...");
 
     try {
-      const { data, error } = isRequesterSignup
-        ? await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              data: {
-                churchwork_role: "requester"
-              }
-            }
-          })
-        : await supabase.auth.signInWithPassword({ email, password });
+      const response = await fetch("/api/role-auth", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          role,
+          mode,
+          email,
+          password
+        })
+      });
 
-      if (error) {
-        setStatus(authErrorMessage(error));
+      const body = await response.json().catch(() => null);
+
+      if (!response.ok || !body?.ok) {
+        setStatus(messageFromResponse(body, "ChurchWork auth did not complete. Check the server auth diagnostics."));
         setIsBusy(false);
         return;
       }
 
-      if (isRequesterSignup && !data.session) {
+      if (isRequesterSignup && body.needsEmailConfirmation) {
         setStatus("Requester account created. Check your email to confirm the account before signing in.");
         setMode("sign-in");
         setPassword("");
@@ -129,25 +105,23 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
         return;
       }
 
-      setSession(data.session ?? null);
-      setStatus(data.session ? "Signed in." : "No active session returned. Please retry sign-in.");
-    } catch (error) {
-      setStatus(authErrorMessage(error));
+      setSignedIn({
+        email: typeof body.email === "string" ? body.email : email,
+        role,
+        roleVerified: body.roleVerified === true
+      });
+      setStatus(messageFromResponse(body, "Signed in."));
+    } catch {
+      setStatus("ChurchWork server auth route is unreachable. Check the latest deploy and /pilot-auth-server-check.");
     }
 
     setIsBusy(false);
   }
 
-  async function handleSignOut() {
-    setIsBusy(true);
-    try {
-      await supabase.auth.signOut();
-      setSession(null);
-      setStatus(copy.accountHelp);
-    } catch (error) {
-      setStatus(authErrorMessage(error));
-    }
-    setIsBusy(false);
+  function handleSignOut() {
+    setSignedIn(null);
+    setPassword("");
+    setStatus(copy.accountHelp);
   }
 
   function submitLabel() {
@@ -176,13 +150,17 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
         </div>
 
         <section className="rounded-[2rem] border border-[#d8d0c0] bg-white p-7 shadow-2xl shadow-[#0d2b3b]/10">
-          {session ? (
+          {signedIn ? (
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Signed in</p>
               <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{copy.destination}</h2>
               <p className="mt-4 text-sm font-semibold leading-7 text-[#4d5d55]">
-                You are signed in as {session.user.email}. Role-based routing and the real pilot dashboard are the next connection step.
+                You are signed in as {signedIn.email}. Role-based routing and the real pilot dashboard are the next connection step.
               </p>
+              <div className="mt-4 rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] p-4 text-sm font-semibold leading-6 text-[#4d5d55]">
+                Role: <strong className="text-[#173b2d]">{signedIn.role}</strong>{" "}
+                {signedIn.roleVerified ? "· Metadata verified" : "· Metadata not yet verified"}
+              </div>
               <div className="mt-6 grid gap-3">
                 <a href="/" className="rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-4 py-3 text-center text-sm font-black text-[#173b2d] hover:bg-white">Back to public site</a>
                 <button type="button" onClick={handleSignOut} disabled={isBusy} className="rounded-xl bg-[#173b2d] px-4 py-3 text-sm font-black text-white hover:bg-[#102b3a] disabled:opacity-60">

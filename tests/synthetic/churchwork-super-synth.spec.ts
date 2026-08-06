@@ -31,13 +31,14 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("role login entrances are real login screens without placeholder records", async ({ page }) => {
+  test("role login entrances are real server-backed login screens without placeholder records", async ({ page }) => {
     for (const route of ["/requester-login", "/facility-login", "/partner-login"]) {
       await page.goto(route);
       await expect(page).toHaveURL(new RegExp(`${route}$`));
       await expect(page.getByRole("heading", { name: /login/i }).first()).toBeVisible();
       await expect(page.getByLabel("Email")).toBeVisible();
       await expect(page.getByLabel("Password")).toBeVisible();
+      await expect(page.getByText("server auth", { exact: false })).toHaveCount(0);
       await expect(page.getByText("ChurchWork internal access")).toHaveCount(0);
       await expect(page.getByText("Private pilot access")).toHaveCount(0);
       await expect(page.getByText("Jane", { exact: false })).toHaveCount(0);
@@ -61,6 +62,27 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
       await expect(page.getByRole("heading", { name: "Create requester account" })).toHaveCount(0);
       await expect(page.getByText(/Need access\? Contact the ChurchWork pilot admin/i)).toBeVisible();
     }
+  });
+
+  test("role login submits through the server auth bridge", async ({ page }) => {
+    const requests: string[] = [];
+    await page.route("/api/role-auth", async (route) => {
+      requests.push(route.request().url());
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, email: "requester@example.com", role: "requester", roleVerified: true, message: "Signed in through server auth bridge." })
+      });
+    });
+
+    await page.goto("/requester-login");
+    await page.getByLabel("Email").fill("requester@example.com");
+    await page.getByLabel("Password").fill("testing-password");
+    await page.getByRole("button", { name: "Sign in" }).click();
+
+    await expect(page.getByRole("heading", { name: "Requester workspace" })).toBeVisible();
+    await expect(page.getByText("requester@example.com")).toBeVisible();
+    expect(requests.length).toBe(1);
   });
 
   test("internal backend routes require the internal access gate", async ({ page }) => {

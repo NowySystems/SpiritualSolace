@@ -48,6 +48,21 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     }
   });
 
+  test("only requesters can create public accounts", async ({ page }) => {
+    await page.goto("/requester-login");
+    await expect(page.getByRole("button", { name: "New requester? Create an account" })).toBeVisible();
+    await page.getByRole("button", { name: "New requester? Create an account" }).click();
+    await expect(page.getByRole("heading", { name: "Create requester account" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Create requester account" })).toBeVisible();
+
+    for (const route of ["/facility-login", "/partner-login"]) {
+      await page.goto(route);
+      await expect(page.getByRole("button", { name: "New requester? Create an account" })).toHaveCount(0);
+      await expect(page.getByRole("heading", { name: "Create requester account" })).toHaveCount(0);
+      await expect(page.getByText(/Need access\? Contact the ChurchWork pilot admin/i)).toBeVisible();
+    }
+  });
+
   test("internal backend routes require the internal access gate", async ({ page }) => {
     for (const route of ["/admin", "/mvp", "/synthetic-smoke", "/ai-map"]) {
       await page.goto(route);

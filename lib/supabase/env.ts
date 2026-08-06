@@ -11,7 +11,14 @@ export function requireEnvValue(name: string, value: string | undefined) {
 
 export function getSupabaseBrowserEnv() {
   return {
-    url: requireEnvValue("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL).replace(/\/$/, ""),
+    url: requireEnvValue("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL),
+    anonKey: requireEnvValue("NEXT_PUBLIC_SUPABASE_ANON_KEY", SUPABASE_ANON_KEY)
+  };
+}
+
+export function getSupabaseServerEnv() {
+  return {
+    url: requireEnvValue("NEXT_PUBLIC_SUPABASE_URL", SUPABASE_URL),
     anonKey: requireEnvValue("NEXT_PUBLIC_SUPABASE_ANON_KEY", SUPABASE_ANON_KEY)
   };
 }

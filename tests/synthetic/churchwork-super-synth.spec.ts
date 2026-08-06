@@ -31,13 +31,19 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("role login entrances are reachable without the internal backend gate", async ({ page }) => {
+  test("role login entrances are real login screens without placeholder records", async ({ page }) => {
     for (const route of ["/requester-login", "/facility-login", "/partner-login"]) {
       await page.goto(route);
       await expect(page).toHaveURL(new RegExp(`${route}$`));
-      await expect(page.getByRole("heading", { name: "Private pilot access" })).toBeVisible();
-      await expect(page.getByLabel("Access code")).toBeVisible();
+      await expect(page.getByRole("heading", { name: /login/i }).first()).toBeVisible();
+      await expect(page.getByLabel("Email")).toBeVisible();
+      await expect(page.getByLabel("Password")).toBeVisible();
       await expect(page.getByText("ChurchWork internal access")).toHaveCount(0);
+      await expect(page.getByText("Private pilot access")).toHaveCount(0);
+      await expect(page.getByText("Jane", { exact: false })).toHaveCount(0);
+      await expect(page.getByText("John", { exact: false })).toHaveCount(0);
+      await expect(page.getByText("Grandview", { exact: false })).toHaveCount(0);
+      await expect(page.getByText("Hope Church", { exact: false })).toHaveCount(0);
       await expectNoHorizontalOverflow(page);
     }
   });

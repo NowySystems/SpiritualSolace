@@ -1,10 +1,5 @@
-import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { RequesterPortalFinal } from "@/components/pilot-final/RequesterPortalFinal";
+import { RolePilotLogin } from "@/components/RolePilotLogin";
 
 export default function RequesterLoginPage() {
-  return (
-    <ChurchWorkAccessGate>
-      <RequesterPortalFinal />
-    </ChurchWorkAccessGate>
-  );
+  return <RolePilotLogin role="requester" />;
 }

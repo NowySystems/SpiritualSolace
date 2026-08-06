@@ -52,11 +52,19 @@ const roleCopy = {
 } satisfies Record<RoleKey, RoleCopy>;
 
 function messageFromResponse(body: unknown, fallback: string) {
-  if (body && typeof body === "object" && "message" in body && typeof body.message === "string") {
-    return body.message;
+  if (!body || typeof body !== "object") {
+    return fallback;
   }
 
-  return fallback;
+  const record = body as Record<string, unknown>;
+  const message = typeof record.message === "string" ? record.message : fallback;
+  const hint = typeof record.hint === "string" ? record.hint : "";
+  const detail = typeof record.detail === "string" ? record.detail : "";
+  const code = typeof record.code === "string" ? record.code : "";
+
+  return [message, hint, detail && code !== "supabase-auth-rejected" ? `Detail: ${detail}` : ""]
+    .filter(Boolean)
+    .join(" ");
 }
 
 export function RolePilotLogin({ role }: RolePilotLoginProps) {

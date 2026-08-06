@@ -22,6 +22,10 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await expect(page.locator('a[href="/mvp"]')).toHaveCount(0);
     await expect(page.locator('a[href="/demo/synthetic"]')).toHaveCount(0);
     await expect(page.locator('a[href="/preview"]')).toHaveCount(0);
+    await expect(page.getByText("Guardrails", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("No emergency workflow", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("No medical records", { exact: true })).toHaveCount(0);
+    await expect(page.getByText("No open chat", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Cole", { exact: false })).toHaveCount(0);
     await expect(page.getByText("Sam", { exact: false })).toHaveCount(0);
     await expectNoHorizontalOverflow(page);

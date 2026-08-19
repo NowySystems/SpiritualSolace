@@ -4,6 +4,23 @@ import { getSupabaseServerEnv } from "@/lib/supabase/env";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up";
+type AuthSource = "supabase-js" | "supabase-rest-fallback";
+
+type AuthFailure = {
+  message: string;
+  status?: number;
+};
+
+type AuthSuccess = {
+  user: { id?: string; email?: string; user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown> } | null;
+  session: { access_token?: string } | null;
+};
+
+type AuthAttempt = {
+  source: AuthSource;
+  data: AuthSuccess | null;
+  error: AuthFailure | null;
+};
 
 const allowedRoles = new Set<RoleKey>(["requester", "facility", "partner"]);
 
@@ -23,7 +40,7 @@ function cleanMode(value: unknown): AuthMode {
   return value === "sign-up" ? "sign-up" : "sign-in";
 }
 
-function roleFromUser(user: { user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown> } | null | undefined) {
+function roleFromUser(user: AuthSuccess["user"] | null | undefined) {
   const userRole = user?.user_metadata?.churchwork_role;
   const appRole = user?.app_metadata?.churchwork_role;
   return typeof appRole === "string" ? appRole : typeof userRole === "string" ? userRole : null;
@@ -45,6 +62,165 @@ function authErrorMessage(error: unknown) {
   }
 
   return "Supabase auth did not complete.";
+}
+
+function errorName(error: unknown) {
+  return error && typeof error === "object" && "name" in error && typeof error.name === "string" ? error.name : "Error";
+}
+
+function isNetworkAuthError(message: string) {
+  return /fetch failed|failed to fetch|network|timeout|undici|econnreset|enotfound|etimedout/i.test(message);
+}
+
+function keyKind(key: string) {
+  if (key.startsWith("sb_publishable_")) return "publishable";
+  if (key.startsWith("eyJ")) return "jwt-anon";
+  return "unknown";
+}
+
+function safeHost(url: string) {
+  try {
+    return new URL(url).host;
+  } catch {
+    return "invalid-url";
+  }
+}
+
+function bodyMessage(body: Record<string, unknown>, fallback: string) {
+  return typeof body.msg === "string"
+    ? body.msg
+    : typeof body.message === "string"
+      ? body.message
+      : typeof body.error_description === "string"
+        ? body.error_description
+        : typeof body.error === "string"
+          ? body.error
+          : fallback;
+}
+
+async function parseBody(response: Response) {
+  try {
+    const body = await response.json();
+    return body && typeof body === "object" ? body as Record<string, unknown> : {};
+  } catch {
+    return {};
+  }
+}
+
+function normalizeAuthData(body: Record<string, unknown>): AuthSuccess {
+  const user = body.user && typeof body.user === "object" ? body.user as AuthSuccess["user"] : null;
+  const sessionFromBody = body.session && typeof body.session === "object" ? body.session as AuthSuccess["session"] : null;
+  const sessionFromToken = typeof body.access_token === "string" ? { access_token: body.access_token } : null;
+
+  return {
+    user,
+    session: sessionFromBody ?? sessionFromToken
+  };
+}
+
+async function supabaseJsAttempt(env: ReturnType<typeof getSupabaseServerEnv>, mode: AuthMode, role: RoleKey, email: string, password: string): Promise<AuthAttempt> {
+  const supabase = createClient(env.url, env.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
+
+  try {
+    const result = mode === "sign-up"
+      ? await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { churchwork_role: role } }
+        })
+      : await supabase.auth.signInWithPassword({ email, password });
+
+    if (result.error) {
+      return {
+        source: "supabase-js",
+        data: null,
+        error: {
+          message: authErrorMessage(result.error),
+          status: result.error.status
+        }
+      };
+    }
+
+    return {
+      source: "supabase-js",
+      data: {
+        user: result.data?.user ?? null,
+        session: result.data?.session ?? null
+      },
+      error: null
+    };
+  } catch (error) {
+    return {
+      source: "supabase-js",
+      data: null,
+      error: {
+        message: `${errorName(error)}: ${authErrorMessage(error)}`,
+        status: 502
+      }
+    };
+  }
+}
+
+async function restFallbackAttempt(env: ReturnType<typeof getSupabaseServerEnv>, mode: AuthMode, role: RoleKey, email: string, password: string): Promise<AuthAttempt> {
+  const endpoint = mode === "sign-up"
+    ? `${env.url}/auth/v1/signup`
+    : `${env.url}/auth/v1/token?grant_type=password`;
+
+  const headers: Record<string, string> = {
+    apikey: env.anonKey,
+    "Content-Type": "application/json"
+  };
+
+  if (!env.anonKey.startsWith("sb_publishable_")) {
+    headers.Authorization = `Bearer ${env.anonKey}`;
+  }
+
+  const requestBody = mode === "sign-up"
+    ? { email, password, data: { churchwork_role: role } }
+    : { email, password };
+
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+      cache: "no-store"
+    });
+
+    const body = await parseBody(response);
+
+    if (!response.ok) {
+      return {
+        source: "supabase-rest-fallback",
+        data: null,
+        error: {
+          message: bodyMessage(body, `Supabase auth returned HTTP ${response.status}`),
+          status: response.status
+        }
+      };
+    }
+
+    return {
+      source: "supabase-rest-fallback",
+      data: normalizeAuthData(body),
+      error: null
+    };
+  } catch (error) {
+    return {
+      source: "supabase-rest-fallback",
+      data: null,
+      error: {
+        message: `${errorName(error)}: ${authErrorMessage(error)}`,
+        status: 502
+      }
+    };
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -89,36 +265,27 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const supabase = createClient(env.url, env.anonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    }
-  });
+  const primaryAttempt = await supabaseJsAttempt(env, mode, role, email, password);
+  const shouldTryFallback = primaryAttempt.error && isNetworkAuthError(primaryAttempt.error.message);
+  const finalAttempt = shouldTryFallback
+    ? await restFallbackAttempt(env, mode, role, email, password)
+    : primaryAttempt;
 
-  const { data, error } = mode === "sign-up"
-    ? await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            churchwork_role: role
-          }
-        }
-      })
-    : await supabase.auth.signInWithPassword({ email, password });
+  if (finalAttempt.error || !finalAttempt.data) {
+    const primaryNote = shouldTryFallback && primaryAttempt.error
+      ? ` Primary auth failed first: ${primaryAttempt.error.message}.`
+      : "";
+    const diagnostic = `host=${safeHost(env.url)} key=${keyKind(env.anonKey)} source=${finalAttempt.source}.`;
 
-  if (error) {
-    return json(error.status || 401, {
+    return json(finalAttempt.error?.status || 401, {
       ok: false,
-      code: "supabase-auth-rejected",
-      message: authErrorMessage(error)
+      code: shouldTryFallback ? "supabase-auth-fallback-failed" : "supabase-auth-rejected",
+      message: `${finalAttempt.error?.message ?? "Supabase auth failed."} ${diagnostic}${primaryNote}`
     });
   }
 
-  const user = data?.user ?? null;
-  const session = data?.session ?? null;
+  const user = finalAttempt.data.user;
+  const session = finalAttempt.data.session;
   const actualRole = roleFromUser(user);
 
   if (mode === "sign-in" && actualRole && actualRole !== role) {
@@ -137,6 +304,7 @@ export async function POST(request: NextRequest) {
     userId: user?.id ?? null,
     roleVerified: actualRole === role,
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
+    authSource: finalAttempt.source,
     message: mode === "sign-up"
       ? "Requester account created. Check email confirmation settings if sign-in is not immediate."
       : "Signed in through Supabase auth."

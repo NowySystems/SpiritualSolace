@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import ChurchWorkMvpPage from "../mvp/page";
+import { PilotWorkspace } from "@/components/PilotWorkspace";
 
 const allowedRoles = new Set(["requester", "facility", "partner"]);
+type RoleKey = "requester" | "facility" | "partner";
 
 export default async function PilotMvpPage() {
   const cookieStore = await cookies();
@@ -13,5 +14,5 @@ export default async function PilotMvpPage() {
     redirect("/requester-login");
   }
 
-  return <ChurchWorkMvpPage />;
+  return <PilotWorkspace role={role as RoleKey} />;
 }

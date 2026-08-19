@@ -110,12 +110,12 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
         role,
         roleVerified: body.roleVerified === true
       });
-      setStatus(messageFromResponse(body, "Signed in."));
+      setStatus(`${messageFromResponse(body, "Signed in.")} Opening pilot MVP...`);
+      window.location.assign("/pilot-mvp");
     } catch {
       setStatus("ChurchWork server auth route is unreachable. Check the latest deploy and /pilot-auth-server-check.");
+      setIsBusy(false);
     }
-
-    setIsBusy(false);
   }
 
   function handleSignOut() {
@@ -155,15 +155,16 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Signed in</p>
               <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{copy.destination}</h2>
               <p className="mt-4 text-sm font-semibold leading-7 text-[#4d5d55]">
-                You are signed in as {signedIn.email}. Role-based routing and the real pilot dashboard are the next connection step.
+                You are signed in as {signedIn.email}. Opening the pilot MVP now.
               </p>
               <div className="mt-4 rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] p-4 text-sm font-semibold leading-6 text-[#4d5d55]">
                 Role: <strong className="text-[#173b2d]">{signedIn.role}</strong>{" "}
                 {signedIn.roleVerified ? "· Metadata verified" : "· Metadata not yet verified"}
               </div>
               <div className="mt-6 grid gap-3">
+                <a href="/pilot-mvp" className="rounded-xl bg-[#173b2d] px-4 py-3 text-center text-sm font-black text-white hover:bg-[#102b3a]">Open pilot MVP</a>
                 <a href="/" className="rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-4 py-3 text-center text-sm font-black text-[#173b2d] hover:bg-white">Back to public site</a>
-                <button type="button" onClick={handleSignOut} disabled={isBusy} className="rounded-xl bg-[#173b2d] px-4 py-3 text-sm font-black text-white hover:bg-[#102b3a] disabled:opacity-60">
+                <button type="button" onClick={handleSignOut} disabled={isBusy} className="rounded-xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm font-black text-[#173b2d] hover:bg-[#f8fbf8] disabled:opacity-60">
                   Sign out
                 </button>
               </div>

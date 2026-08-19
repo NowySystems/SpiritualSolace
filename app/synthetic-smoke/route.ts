@@ -14,8 +14,13 @@ const smokeContract = {
   project: "ChurchWork",
   repo: "LL-COLE-J/SpiritualSolace",
   productFamily: "NowySystems",
-  status: "pilot-mvp-navigation",
-  buildMarker: "churchwork-role-login-mvp-v1",
+  status: "pilot-mvp-navigation-recovery-baseline",
+  buildMarker: "churchwork-aug19-recovery-baseline-v1",
+  recovery: {
+    date: "2026-08-19",
+    base: "ee0a256",
+    summary: "Recovered main to the last green Supabase-client auth build, preserved portal-first public landing and clean role login entrances, and excluded the failed diagnostic patch series from active main."
+  },
   visibility: {
     publicRoutes: expectedRoutes.public,
     backendRoutesRequireInternalAccess: true,
@@ -47,9 +52,9 @@ const smokeContract = {
   expectedRoutes,
   routeChecks: [
     { path: "/", expect: "Public landing with Requester Login, Facility Login, and Partner Login only. No admin, MVP, preview, demo, or diagnostic links." },
-    { path: "/requester-login", expect: "Public requester login entrance with role portal access gate." },
-    { path: "/facility-login", expect: "Public facility login entrance with role portal access gate." },
-    { path: "/partner-login", expect: "Public partner login entrance with role portal access gate." },
+    { path: "/requester-login", expect: "Public requester login entrance. Requesters may create an account." },
+    { path: "/facility-login", expect: "Public facility login entrance. Facility accounts are invited or approved, not public self-create." },
+    { path: "/partner-login", expect: "Public partner login entrance. Partner accounts are invited or approved, not public self-create." },
     { path: "/internal-access", expect: "Private access screen for internal ChurchWork backend routes." },
     { path: "/admin", expect: "Internal backend command center with links to pilot MVP, role logins, public site, and BI/test surfaces." },
     { path: "/mvp", expect: "Internal integrated one-device sandbox: requester creates a safe request, facility approves, partner logs outcome, and requester sees approved update." },
@@ -60,6 +65,7 @@ const smokeContract = {
     "Public landing must expose only requester, facility, and partner login entrances.",
     "Public landing must not expose admin, MVP, demo, preview, diagnostics, Cole, or Sam language.",
     "Backend, MVP, preview, demo, diagnostics, pilot, and legacy role portal paths must require internal access.",
+    "Requester account creation may be public; facility and partner account creation must not be public.",
     "MVP, preview, and demo routes must not collect diagnosis, treatment, medication, insurance, emergency, or medical record details.",
     "MVP, preview, and demo routes must not write data.",
     "Partner routes must show approved context only.",
@@ -70,11 +76,12 @@ const smokeContract = {
   currentSyntheticChecks: [
     "Public landing has exactly the role login destinations needed for the pilot.",
     "Role login entrances render without the internal backend gate.",
+    "Requester login exposes account creation; facility and partner logins do not.",
     "Internal backend routes redirect to /internal-access.",
     "Desktop and mobile layouts avoid horizontal overflow."
   ],
   knownIssues: [
-    { key: "role-login-access-code-not-full-auth", severity: "high", status: "open", summary: "Requester, facility, and partner login entrances still use the pilot access-code gate; replace with real role auth for pilot MVP." },
+    { key: "role-login-auth-fetch-failed", severity: "high", status: "open", summary: "Role login screens use the Supabase client auth bridge, but sign-in can still return fetch failed. Next fix should be small and tested from this green recovery baseline." },
     { key: "pilot-supabase-auth-fetch", severity: "high", status: "under-diagnosis", summary: "/pilot sign-in can return Failed to fetch; /pilot-auth-check and /pilot-auth-server-check are diagnostic paths." },
     { key: "chrome-install-event-suppressed", severity: "medium", status: "open", summary: "Android Chrome may suppress beforeinstallprompt even when manifest, icon, and service worker checks pass." }
   ],

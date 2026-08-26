@@ -1,10 +1,5 @@
-import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { FacilityPortalFinal } from "@/components/pilot-final/FacilityPortalFinal";
+import { redirect } from "next/navigation";
 
 export default function FacilityPortalPage() {
-  return (
-    <ChurchWorkAccessGate>
-      <FacilityPortalFinal />
-    </ChurchWorkAccessGate>
-  );
+  redirect("/facility-login");
 }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const COOKIE_NAME = "churchwork_internal_access";
-const DEFAULT_INTERNAL_KEY = "churchwork-internal-preview";
 
 const INTERNAL_PREFIXES = [
   "/admin",
@@ -18,7 +17,8 @@ const INTERNAL_PREFIXES = [
 ];
 
 function internalKey() {
-  return process.env.CHURCHWORK_INTERNAL_ACCESS_KEY || DEFAULT_INTERNAL_KEY;
+  const value = process.env.CHURCHWORK_INTERNAL_ACCESS_KEY?.trim();
+  return value || null;
 }
 
 function isInternalPath(pathname: string) {
@@ -39,6 +39,16 @@ export function middleware(request: NextRequest) {
   }
 
   const key = internalKey();
+
+  if (!key) {
+    return addPrivateHeaders(
+      new NextResponse("ChurchWork internal access is not configured.", {
+        status: 503,
+        headers: { "Content-Type": "text/plain; charset=utf-8" }
+      })
+    );
+  }
+
   const cookieValue = request.cookies.get(COOKIE_NAME)?.value;
 
   if (cookieValue === key) {

@@ -4,6 +4,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseServerEnv } from "@/lib/supabase/env";
 
 type SupportOption = "Prayer" | "Friendly visit" | "Encouragement" | "Pastoral call";
+type PilotRequestStatus =
+  | "draft"
+  | "facility_review"
+  | "approved_for_partner"
+  | "partner_outcome_logged"
+  | "requester_updated"
+  | "closed";
+
+type PilotRequestRow = {
+  id: string;
+  support_options: SupportOption[] | null;
+  safe_context_note: string | null;
+  status: PilotRequestStatus;
+  facility_approved_at: string | null;
+  partner_assigned_at: string | null;
+  partner_outcome: string | null;
+  requester_update_released_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 const allowedSupport = new Set<SupportOption>(["Prayer", "Friendly visit", "Encouragement", "Pastoral call"]);
 const blockedTerms = [
@@ -21,6 +41,19 @@ const blockedTerms = [
   "chart",
   "record"
 ];
+
+const requestSelect = [
+  "id",
+  "support_options",
+  "safe_context_note",
+  "status",
+  "facility_approved_at",
+  "partner_assigned_at",
+  "partner_outcome",
+  "requester_update_released_at",
+  "created_at",
+  "updated_at"
+].join(",");
 
 function json(status: number, body: Record<string, unknown>) {
   return NextResponse.json(body, {
@@ -55,12 +88,57 @@ function blockedMatches(note: string) {
   return blockedTerms.filter((term) => lower.includes(term));
 }
 
+function roleFromUser(user: { user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown> } | null | undefined) {
+  const appRole = user?.app_metadata?.churchwork_role;
+  const userRole = user?.user_metadata?.churchwork_role;
+  return typeof appRole === "string" ? appRole : typeof userRole === "string" ? userRole : null;
+}
+
+function workspaceStage(status: PilotRequestStatus) {
+  if (status === "approved_for_partner") return "partner_assignment";
+  if (status === "partner_outcome_logged" || status === "requester_updated") return "care_complete";
+  return status;
+}
+
+function toWorkspaceRequest(row: PilotRequestRow) {
+  const facilityApproved = Boolean(row.facility_approved_at) || [
+    "approved_for_partner",
+    "partner_outcome_logged",
+    "requester_updated",
+    "closed"
+  ].includes(row.status);
+
+  const partnerReported = Boolean(row.partner_outcome) || [
+    "partner_outcome_logged",
+    "requester_updated",
+    "closed"
+  ].includes(row.status);
+
+  return {
+    id: row.id,
+    support: cleanSupport(row.support_options),
+    safe_note: row.safe_context_note ?? "",
+    status: workspaceStage(row.status),
+    facility_review_status: facilityApproved ? "approved" : "pending",
+    partner_assignment_status: partnerReported ? "reported" : row.partner_assigned_at ? "assigned" : "pending",
+    requester_update_status: row.requester_update_released_at ? "released" : "pending",
+    created_at: row.created_at,
+    updated_at: row.updated_at
+  };
+}
+
 async function clientForSession() {
   const cookieStore = await cookies();
   const token = cookieStore.get("churchwork_role_session")?.value;
 
   if (!token) {
-    return { error: json(401, { ok: false, code: "missing-session", message: "Sign in before using the pilot request workspace." }) };
+    return {
+      error: json(401, {
+        ok: false,
+        code: "missing-session",
+        message: "Sign in before using the pilot request workspace."
+      })
+    };
   }
 
   const env = getSupabaseServerEnv();
@@ -77,17 +155,40 @@ async function clientForSession() {
     }
   });
 
-  return { supabase };
+  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  const user = userData.user;
+
+  if (userError || !user) {
+    return {
+      error: json(401, {
+        ok: false,
+        code: "invalid-session",
+        message: "Your ChurchWork session is no longer valid. Sign in again."
+      })
+    };
+  }
+
+  if (roleFromUser(user) !== "requester") {
+    return {
+      error: json(403, {
+        ok: false,
+        code: "requester-role-required",
+        message: "Pilot request intake is available to requester accounts only."
+      })
+    };
+  }
+
+  return { supabase, user };
 }
 
 export async function GET() {
   try {
-    const { supabase, error } = await clientForSession();
-    if (error || !supabase) return error;
+    const session = await clientForSession();
+    if ("error" in session) return session.error;
 
-    const { data, error: listError } = await supabase
+    const { data, error: listError } = await session.supabase
       .from("churchwork_pilot_requests")
-      .select("id,support,safe_note,status,facility_review_status,partner_assignment_status,requester_update_status,created_at,updated_at")
+      .select(requestSelect)
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -99,7 +200,8 @@ export async function GET() {
       });
     }
 
-    return json(200, { ok: true, requests: data ?? [] });
+    const requests = ((data ?? []) as PilotRequestRow[]).map(toWorkspaceRequest);
+    return json(200, { ok: true, requests });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-list-failed", message: errorMessage(error) });
   }
@@ -128,20 +230,27 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const { supabase, error } = await clientForSession();
-    if (error || !supabase) return error;
+    const session = await clientForSession();
+    if ("error" in session) return session.error;
 
-    const { data, error: insertError } = await supabase
+    const submittedAt = new Date().toISOString();
+    const { data, error: insertError } = await session.supabase
       .from("churchwork_pilot_requests")
       .insert({
-        support,
-        safe_note: safeNote,
+        requester_user_id: session.user.id,
+        requester_email: session.user.email ?? null,
+        support_options: support,
+        safe_context_note: safeNote,
         status: "facility_review",
-        facility_review_status: "pending",
-        partner_assignment_status: "pending",
-        requester_update_status: "pending"
+        activity_log: [
+          {
+            event: "request_submitted",
+            actor: "requester",
+            at: submittedAt
+          }
+        ]
       })
-      .select("id,support,safe_note,status,facility_review_status,partner_assignment_status,requester_update_status,created_at,updated_at")
+      .select(requestSelect)
       .single();
 
     if (insertError) {
@@ -152,7 +261,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return json(201, { ok: true, request: data, message: "Request saved and sent to facility review." });
+    return json(201, {
+      ok: true,
+      request: toWorkspaceRequest(data as PilotRequestRow),
+      message: "Request saved and sent to facility review."
+    });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-save-failed", message: errorMessage(error) });
   }

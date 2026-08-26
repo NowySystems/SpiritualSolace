@@ -14,10 +14,7 @@ const INTERNAL_PREFIXES = [
   "/pilot-auth-check",
   "/pilot-auth-server-check",
   "/pwa-check",
-  "/pwa-reset",
-  "/requester-portal",
-  "/facility-portal",
-  "/partner-portal"
+  "/pwa-reset"
 ];
 
 function internalKey() {

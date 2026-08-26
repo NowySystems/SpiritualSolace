@@ -79,8 +79,10 @@ function blockedMatches(note: string) {
 
 function roleFromUser(user: { user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown> } | null | undefined) {
   const appRole = user?.app_metadata?.churchwork_role;
+  if (appRole === "requester" || appRole === "facility" || appRole === "partner") return appRole;
+
   const userRole = user?.user_metadata?.churchwork_role;
-  return typeof appRole === "string" ? appRole : typeof userRole === "string" ? userRole : null;
+  return userRole === "requester" ? "requester" : null;
 }
 
 function workspaceStage(status: PilotRequestStatus) {
@@ -185,7 +187,7 @@ export async function GET() {
       return json(503, {
         ok: false,
         code: "pilot-request-store-unavailable",
-        message: `Pilot request storage is not available yet: ${listError.message}`
+        message: "Pilot request storage is temporarily unavailable."
       });
     }
 
@@ -246,7 +248,7 @@ export async function POST(request: NextRequest) {
       return json(503, {
         ok: false,
         code: "pilot-request-save-unavailable",
-        message: `Pilot request storage is not available yet: ${insertError.message}`
+        message: "Pilot request storage is temporarily unavailable."
       });
     }
 

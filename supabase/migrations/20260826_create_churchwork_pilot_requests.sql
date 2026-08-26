@@ -64,6 +64,7 @@ on public.churchwork_pilot_requests (status, created_at desc);
 create or replace function public.set_churchwork_pilot_requests_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();

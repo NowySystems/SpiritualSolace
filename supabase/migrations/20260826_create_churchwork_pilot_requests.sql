@@ -34,7 +34,7 @@ create policy "Requester can read own pilot requests"
 on public.churchwork_pilot_requests
 for select
 to authenticated
-using (requester_user_id = auth.uid());
+using (requester_user_id = (select auth.uid()));
 
 drop policy if exists "Requester can create own pilot requests"
 on public.churchwork_pilot_requests;
@@ -43,17 +43,14 @@ create policy "Requester can create own pilot requests"
 on public.churchwork_pilot_requests
 for insert
 to authenticated
-with check (requester_user_id = auth.uid());
+with check (requester_user_id = (select auth.uid()));
 
+-- Requester editing is intentionally not enabled yet.
 drop policy if exists "Requester can update own pilot requests"
 on public.churchwork_pilot_requests;
 
-create policy "Requester can update own pilot requests"
-on public.churchwork_pilot_requests
-for update
-to authenticated
-using (requester_user_id = auth.uid())
-with check (requester_user_id = auth.uid());
+drop policy if exists "Requester can update own draft requests"
+on public.churchwork_pilot_requests;
 
 create index if not exists churchwork_pilot_requests_requester_idx
 on public.churchwork_pilot_requests (requester_user_id, created_at desc);

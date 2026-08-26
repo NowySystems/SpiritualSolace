@@ -25,6 +25,13 @@ type PilotRequestRow = {
   updated_at: string;
 };
 
+type AuthUser = {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, unknown>;
+  app_metadata?: Record<string, unknown>;
+};
+
 const allowedSupport = new Set<SupportOption>(["Prayer", "Friendly visit", "Encouragement", "Pastoral call"]);
 const blockedTerms = [
   "diagnosis",
@@ -77,12 +84,27 @@ function blockedMatches(note: string) {
   return blockedTerms.filter((term) => lower.includes(term));
 }
 
-function roleFromUser(user: { user_metadata?: Record<string, unknown>; app_metadata?: Record<string, unknown> } | null | undefined) {
-  const appRole = user?.app_metadata?.churchwork_role;
-  if (appRole === "requester" || appRole === "facility" || appRole === "partner") return appRole;
+function requesterFromMetadata(user: AuthUser | null | undefined) {
+  return user?.app_metadata?.churchwork_role === "requester" || user?.user_metadata?.churchwork_role === "requester";
+}
 
-  const userRole = user?.user_metadata?.churchwork_role;
-  return userRole === "requester" ? "requester" : null;
+async function requesterAccess(supabase: ReturnType<typeof createClient>, user: AuthUser) {
+  if (requesterFromMetadata(user)) {
+    return { allowed: true, error: false };
+  }
+
+  const { data, error } = await supabase
+    .from("role_memberships")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("role", "requester")
+    .eq("status", "active")
+    .limit(1);
+
+  return {
+    allowed: !error && Boolean(data?.length),
+    error: Boolean(error)
+  };
 }
 
 function workspaceStage(status: PilotRequestStatus) {
@@ -147,7 +169,7 @@ async function clientForSession() {
   });
 
   const { data: userData, error: userError } = await supabase.auth.getUser(token);
-  const user = userData.user;
+  const user = userData.user as AuthUser | null;
 
   if (userError || !user) {
     return {
@@ -159,7 +181,19 @@ async function clientForSession() {
     };
   }
 
-  if (roleFromUser(user) !== "requester") {
+  const access = await requesterAccess(supabase, user);
+
+  if (access.error) {
+    return {
+      error: json(503, {
+        ok: false,
+        code: "requester-role-check-unavailable",
+        message: "Requester role verification is temporarily unavailable."
+      })
+    };
+  }
+
+  if (!access.allowed) {
     return {
       error: json(403, {
         ok: false,

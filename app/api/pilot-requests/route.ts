@@ -20,6 +20,7 @@ type PilotRequestRow = {
   facility_approved_at: string | null;
   partner_assigned_at: string | null;
   partner_outcome: string | null;
+  requester_update: string | null;
   requester_update_released_at: string | null;
   created_at: string;
   updated_at: string;
@@ -49,7 +50,7 @@ const blockedTerms = [
   "record"
 ];
 
-const requestSelect = "id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update_released_at,created_at,updated_at" as const;
+const requestSelect = "id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update,requester_update_released_at,created_at,updated_at" as const;
 
 function json(status: number, body: Record<string, unknown>) {
   return NextResponse.json(body, {
@@ -113,9 +114,12 @@ function toWorkspaceRequest(row: PilotRequestRow) {
     support: cleanSupport(row.support_options),
     safe_note: row.safe_context_note ?? "",
     status: workspaceStage(row.status),
+    raw_status: row.status,
     facility_review_status: facilityApproved ? "approved" : "pending",
     partner_assignment_status: partnerReported ? "reported" : row.partner_assigned_at ? "assigned" : "pending",
     requester_update_status: row.requester_update_released_at ? "released" : "pending",
+    partner_outcome: row.partner_outcome,
+    requester_update: row.requester_update,
     created_at: row.created_at,
     updated_at: row.updated_at
   };
@@ -282,7 +286,7 @@ export async function POST(request: NextRequest) {
     return json(201, {
       ok: true,
       request: toWorkspaceRequest(data as PilotRequestRow),
-      message: "Request saved and sent to facility review."
+      message: "Request saved and sent to Grandview review."
     });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-save-failed", message: errorMessage(error) });

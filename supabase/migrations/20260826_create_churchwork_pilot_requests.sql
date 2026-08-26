@@ -78,3 +78,8 @@ create trigger set_churchwork_pilot_requests_updated_at
 before update on public.churchwork_pilot_requests
 for each row
 execute function public.set_churchwork_pilot_requests_updated_at();
+
+-- Requester pilot intake currently needs create + reload only.
+-- Keep anonymous users out and avoid granting update/truncate until requester editing is intentionally implemented.
+revoke all privileges on table public.churchwork_pilot_requests from anon, authenticated;
+grant select, insert on table public.churchwork_pilot_requests to authenticated;

@@ -40,10 +40,12 @@ function cleanMode(value: unknown): AuthMode {
   return value === "sign-up" ? "sign-up" : "sign-in";
 }
 
-function roleFromUser(user: AuthSuccess["user"] | null | undefined) {
-  const userRole = user?.user_metadata?.churchwork_role;
+function roleFromUser(user: AuthSuccess["user"] | null | undefined): RoleKey | null {
   const appRole = user?.app_metadata?.churchwork_role;
-  return typeof appRole === "string" ? appRole : typeof userRole === "string" ? userRole : null;
+  if (isRole(appRole)) return appRole;
+
+  const userRole = user?.user_metadata?.churchwork_role;
+  return userRole === "requester" ? "requester" : null;
 }
 
 function json(status: number, body: Record<string, unknown>) {

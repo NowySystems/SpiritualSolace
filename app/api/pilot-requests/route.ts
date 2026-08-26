@@ -42,18 +42,7 @@ const blockedTerms = [
   "record"
 ];
 
-const requestSelect = [
-  "id",
-  "support_options",
-  "safe_context_note",
-  "status",
-  "facility_approved_at",
-  "partner_assigned_at",
-  "partner_outcome",
-  "requester_update_released_at",
-  "created_at",
-  "updated_at"
-].join(",");
+const requestSelect = "id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update_released_at,created_at,updated_at" as const;
 
 function json(status: number, body: Record<string, unknown>) {
   return NextResponse.json(body, {

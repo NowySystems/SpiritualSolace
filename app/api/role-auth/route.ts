@@ -22,6 +22,11 @@ type AuthAttempt = {
   error: AuthFailure | null;
 };
 
+type MembershipRow = {
+  role: string;
+  status: string;
+};
+
 const allowedRoles = new Set<RoleKey>(["requester", "facility", "partner"]);
 
 function isRole(value: unknown): value is RoleKey {
@@ -40,12 +45,62 @@ function cleanMode(value: unknown): AuthMode {
   return value === "sign-up" ? "sign-up" : "sign-in";
 }
 
-function roleFromUser(user: AuthSuccess["user"] | null | undefined): RoleKey | null {
+function rolesFromMetadata(user: AuthSuccess["user"] | null | undefined) {
+  const roles = new Set<RoleKey>();
   const appRole = user?.app_metadata?.churchwork_role;
-  if (isRole(appRole)) return appRole;
-
   const userRole = user?.user_metadata?.churchwork_role;
-  return userRole === "requester" ? "requester" : null;
+
+  if (isRole(appRole)) roles.add(appRole);
+  if (userRole === "requester") roles.add("requester");
+
+  return roles;
+}
+
+function addMembershipRole(roles: Set<RoleKey>, membershipRole: string) {
+  if (membershipRole === "requester") roles.add("requester");
+  if (membershipRole === "facility_admin" || membershipRole === "facility_staff") roles.add("facility");
+  if (membershipRole === "partner_admin" || membershipRole === "partner_user") roles.add("partner");
+}
+
+async function approvedPortalRoles(
+  env: ReturnType<typeof getSupabaseServerEnv>,
+  token: string | undefined,
+  user: AuthSuccess["user"] | null | undefined
+) {
+  const roles = rolesFromMetadata(user);
+
+  if (!token || !user?.id) {
+    return { roles, error: null as string | null };
+  }
+
+  const supabase = createClient(env.url, env.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  });
+
+  const { data, error } = await supabase
+    .from("role_memberships")
+    .select("role,status")
+    .eq("user_id", user.id)
+    .eq("status", "active");
+
+  if (error) {
+    return { roles, error: error.message };
+  }
+
+  for (const row of (data ?? []) as MembershipRow[]) {
+    addMembershipRole(roles, row.role);
+  }
+
+  return { roles, error: null as string | null };
 }
 
 function json(status: number, body: Record<string, unknown>) {
@@ -288,21 +343,45 @@ export async function POST(request: NextRequest) {
 
   const user = finalAttempt.data.user;
   const session = finalAttempt.data.session;
-  const actualRole = roleFromUser(user);
+  let roleVerified = mode === "sign-up" && role === "requester" && rolesFromMetadata(user).has("requester");
 
-  if (mode === "sign-in" && actualRole !== role) {
-    if (!actualRole) {
-      return json(403, {
+  if (mode === "sign-in") {
+    const roleCheck = await approvedPortalRoles(env, session?.access_token, user);
+
+    if (roleCheck.error) {
+      return json(503, {
         ok: false,
-        code: "role-not-assigned",
-        message: "This account does not have an approved ChurchWork pilot role yet. Contact the pilot admin before signing in."
+        code: "role-check-unavailable",
+        message: "ChurchWork role verification is temporarily unavailable."
       });
     }
 
-    return json(403, {
+    roleVerified = roleCheck.roles.has(role);
+
+    if (!roleVerified) {
+      const availableRoles = Array.from(roleCheck.roles);
+
+      if (availableRoles.length === 0) {
+        return json(403, {
+          ok: false,
+          code: "role-not-assigned",
+          message: "This account does not have an active ChurchWork pilot role yet. Contact the pilot admin before signing in."
+        });
+      }
+
+      return json(403, {
+        ok: false,
+        code: "wrong-role",
+        message: `This account is approved for ${availableRoles.join(" / ")} access, not ${role}. Use the correct ChurchWork portal.`
+      });
+    }
+  }
+
+  if (mode === "sign-up" && session?.access_token && !roleVerified) {
+    return json(500, {
       ok: false,
-      code: "wrong-role",
-      message: `This account is approved as ${actualRole}, not ${role}. Use the correct ChurchWork portal.`
+      code: "requester-role-setup-failed",
+      message: "Requester account was created, but its pilot role could not be verified."
     });
   }
 
@@ -312,7 +391,7 @@ export async function POST(request: NextRequest) {
     role,
     email: user?.email ?? email,
     userId: user?.id ?? null,
-    roleVerified: actualRole === role,
+    roleVerified,
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
     authSource: finalAttempt.source,
     message: mode === "sign-up"
@@ -320,7 +399,7 @@ export async function POST(request: NextRequest) {
       : "Signed in through Supabase auth."
   });
 
-  if (session?.access_token) {
+  if (session?.access_token && roleVerified) {
     result.cookies.set("churchwork_role_session", session.access_token, {
       httpOnly: true,
       secure: true,

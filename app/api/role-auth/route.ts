@@ -288,7 +288,15 @@ export async function POST(request: NextRequest) {
   const session = finalAttempt.data.session;
   const actualRole = roleFromUser(user);
 
-  if (mode === "sign-in" && actualRole && actualRole !== role) {
+  if (mode === "sign-in" && actualRole !== role) {
+    if (!actualRole) {
+      return json(403, {
+        ok: false,
+        code: "role-not-assigned",
+        message: "This account does not have an approved ChurchWork pilot role yet. Contact the pilot admin before signing in."
+      });
+    }
+
     return json(403, {
       ok: false,
       code: "wrong-role",

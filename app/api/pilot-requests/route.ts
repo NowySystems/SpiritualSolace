@@ -88,25 +88,6 @@ function requesterFromMetadata(user: AuthUser | null | undefined) {
   return user?.app_metadata?.churchwork_role === "requester" || user?.user_metadata?.churchwork_role === "requester";
 }
 
-async function requesterAccess(supabase: ReturnType<typeof createClient>, user: AuthUser) {
-  if (requesterFromMetadata(user)) {
-    return { allowed: true, error: false };
-  }
-
-  const { data, error } = await supabase
-    .from("role_memberships")
-    .select("id")
-    .eq("user_id", user.id)
-    .eq("role", "requester")
-    .eq("status", "active")
-    .limit(1);
-
-  return {
-    allowed: !error && Boolean(data?.length),
-    error: Boolean(error)
-  };
-}
-
 function workspaceStage(status: PilotRequestStatus) {
   if (status === "approved_for_partner") return "partner_assignment";
   if (status === "partner_outcome_logged" || status === "requester_updated") return "care_complete";
@@ -181,19 +162,31 @@ async function clientForSession() {
     };
   }
 
-  const access = await requesterAccess(supabase, user);
+  let requesterAllowed = requesterFromMetadata(user);
 
-  if (access.error) {
-    return {
-      error: json(503, {
-        ok: false,
-        code: "requester-role-check-unavailable",
-        message: "Requester role verification is temporarily unavailable."
-      })
-    };
+  if (!requesterAllowed) {
+    const { data: memberships, error: membershipError } = await supabase
+      .from("role_memberships")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("role", "requester")
+      .eq("status", "active")
+      .limit(1);
+
+    if (membershipError) {
+      return {
+        error: json(503, {
+          ok: false,
+          code: "requester-role-check-unavailable",
+          message: "Requester role verification is temporarily unavailable."
+        })
+      };
+    }
+
+    requesterAllowed = Boolean(memberships?.length);
   }
 
-  if (!access.allowed) {
+  if (!requesterAllowed) {
     return {
       error: json(403, {
         ok: false,

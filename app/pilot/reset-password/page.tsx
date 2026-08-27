@@ -8,7 +8,7 @@ export default function PilotResetPasswordPage() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [status, setStatus] = useState("Enter a new password for your ChurchWork pilot account.");
+  const [status, setStatus] = useState("Enter a new password for your ChurchWork account.");
   const [isBusy, setIsBusy] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -37,17 +37,17 @@ export default function PilotResetPasswordPage() {
 
     setPassword("");
     setConfirmPassword("");
-    setStatus("Password updated. You can return to pilot sign in.");
+    setStatus("Password updated. Return to the ChurchWork home page and choose your login portal.");
     setIsBusy(false);
   }
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#f7f3ea] px-6 py-12 text-[#102b3a]">
       <section className="w-full max-w-xl rounded-[2rem] border border-[#d8d0c0] bg-white p-8 shadow-xl">
-        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">ChurchWork Pilot</p>
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-[#789052]">ChurchWork</p>
         <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.04em]">Create a new password</h1>
         <p className="mt-4 text-sm leading-7 text-[#4d5d55]">
-          Use the password reset link from your email, then choose a new password for your pilot account.
+          Use the password reset link from your email, then choose a new password for your ChurchWork account.
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -94,8 +94,8 @@ export default function PilotResetPasswordPage() {
         </form>
 
         <div className="mt-5 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/pilot" className="font-bold text-[#173b2d] underline-offset-4 hover:underline">
-            Return to pilot sign in
+          <Link href="/" className="font-bold text-[#173b2d] underline-offset-4 hover:underline">
+            Back to ChurchWork home
           </Link>
           <p className="font-semibold text-[#4d5d55]">{status}</p>
         </div>

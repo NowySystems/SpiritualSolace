@@ -6,14 +6,47 @@ const INTERNAL_PREFIXES = [
   "/mvp",
   "/demo",
   "/preview",
+  "/design",
   "/ai-map",
   "/synthetic-smoke",
   "/pilot",
   "/pilot-auth-check",
   "/pilot-auth-server-check",
   "/pwa-check",
-  "/pwa-reset"
+  "/pwa-reset",
+  "/app",
+  "/care-binder",
+  "/advisor-intelligence",
+  "/daily-brief",
+  "/donor-market-intelligence",
+  "/evidence-intelligence",
+  "/fund-class-map",
+  "/funding-search",
+  "/governance",
+  "/grant-radar",
+  "/grants-gov-live",
+  "/guardrails",
+  "/keyword-category-manager",
+  "/landing-v1",
+  "/learning-loop",
+  "/opportunity-database",
+  "/past-awards",
+  "/proposal-scanner",
+  "/reports",
+  "/request-care",
+  "/review-queue",
+  "/source-database",
+  "/source-watch",
+  "/api/churchwork-demo-audio",
+  "/api/grants-gov",
+  "/api/review-queue",
+  "/api/source-pilots",
+  "/api/usaspending"
 ];
+
+const PUBLIC_RECOVERY_PATHS = new Set([
+  "/pilot/reset-password"
+]);
 
 function internalKey() {
   const value = process.env.CHURCHWORK_INTERNAL_ACCESS_KEY?.trim();
@@ -36,6 +69,12 @@ function addPrivateHeaders(response: NextResponse) {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Password recovery must remain reachable from the Supabase recovery email even
+  // though other legacy /pilot/* diagnostics are internal-only.
+  if (PUBLIC_RECOVERY_PATHS.has(pathname)) {
+    return addPrivateHeaders(NextResponse.next());
+  }
 
   // The operator console has its own owner/platform-admin Supabase authentication.
   // Keep it private/noindex, but do not hide its login screen behind the generic

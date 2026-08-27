@@ -1,17 +1,5 @@
-"use client";
-
-import { AdminPortalAccessHub } from "@/components/AdminPortalAccessHub";
-import { PilotAuthGate } from "@/components/PilotAuthGate";
-import { PolicyAcceptanceGate } from "@/components/PolicyAcceptanceGate";
+import { redirect } from "next/navigation";
 
 export default function PilotPage() {
-  return (
-    <PilotAuthGate>
-      {(session) => (
-        <PolicyAcceptanceGate session={session}>
-          <AdminPortalAccessHub session={session} />
-        </PolicyAcceptanceGate>
-      )}
-    </PilotAuthGate>
-  );
+  redirect("/admin");
 }

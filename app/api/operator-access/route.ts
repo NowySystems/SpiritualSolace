@@ -16,6 +16,22 @@ type RoleName =
 
 type RoleStatus = "active" | "disabled";
 
+type SnapshotRole = {
+  role?: unknown;
+  status?: unknown;
+  organization_slug?: unknown;
+};
+
+type SnapshotUser = {
+  id?: unknown;
+  roles?: unknown;
+};
+
+type OperatorSnapshot = {
+  current_user_id?: unknown;
+  users?: unknown;
+};
+
 const allowedRolesByOrg: Record<OrgSlug, Set<RoleName>> = {
   churchwork: new Set<RoleName>(["owner", "platform_admin", "requester"]),
   "grandview-post-acute": new Set<RoleName>(["facility_admin", "facility_staff"]),
@@ -42,6 +58,24 @@ function isOrg(value: unknown): value is OrgSlug {
 
 function isStatus(value: unknown): value is RoleStatus {
   return value === "active" || value === "disabled";
+}
+
+function currentOperatorIsOwner(snapshot: unknown, fallbackUserId: string) {
+  if (!snapshot || typeof snapshot !== "object") return false;
+
+  const typedSnapshot = snapshot as OperatorSnapshot;
+  const currentUserId = typeof typedSnapshot.current_user_id === "string"
+    ? typedSnapshot.current_user_id
+    : fallbackUserId;
+  const users = Array.isArray(typedSnapshot.users) ? typedSnapshot.users as SnapshotUser[] : [];
+  const currentUser = users.find((user) => user && typeof user.id === "string" && user.id === currentUserId);
+  const roles = currentUser && Array.isArray(currentUser.roles) ? currentUser.roles as SnapshotRole[] : [];
+
+  return roles.some((entry) =>
+    entry?.role === "owner"
+    && entry?.status === "active"
+    && entry?.organization_slug === "churchwork"
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -111,12 +145,20 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const { error: operatorError } = await supabase.rpc("get_churchwork_pilot_operator_snapshot");
+  const { data: operatorSnapshot, error: operatorError } = await supabase.rpc("get_churchwork_pilot_operator_snapshot");
   if (operatorError) {
     return json(403, {
       ok: false,
       code: "operator-role-required",
       message: "This account does not have active ChurchWork owner/admin access."
+    });
+  }
+
+  if (role === "owner" && !currentOperatorIsOwner(operatorSnapshot, userData.user.id)) {
+    return json(403, {
+      ok: false,
+      code: "owner-role-required",
+      message: "Only an active ChurchWork owner can manage Owner access."
     });
   }
 
@@ -128,13 +170,48 @@ export async function POST(request: NextRequest) {
   });
 
   if (error) {
-    const missingAccount = /has not signed up yet/i.test(error.message);
-    return json(missingAccount ? 409 : 400, {
+    const errorMessage = error.message ?? "";
+    const missingAccount = /has not signed up yet/i.test(errorMessage);
+    const ownerRequired = /Owner access required to manage owner role/i.test(errorMessage);
+    const lastOwner = /Cannot disable the last active ChurchWork owner/i.test(errorMessage);
+    const roleOrgMismatch = /(roles must belong to|Platform\/requester roles must belong to)/i.test(errorMessage);
+
+    if (missingAccount) {
+      return json(409, {
+        ok: false,
+        code: "account-not-created",
+        message: "That person must create a ChurchWork account before a role can be assigned."
+      });
+    }
+
+    if (ownerRequired) {
+      return json(403, {
+        ok: false,
+        code: "owner-role-required",
+        message: "Only an active ChurchWork owner can manage Owner access."
+      });
+    }
+
+    if (lastOwner) {
+      return json(409, {
+        ok: false,
+        code: "last-owner-required",
+        message: "ChurchWork must keep at least one active owner."
+      });
+    }
+
+    if (roleOrgMismatch) {
+      return json(400, {
+        ok: false,
+        code: "role-org-mismatch",
+        message: "That role does not belong to the selected ChurchWork organization."
+      });
+    }
+
+    return json(400, {
       ok: false,
-      code: missingAccount ? "account-not-created" : "access-change-rejected",
-      message: missingAccount
-        ? "That person must create a ChurchWork account before a role can be assigned."
-        : "ChurchWork rejected that access change."
+      code: "access-change-rejected",
+      message: "ChurchWork rejected that access change."
     });
   }
 

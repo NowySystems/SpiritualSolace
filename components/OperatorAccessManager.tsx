@@ -18,6 +18,7 @@ type OperatorUser = {
 type OverviewShape = {
   ok?: boolean;
   snapshot?: {
+    current_user_id?: string;
     users?: OperatorUser[];
   };
 };
@@ -35,11 +36,10 @@ const orgOptions: Array<{ value: OrgSlug; label: string }> = [
   { value: "hope-church", label: "Hope Church" }
 ];
 
-const roleOptions: Record<OrgSlug, RoleOption[]> = {
+const baseRoleOptions: Record<OrgSlug, RoleOption[]> = {
   churchwork: [
     { value: "requester", label: "Requester" },
-    { value: "platform_admin", label: "Platform admin" },
-    { value: "owner", label: "Owner" }
+    { value: "platform_admin", label: "Platform admin" }
   ],
   "grandview-post-acute": [
     { value: "facility_staff", label: "Facility staff" },
@@ -51,6 +51,15 @@ const roleOptions: Record<OrgSlug, RoleOption[]> = {
   ]
 };
 
+const ownerRoleOption: RoleOption = { value: "owner", label: "Owner" };
+
+function rolesForOrg(orgSlug: OrgSlug, canManageOwners: boolean) {
+  if (orgSlug === "churchwork" && canManageOwners) {
+    return [...baseRoleOptions.churchwork, ownerRoleOption];
+  }
+  return baseRoleOptions[orgSlug];
+}
+
 function messageFromBody(body: unknown, fallback: string) {
   if (body && typeof body === "object" && "message" in body && typeof body.message === "string") return body.message;
   return fallback;
@@ -58,6 +67,7 @@ function messageFromBody(body: unknown, fallback: string) {
 
 export function OperatorAccessManager() {
   const [users, setUsers] = useState<OperatorUser[] | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [email, setEmail] = useState("");
   const [orgSlug, setOrgSlug] = useState<OrgSlug>("grandview-post-acute");
   const [role, setRole] = useState("facility_staff");
@@ -65,7 +75,17 @@ export function OperatorAccessManager() {
   const [message, setMessage] = useState("Choose an existing ChurchWork account to update.");
   const [isBusy, setIsBusy] = useState(false);
 
-  const availableRoles = roleOptions[orgSlug];
+  const isOwner = useMemo(() => {
+    if (!users || !currentUserId) return false;
+    const currentUser = users.find((user) => user.id === currentUserId);
+    return Boolean(currentUser?.roles.some((entry) =>
+      entry.role === "owner"
+      && entry.status === "active"
+      && entry.organization_slug === "churchwork"
+    ));
+  }, [currentUserId, users]);
+
+  const availableRoles = useMemo(() => rolesForOrg(orgSlug, isOwner), [isOwner, orgSlug]);
   const accountEmails = useMemo(() => (users ?? []).map((user) => user.email).filter((value): value is string => Boolean(value)), [users]);
 
   useEffect(() => {
@@ -81,6 +101,7 @@ export function OperatorAccessManager() {
         return;
       }
 
+      setCurrentUserId(typeof body.snapshot.current_user_id === "string" ? body.snapshot.current_user_id : null);
       setUsers(Array.isArray(body.snapshot.users) ? body.snapshot.users : []);
     }
 
@@ -91,8 +112,9 @@ export function OperatorAccessManager() {
   }, []);
 
   function handleOrgChange(nextOrg: OrgSlug) {
+    const nextRoles = rolesForOrg(nextOrg, isOwner);
     setOrgSlug(nextOrg);
-    setRole(roleOptions[nextOrg][0]?.value ?? "requester");
+    setRole(nextRoles[0]?.value ?? "requester");
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -138,6 +160,11 @@ export function OperatorAccessManager() {
             </p>
             <div className="mt-5 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">
               Facility and Hope Church account creation stays deferred until rollout. This tool is ready for that handoff when those accounts exist.
+            </div>
+            <div className="mt-3 rounded-2xl border border-[#cfe4d5] bg-[#f1f8f3] p-4 text-sm font-semibold leading-6 text-[#173b2d]">
+              {isOwner
+                ? "Owner protection is active: ChurchWork must always retain at least one active owner."
+                : "Owner access can only be granted or disabled by an active ChurchWork owner."}
             </div>
           </div>
 

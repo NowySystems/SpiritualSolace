@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 type RoleKey = "requester" | "facility" | "partner";
 type SupportOption = "Prayer" | "Friendly visit" | "Encouragement" | "Pastoral call";
@@ -26,7 +26,6 @@ type PilotWorkspaceProps = {
 };
 
 const supportOptions: SupportOption[] = ["Prayer", "Friendly visit", "Encouragement", "Pastoral call"];
-const blockedTerms = ["diagnosis", "medication", "medicine", "treatment", "symptom", "insurance", "emergency", "doctor", "nurse", "pain", "clinical", "chart", "record"];
 const partnerOutcomes: Array<{ value: PartnerOutcome; label: string; detail: string }> = [
   { value: "prayer_logged", label: "Prayer logged", detail: "Prayer was provided or recorded for this request." },
   { value: "visit_planned", label: "Visit planned", detail: "A spiritual-care visit has been planned." },
@@ -93,20 +92,15 @@ async function signOut() {
 
 export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   const [support, setSupport] = useState<SupportOption[]>([]);
-  const [note, setNote] = useState("");
+  const [noMedicalAck, setNoMedicalAck] = useState(false);
   const [requests, setRequests] = useState<StoredPilotRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
   const [message, setMessage] = useState("Loading pilot workspace...");
 
-  const blockedMatches = useMemo(() => {
-    const lower = note.toLowerCase();
-    return blockedTerms.filter((term) => lower.includes(term));
-  }, [note]);
-
   const latestRequest = requests[0] ?? null;
-  const canSubmit = support.length > 0 && note.trim().length > 0 && blockedMatches.length === 0 && !isSaving;
+  const canSubmit = support.length > 0 && noMedicalAck && !isSaving;
 
   async function loadRequests() {
     setIsLoading(true);
@@ -149,12 +143,12 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   async function submitRequest() {
     if (!canSubmit) return;
     setIsSaving(true);
-    setMessage("Saving request for Grandview review...");
+    setMessage("Saving structured request for Grandview review...");
 
     const response = await fetch("/api/pilot-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ support, safeNote: note })
+      body: JSON.stringify({ support, noMedicalAck })
     }).catch(() => null);
 
     if (!response) {
@@ -176,7 +170,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     }
 
     setSupport([]);
-    setNote("");
+    setNoMedicalAck(false);
     setMessage("Request saved and sent to Grandview for review.");
     setIsSaving(false);
   }
@@ -260,7 +254,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
                   </h1>
                   <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-[#d9e7df] md:text-base">
                     {role === "requester"
-                      ? "Create a guided request and send it to Grandview review. Medical, emergency, insurance, chart, and treatment details stay out of this workflow."
+                      ? "Choose approved spiritual-care support options. ChurchWork does not accept requester notes, medical information, emergency details, insurance information, chart content, or treatment details."
                       : role === "facility"
                         ? "Grandview reviewers approve what may be shared with Hope Church and release completed safe updates back to requesters."
                         : "Hope Church receives only Grandview-approved spiritual-care context and records a structured, non-medical outcome."}
@@ -275,9 +269,9 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
 
             {role === "requester" ? (
               <Card>
-                <Eyebrow>Requester intake</Eyebrow>
+                <Eyebrow>Structured requester intake</Eyebrow>
                 <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">What kind of spiritual support would help?</h2>
-                <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-[#4f6259]">Use a guided request path. Keep the request spiritual-care only.</p>
+                <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-[#4f6259]">Select one or more approved spiritual-care categories. Requester free text is intentionally disabled for Pilot Safe v1.</p>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-2">
                   {supportOptions.map((option) => {
@@ -297,26 +291,22 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
                   })}
                 </div>
 
-                <label className="mt-6 block">
-                  <Eyebrow>Safe context note</Eyebrow>
-                  <textarea
-                    value={note}
-                    onChange={(event) => setNote(event.target.value)}
-                    rows={4}
-                    className="mt-3 w-full rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-4 text-base font-semibold leading-7 outline-[#0f6b54]"
-                    placeholder="Example: They would appreciate prayer and a calm visit this week."
+                <label className="mt-6 flex cursor-pointer items-start gap-4 rounded-2xl border border-[#cfe4d5] bg-[#f1f8f3] p-5">
+                  <input
+                    type="checkbox"
+                    checked={noMedicalAck}
+                    onChange={(event) => setNoMedicalAck(event.target.checked)}
+                    className="mt-1 h-5 w-5 shrink-0 accent-[#0f6b54]"
                   />
+                  <span>
+                    <span className="block text-sm font-black text-[#173b2d]">I confirm this is a spiritual-care request only.</span>
+                    <span className="mt-1 block text-sm font-semibold leading-6 text-[#4f6259]">I am not submitting medical, emergency, insurance, chart, diagnosis, medication, symptom, or treatment information. ChurchWork is not an emergency or clinical-care system.</span>
+                  </span>
                 </label>
 
-                {blockedMatches.length > 0 ? (
-                  <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold leading-6 text-red-900">
-                    Review needed: remove medical, emergency, insurance, chart, or treatment details before submitting.
-                  </div>
-                ) : (
-                  <div className="mt-4 rounded-2xl border border-[#cfe4d5] bg-[#f1f8f3] p-4 text-sm font-bold leading-6 text-[#173b2d]">
-                    Ready for Grandview review.
-                  </div>
-                )}
+                <div className="mt-4 rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-4 text-sm font-bold leading-6 text-[#4f6259]">
+                  ChurchWork will generate the safe request summary from your selected support categories. There is no requester note field.
+                </div>
 
                 <button type="button" onClick={submitRequest} disabled={!canSubmit} className={cx("mt-6 rounded-xl px-5 py-4 text-sm font-black shadow-lg transition", canSubmit ? "bg-[#082838] text-white hover:bg-[#0f3f35]" : "bg-[#d9dfd7] text-[#6a746e]")}>{isSaving ? "Saving..." : "Submit for Grandview review"}</button>
               </Card>
@@ -341,7 +331,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
                           <div>
                             <p className="text-xs font-black uppercase tracking-[0.15em] text-[#506a49]">{formatDate(request.created_at)} · {stageLabel(rawStatus)}</p>
                             <h3 className="mt-2 text-xl font-black text-[#173b2d]">{request.support.join(" + ") || "Spiritual-care request"}</h3>
-                            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-[#4f6259]">{request.safe_note || "No additional safe context."}</p>
+                            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-[#4f6259]">{request.safe_note || "Structured spiritual-care request."}</p>
                           </div>
                           <span className="rounded-full bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#0f6b54] shadow-sm">{stageLabel(rawStatus)}</span>
                         </div>
@@ -400,7 +390,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
                           <div>
                             <p className="text-xs font-black uppercase tracking-[0.15em] text-[#506a49]">{formatDate(request.created_at)} · Grandview approved</p>
                             <h3 className="mt-2 text-xl font-black text-[#173b2d]">{request.support.join(" + ") || "Spiritual-care assignment"}</h3>
-                            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-[#4f6259]">{request.safe_note || "No additional safe context."}</p>
+                            <p className="mt-3 max-w-3xl text-sm font-semibold leading-7 text-[#4f6259]">{request.safe_note || "Structured spiritual-care request."}</p>
                           </div>
                           <span className="rounded-full bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#0f6b54] shadow-sm">{outcomeLabel(request.partner_outcome)}</span>
                         </div>

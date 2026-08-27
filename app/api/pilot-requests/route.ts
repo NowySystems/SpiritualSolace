@@ -34,22 +34,6 @@ type AuthUser = {
 };
 
 const allowedSupport = new Set<SupportOption>(["Prayer", "Friendly visit", "Encouragement", "Pastoral call"]);
-const blockedTerms = [
-  "diagnosis",
-  "medication",
-  "medicine",
-  "treatment",
-  "symptom",
-  "insurance",
-  "emergency",
-  "doctor",
-  "nurse",
-  "pain",
-  "clinical",
-  "chart",
-  "record"
-];
-
 const requestSelect = "id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update,requester_update_released_at,created_at,updated_at" as const;
 
 function json(status: number, body: Record<string, unknown>) {
@@ -76,13 +60,8 @@ function cleanSupport(value: unknown) {
   return value.filter((item): item is SupportOption => typeof item === "string" && allowedSupport.has(item as SupportOption));
 }
 
-function cleanNote(value: unknown) {
-  return typeof value === "string" ? value.trim().slice(0, 1000) : "";
-}
-
-function blockedMatches(note: string) {
-  const lower = note.toLowerCase();
-  return blockedTerms.filter((term) => lower.includes(term));
+function structuredSafeSummary(support: SupportOption[]) {
+  return `Requested spiritual-care support: ${support.join(", ")}.`;
 }
 
 function requesterFromMetadata(user: AuthUser | null | undefined) {
@@ -233,22 +212,17 @@ export async function POST(request: NextRequest) {
   try {
     const payload = await request.json().catch(() => null);
     const support = cleanSupport(payload?.support);
-    const safeNote = cleanNote(payload?.safeNote);
-    const matches = blockedMatches(safeNote);
+    const noMedicalAck = payload?.noMedicalAck === true;
 
     if (support.length === 0) {
       return json(400, { ok: false, code: "support-required", message: "Choose at least one spiritual-care support option." });
     }
 
-    if (!safeNote) {
-      return json(400, { ok: false, code: "note-required", message: "Add a short spiritual-care context note." });
-    }
-
-    if (matches.length > 0) {
+    if (!noMedicalAck) {
       return json(400, {
         ok: false,
-        code: "guardrail-blocked",
-        message: "Remove medical, emergency, insurance, chart, or treatment details before submitting."
+        code: "no-medical-ack-required",
+        message: "Confirm that this request does not contain medical, emergency, insurance, chart, or treatment information."
       });
     }
 
@@ -256,6 +230,7 @@ export async function POST(request: NextRequest) {
     if ("error" in session) return session.error;
 
     const submittedAt = new Date().toISOString();
+    const safeNote = structuredSafeSummary(support);
     const { data, error: insertError } = await session.supabase
       .from("churchwork_pilot_requests")
       .insert({
@@ -268,7 +243,8 @@ export async function POST(request: NextRequest) {
           {
             event: "request_submitted",
             actor: "requester",
-            at: submittedAt
+            at: submittedAt,
+            no_medical_info_acknowledged: true
           }
         ]
       })

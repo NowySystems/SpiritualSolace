@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 const COOKIE_NAME = "churchwork_internal_access";
 
 const INTERNAL_PREFIXES = [
-  "/admin",
   "/mvp",
   "/demo",
   "/preview",
@@ -25,6 +24,10 @@ function isInternalPath(pathname: string) {
   return INTERNAL_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 
+function isAdminPath(pathname: string) {
+  return pathname === "/admin" || pathname.startsWith("/admin/");
+}
+
 function addPrivateHeaders(response: NextResponse) {
   response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
   response.headers.set("Cache-Control", "private, no-store");
@@ -33,6 +36,13 @@ function addPrivateHeaders(response: NextResponse) {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // The operator console has its own owner/platform-admin Supabase authentication.
+  // Keep it private/noindex, but do not hide its login screen behind the generic
+  // diagnostics/demo access key.
+  if (isAdminPath(pathname)) {
+    return addPrivateHeaders(NextResponse.next());
+  }
 
   if (!isInternalPath(pathname)) {
     return NextResponse.next();

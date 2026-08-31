@@ -57,6 +57,15 @@ function rolesFromMetadata(user: AuthSuccess["user"] | null | undefined) {
 }
 
 function addMembershipRole(roles: Set<RoleKey>, membershipRole: string) {
+  // ChurchWork owners/platform admins may enter any portal for operator oversight
+  // and demonstrations. Ordinary users remain strictly role-scoped.
+  if (membershipRole === "owner" || membershipRole === "platform_admin") {
+    roles.add("requester");
+    roles.add("facility");
+    roles.add("partner");
+    return;
+  }
+
   if (membershipRole === "requester") roles.add("requester");
   if (membershipRole === "facility_admin" || membershipRole === "facility_staff") roles.add("facility");
   if (membershipRole === "partner_admin" || membershipRole === "partner_user") roles.add("partner");

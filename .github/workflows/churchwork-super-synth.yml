@@ -45,4 +45,4 @@ jobs:
             churchwork-playwright-report
             test-results/churchwork-synthetic
           if-no-files-found: ignore
-          retention-days: 30
+          retention-days: 1

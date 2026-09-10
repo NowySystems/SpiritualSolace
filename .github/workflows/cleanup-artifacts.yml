@@ -15,21 +15,36 @@ permissions:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Delete artifacts older than 1 day
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          set -euo pipefail
+          set -u -o pipefail
           cutoff="$(date -u -d '1 day ago' +%s)"
-          gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
-            --jq '.artifacts[] | [.id, .created_at, .name] | @tsv' |
+          deleted=0
+          skipped=0
+          failed=0
+
           while IFS=$'\t' read -r id created name; do
+            [ -z "${id:-}" ] && continue
             created_epoch="$(date -u -d "$created" +%s)"
             if [ "$created_epoch" -lt "$cutoff" ]; then
               echo "Deleting artifact $id ($name) created $created"
-              gh api --method DELETE "repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}"
+              if gh api --method DELETE "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${id}" >/dev/null 2>&1; then
+                deleted=$((deleted + 1))
+              else
+                echo "Artifact $id could not be deleted (already gone or API rejected it); continuing"
+                failed=$((failed + 1))
+              fi
+            else
+              skipped=$((skipped + 1))
             fi
-          done
+          done < <(
+            gh api --paginate "/repos/${GITHUB_REPOSITORY}/actions/artifacts?per_page=100" \
+              --jq '.artifacts[] | [.id, .created_at, .name] | @tsv'
+          )
+
+          echo "Cleanup complete: deleted=$deleted recent_kept=$skipped delete_failures=$failed"

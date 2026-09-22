@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { OperatorPortalSwitcher } from "@/components/OperatorPortalSwitcher";
 
 export type ChurchWorkNavKey = "home" | "requests" | "new" | "assignments" | "completed" | "overview" | "organizations" | "users" | "activity" | "settings";
 
@@ -12,6 +13,7 @@ type NavItem = {
 
 type ChurchWorkAppShellProps = {
   organization: string;
+  currentPortal?: "requester" | "facility" | "partner" | "admin";
   accountLabel?: string;
   navItems: NavItem[];
   activeKey: ChurchWorkNavKey;
@@ -34,6 +36,7 @@ function Icon({ name }: { name: NavItem["icon"] }) {
 
 export function ChurchWorkAppShell({
   organization,
+  currentPortal,
   accountLabel = "My Account",
   navItems,
   activeKey,
@@ -98,6 +101,7 @@ export function ChurchWorkAppShell({
                 <p className="truncate text-sm font-extrabold text-[#334b55]">{organization}</p>
               </div>
               <div className="flex items-center gap-3">
+                {currentPortal ? <OperatorPortalSwitcher currentPortal={currentPortal} /> : null}
                 <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#dfece5] text-xs font-black text-[#164f3e]">CW</span>
                 <span className="hidden text-sm font-bold text-[#334b55] sm:inline">{accountLabel}</span>
               </div>

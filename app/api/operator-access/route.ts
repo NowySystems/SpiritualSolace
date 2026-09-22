@@ -80,7 +80,8 @@ function currentOperatorIsOwner(snapshot: unknown, fallbackUserId: string) {
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
-  const token = cookieStore.get("churchwork_operator_session")?.value;
+  const token = cookieStore.get("churchwork_operator_session")?.value
+    ?? cookieStore.get("churchwork_role_session")?.value;
 
   if (!token) {
     return json(401, {

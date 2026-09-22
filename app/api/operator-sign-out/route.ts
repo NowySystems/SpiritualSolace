@@ -11,13 +11,15 @@ export async function POST() {
     }
   );
 
-  response.cookies.set("churchwork_operator_session", "", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0
-  });
+  for (const name of ["churchwork_operator_session", "churchwork_role_session", "churchwork_role"]) {
+    response.cookies.set(name, "", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0
+    });
+  }
 
   return response;
 }

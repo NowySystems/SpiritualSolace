@@ -77,8 +77,8 @@ export function OperatorAuditFeed() {
   if (events === null) return null;
 
   return (
-    <section className="bg-[#edf4f0] px-5 pb-10 text-[#0d2b3b] md:px-8">
-      <div className="mx-auto max-w-[118rem] rounded-[1.5rem] border border-[#d9dfd7] bg-white p-6 shadow-sm shadow-[#0d2b3b]/5">
+    <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 text-[#123044] shadow-sm shadow-[#123044]/5">
+      <div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Audit trail</p>

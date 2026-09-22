@@ -15,7 +15,8 @@ function json(status: number, body: Record<string, unknown>) {
 
 export async function GET() {
   const cookieStore = await cookies();
-  const token = cookieStore.get("churchwork_operator_session")?.value;
+  const token = cookieStore.get("churchwork_operator_session")?.value
+    ?? cookieStore.get("churchwork_role_session")?.value;
 
   if (!token) {
     return json(401, {

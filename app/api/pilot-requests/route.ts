@@ -84,8 +84,8 @@ function toWorkspaceRequest(row: PilotRequestRow) {
     facility_review_status: facilityApproved ? "approved" : "pending",
     partner_assignment_status: partnerReported ? "reported" : row.partner_assigned_at ? "assigned" : "pending",
     requester_update_status: row.requester_update_released_at ? "released" : "pending",
-    partner_outcome: row.partner_outcome,
-    requester_update: row.requester_update,
+    partner_outcome: row.requester_update_released_at ? row.partner_outcome : null,
+    requester_update: row.requester_update_released_at ? row.requester_update : null,
     created_at: row.created_at,
     updated_at: row.updated_at
   };

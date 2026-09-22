@@ -19,7 +19,11 @@ export async function GET() {
     });
 
     if (!response.ok) {
-      console.error("[churchwork-keepalive] Supabase ping failed", { status: response.status });
+      const upstreamBody = await response.text().catch(() => "");
+      console.error("[churchwork-keepalive] Supabase ping failed", {
+        status: response.status,
+        detail: upstreamBody.slice(0, 240)
+      });
       return NextResponse.json({ ok: false }, { status: 503 });
     }
 

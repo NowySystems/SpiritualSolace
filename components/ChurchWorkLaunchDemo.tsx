@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type SceneKey =
   | "intro"
@@ -366,11 +366,71 @@ function SceneVisual({ scene }: { scene: Scene }) {
 export function ChurchWorkLaunchDemo() {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [narrationEnabled, setNarrationEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
   const scene = scenes[index];
   const percent = ((index + 1) / scenes.length) * 100;
 
+  const speakScene = useCallback((targetScene: Scene, advanceWhenDone: boolean) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setSpeechSupported(false);
+      return false;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(
+      `${targetScene.title} ${targetScene.body}`
+    );
+    utterance.lang = "en-US";
+    utterance.rate = 0.94;
+    utterance.pitch = 0.98;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find((voice) =>
+      voice.lang.toLowerCase().startsWith("en-us") &&
+      /natural|samantha|ava|aria|jenny|guy|davis/i.test(voice.name)
+    ) ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us"));
+
+    if (preferredVoice) utterance.voice = preferredVoice;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      if (advanceWhenDone) {
+        setIndex((value) => {
+          if (value >= scenes.length - 1) {
+            setPlaying(false);
+            return value;
+          }
+          return value + 1;
+        });
+      }
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setSpeechSupported(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+    return true;
+  }, []);
+
   useEffect(() => {
-    if (!playing) return;
+    if (!playing) {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      setIsSpeaking(false);
+      return;
+    }
+
+    if (narrationEnabled && speechSupported) {
+      const started = speakScene(scene, true);
+      if (started) return;
+    }
+
     const timer = window.setTimeout(() => {
       if (index >= scenes.length - 1) {
         setPlaying(false);
@@ -378,8 +438,15 @@ export function ChurchWorkLaunchDemo() {
       }
       setIndex((value) => value + 1);
     }, 6500);
+
     return () => window.clearTimeout(timer);
-  }, [index, playing]);
+  }, [index, narrationEnabled, playing, scene, speakScene, speechSupported]);
+
+  useEffect(() => () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+  }, []);
 
   const nextLabel = useMemo(() => index === scenes.length - 1 ? "Replay demo" : index === 0 ? "Start walkthrough" : "Next", [index]);
 
@@ -389,12 +456,34 @@ export function ChurchWorkLaunchDemo() {
       setPlaying(true);
       return;
     }
+
+    if (index === 0 && !playing) {
+      setPlaying(true);
+      return;
+    }
+
+    setPlaying(false);
     setIndex((value) => Math.min(value + 1, scenes.length - 1));
   }
 
   function back() {
     setPlaying(false);
     setIndex((value) => Math.max(value - 1, 0));
+  }
+
+  function replayNarration() {
+    setPlaying(false);
+    void speakScene(scene, false);
+  }
+
+  function toggleNarration() {
+    const nextValue = !narrationEnabled;
+    setNarrationEnabled(nextValue);
+
+    if (!nextValue && typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
   }
 
   return (
@@ -438,7 +527,7 @@ export function ChurchWorkLaunchDemo() {
             </div>
             <div className="mt-3 flex items-center justify-between text-[10px] font-bold text-[#7c8785]">
               <span>{index + 1} / {scenes.length}</span>
-              <span>{playing ? "Playing" : "Paused"}</span>
+              <span>{playing ? (isSpeaking && narrationEnabled ? "Narrating" : "Playing") : "Paused"}</span>
             </div>
 
             <div className="mt-7 flex flex-wrap gap-3">
@@ -451,6 +540,27 @@ export function ChurchWorkLaunchDemo() {
                   {playing ? "Pause" : "Auto-play"}
                 </button>
               ) : null}
+              <button
+                type="button"
+                onClick={toggleNarration}
+                className="rounded-xl border border-[#d4d1c8] bg-white/60 px-4 py-3 text-xs font-black text-[#65767a]"
+                aria-pressed={narrationEnabled}
+              >
+                {narrationEnabled ? "🔊 Narration on" : "🔇 Narration off"}
+              </button>
+              {speechSupported ? (
+                <button type="button" onClick={replayNarration} className="rounded-xl border border-[#d4d1c8] bg-white/60 px-4 py-3 text-xs font-black text-[#65767a]">
+                  ↻ Replay voice
+                </button>
+              ) : null}
+            </div>
+
+            <div className="mt-4 rounded-2xl border border-[#d9d3c7] bg-[#fffdf9]/70 p-4 backdrop-blur" aria-live="polite">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#71807e]">Narration</p>
+                <span className="text-[10px] font-bold text-[#87928f]">{speechSupported ? (narrationEnabled ? "Voice + captions" : "Captions only") : "Captions only"}</span>
+              </div>
+              <p className="mt-2 text-xs font-semibold leading-5 text-[#52676d]">{scene.title} {scene.body}</p>
             </div>
 
             <div className="mt-8 space-y-2">

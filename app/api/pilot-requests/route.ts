@@ -1,7 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseServerEnv } from "@/lib/supabase/env";
+import { getPilotRoleSession } from "@/lib/pilot-role-session";
 
 type SupportOption = "Prayer" | "Friendly visit" | "Encouragement" | "Pastoral call";
 type PilotRequestStatus =
@@ -24,13 +22,6 @@ type PilotRequestRow = {
   requester_update_released_at: string | null;
   created_at: string;
   updated_at: string;
-};
-
-type AuthUser = {
-  id: string;
-  email?: string;
-  user_metadata?: Record<string, unknown>;
-  app_metadata?: Record<string, unknown>;
 };
 
 const allowedSupport = new Set<SupportOption>(["Prayer", "Friendly visit", "Encouragement", "Pastoral call"]);
@@ -62,10 +53,6 @@ function cleanSupport(value: unknown) {
 
 function structuredSafeSummary(support: SupportOption[]) {
   return `Requested spiritual-care support: ${support.join(", ")}.`;
-}
-
-function requesterFromMetadata(user: AuthUser | null | undefined) {
-  return user?.app_metadata?.churchwork_role === "requester" || user?.user_metadata?.churchwork_role === "requester";
 }
 
 function workspaceStage(status: PilotRequestStatus) {
@@ -104,88 +91,10 @@ function toWorkspaceRequest(row: PilotRequestRow) {
   };
 }
 
-async function clientForSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("churchwork_role_session")?.value;
-
-  if (!token) {
-    return {
-      error: json(401, {
-        ok: false,
-        code: "missing-session",
-        message: "Sign in before using the pilot request workspace."
-      })
-    };
-  }
-
-  const env = getSupabaseServerEnv();
-  const supabase = createClient(env.url, env.anonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false
-    },
-    global: {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    }
-  });
-
-  const { data: userData, error: userError } = await supabase.auth.getUser(token);
-  const user = userData.user as AuthUser | null;
-
-  if (userError || !user) {
-    return {
-      error: json(401, {
-        ok: false,
-        code: "invalid-session",
-        message: "Your ChurchWork session is no longer valid. Sign in again."
-      })
-    };
-  }
-
-  let requesterAllowed = requesterFromMetadata(user);
-
-  if (!requesterAllowed) {
-    const { data: memberships, error: membershipError } = await supabase
-      .from("role_memberships")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("role", "requester")
-      .eq("status", "active")
-      .limit(1);
-
-    if (membershipError) {
-      return {
-        error: json(503, {
-          ok: false,
-          code: "requester-role-check-unavailable",
-          message: "Requester role verification is temporarily unavailable."
-        })
-      };
-    }
-
-    requesterAllowed = Boolean(memberships?.length);
-  }
-
-  if (!requesterAllowed) {
-    return {
-      error: json(403, {
-        ok: false,
-        code: "requester-role-required",
-        message: "Pilot request intake is available to requester accounts only."
-      })
-    };
-  }
-
-  return { supabase, user };
-}
-
 export async function GET() {
   try {
-    const session = await clientForSession();
-    if ("error" in session) return session.error;
+    const session = await getPilotRoleSession("requester");
+    if (!session.ok) return json(session.status, session);
 
     const { data, error: listError } = await session.supabase
       .from("churchwork_pilot_requests")
@@ -226,8 +135,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const session = await clientForSession();
-    if ("error" in session) return session.error;
+    const session = await getPilotRoleSession("requester");
+    if (!session.ok) return json(session.status, session);
 
     const submittedAt = new Date().toISOString();
     const safeNote = structuredSafeSummary(support);

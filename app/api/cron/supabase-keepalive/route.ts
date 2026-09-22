@@ -12,6 +12,19 @@ export async function GET() {
       "Cache-Control": "no-cache"
     };
 
+    const authResponse = await fetch(`${env.url}/auth/v1/settings`, {
+      method: "GET",
+      headers,
+      cache: "no-store"
+    });
+
+    if (!authResponse.ok) {
+      console.error("[churchwork-keepalive] Supabase auth health failed", {
+        status: authResponse.status
+      });
+      return NextResponse.json({ ok: false }, { status: 503 });
+    }
+
     const response = await fetch(`${env.url}/rest/v1/rpc/churchwork_keepalive`, {
       method: "POST",
       headers: {

@@ -303,6 +303,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   return (
     <ChurchWorkAppShell
       organization={organization}
+      currentPortal={role}
       navItems={navItems}
       activeKey={activeNav}
       onNavigate={navigate}

@@ -8,12 +8,9 @@ export async function GET() {
     const env = getSupabaseServerEnv();
     const headers: Record<string, string> = {
       apikey: env.anonKey,
+      Authorization: `Bearer ${env.anonKey}`,
       "Cache-Control": "no-cache"
     };
-
-    if (!env.anonKey.startsWith("sb_publishable_")) {
-      headers.Authorization = `Bearer ${env.anonKey}`;
-    }
 
     const response = await fetch(`${env.url}/rest/v1/`, {
       method: "GET",

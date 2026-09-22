@@ -68,7 +68,15 @@ function rawStatus(request: StoredPilotRequest) {
   return request.raw_status ?? request.status;
 }
 
-function statusLabel(status: string) {
+function statusLabel(status: string, role?: RoleKey) {
+  if (role === "requester") {
+    if (status === "facility_review") return "Under Review";
+    if (status === "approved_for_partner") return "Care in Progress";
+    if (status === "partner_outcome_logged") return "Update in Review";
+    if (status === "requester_updated" || status === "closed") return "Complete";
+    return "Submitted";
+  }
+
   if (status === "facility_review") return "Needs Review";
   if (status === "approved_for_partner") return "With Care Partner";
   if (status === "partner_outcome_logged") return "Ready to Release";
@@ -99,16 +107,26 @@ function progressIndex(status: string) {
 }
 
 function RequestProgress({ request, role }: { request: StoredPilotRequest; role: RoleKey }) {
+  const status = rawStatus(request);
   const labels = role === "requester"
-    ? ["Submitted", "Under Review", "Care in Progress", "Update", "Completed"]
+    ? ["Submitted", "Under Review", "Care in Progress", "Update Released"]
     : ["Submitted", "Under Review", "Partner Engaged", "Care Provided", "Update Released"];
-  const index = progressIndex(rawStatus(request));
+  const index = role === "requester"
+    ? status === "facility_review"
+      ? 1
+      : status === "approved_for_partner" || status === "partner_outcome_logged"
+        ? 2
+        : status === "requester_updated" || status === "closed"
+          ? 3
+          : 0
+    : Math.min(progressIndex(status), 4);
+  const gridClass = role === "requester" ? "grid-cols-4" : "grid-cols-5";
 
   return (
-    <div className="mt-5 grid grid-cols-5">
+    <div className={cx("mt-5 grid", gridClass)}>
       {labels.map((label, step) => {
-        const reached = step <= Math.min(index, 4);
-        const current = step === Math.min(index, 4);
+        const reached = step <= index;
+        const current = step === index;
         return (
           <div key={label} className="relative text-center">
             {step < labels.length - 1 ? (
@@ -357,7 +375,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
 }
 
 function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; onNew: () => void }) {
-  const current = requests.find((item) => rawStatus(item) !== "closed") ?? requests[0] ?? null;
+  const current = requests.find((item) => !["requester_updated", "closed"].includes(rawStatus(item))) ?? requests[0] ?? null;
   return (
     <>
       <PageTitle title="Welcome back" description="Here’s the latest on your spiritual-care requests." action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white">+ New Request</button>} />
@@ -365,7 +383,7 @@ function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: Store
         <Card className="p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <span className={cx("inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em]", statusPill(rawStatus(current)))}>{statusLabel(rawStatus(current))}</span>
+              <span className={cx("inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em]", statusPill(rawStatus(current)))}>{statusLabel(rawStatus(current), "requester")}</span>
               <h2 className="mt-3 text-xl font-black text-[#183f35]">Spiritual care request</h2>
               <p className="mt-1 text-sm font-semibold text-[#65767a]">Submitted {formatDate(current.created_at)} · {current.support.join(", ")}</p>
             </div>
@@ -392,7 +410,7 @@ function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: Store
           {requests.slice(0, 4).map((request) => (
             <button key={request.id} onClick={() => onOpen(request.id)} className="flex w-full items-center justify-between gap-4 border-b border-[#eee9df] px-6 py-4 text-left last:border-0 hover:bg-[#faf8f2]">
               <div><p className="font-extrabold text-[#183f35]">{request.support.join(" + ") || "Spiritual care"}</p><p className="mt-1 text-xs font-semibold text-[#778488]">{formatDate(request.created_at)} · {shortId(request.id)}</p></div>
-              <span className={cx("rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request))}</span>
+              <span className={cx("rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request), "requester")}</span>
             </button>
           ))}
         </Card>
@@ -411,7 +429,7 @@ function RequesterRequests({ requests, isLoading, onOpen, onNew }: { requests: S
             <button key={request.id} onClick={() => onOpen(request.id)} className="w-full rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div><p className="text-base font-black text-[#183f35]">Spiritual care request</p><p className="mt-1 text-sm font-semibold text-[#6f7e82]">{request.support.join(", ")} · Submitted {formatDate(request.created_at)}</p></div>
-                <div className="flex items-center gap-4"><span className={cx("rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request))}</span><span className="text-xl text-[#557079]">›</span></div>
+                <div className="flex items-center gap-4"><span className={cx("rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request), "requester")}</span><span className="text-xl text-[#557079]">›</span></div>
               </div>
             </button>
           ))}
@@ -605,7 +623,7 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
         eyebrow={role === "partner" ? "Hope Church" : role === "facility" ? "Grandview Post Acute" : "My request"}
         title={`Request #${shortId(request.id).replace("CW-", "")}`}
         description={`Submitted ${formatDate(request.created_at)}`}
-        action={<span className={cx("rounded-full px-4 py-2 text-xs font-black", statusPill(status))}>{statusLabel(status)}</span>}
+        action={<span className={cx("rounded-full px-4 py-2 text-xs font-black", statusPill(status))}>{statusLabel(status, role)}</span>}
       />
 
       <Card className="p-6">
@@ -628,7 +646,7 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
             <div className="mt-4 rounded-xl bg-[#eef5f1] p-4 text-xs font-semibold leading-5 text-[#4d6b60]">This is a spiritual-care workflow. Medical or clinical information is not part of the requester submission.</div>
           </Card>
 
-          {request.partner_outcome ? <Card className="p-6"><h2 className="text-xl font-black text-[#183f35]">Care partner update</h2><p className="mt-3 text-sm font-bold text-[#49635b]">{outcomeLabel(request.partner_outcome)}</p></Card> : null}
+          {request.partner_outcome && role !== "requester" ? <Card className="p-6"><h2 className="text-xl font-black text-[#183f35]">Care partner update</h2><p className="mt-3 text-sm font-bold text-[#49635b]">{outcomeLabel(request.partner_outcome)}</p></Card> : null}
           {role === "requester" && request.requester_update ? <Card className="border-[#bcd7c6] bg-[#f0f7f3] p-6"><h2 className="text-xl font-black text-[#183f35]">Your update</h2><p className="mt-3 text-sm font-bold leading-7 text-[#355d4e]">{request.requester_update}</p></Card> : null}
         </div>
 
@@ -651,7 +669,7 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
                 {status === "facility_review" ? "Grandview is reviewing your request."
                   : status === "approved_for_partner" ? "A care partner is working on your request."
                   : status === "partner_outcome_logged" ? "Grandview is reviewing the care partner update."
-                  : status === "requester_updated" ? "A safe update has been released to you."
+                  : status === "requester_updated" || status === "closed" ? "Your update has been released. This request is complete—no further action is needed."
                   : "This request is complete."}
               </p>
             )}
@@ -663,7 +681,7 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
               <ActivityItem done label="Request submitted" detail={formatDate(request.created_at, true)} />
               <ActivityItem done={progressIndex(status) >= 2} label="Facility review" detail={progressIndex(status) >= 2 ? "Approved" : "In review"} />
               <ActivityItem done={progressIndex(status) >= 3} label="Care partner" detail={request.partner_outcome ? outcomeLabel(request.partner_outcome) : progressIndex(status) >= 2 ? "Engaged" : "Pending"} />
-              <ActivityItem done={progressIndex(status) >= 4} label="Requester update" detail={request.requester_update_status === "released" ? "Released" : "Pending"} />
+              <ActivityItem done={progressIndex(status) >= 4} label={role === "requester" ? "Update released" : "Requester update"} detail={request.requester_update_status === "released" ? "Released · complete" : "Pending"} />
             </div>
           </Card>
         </div>

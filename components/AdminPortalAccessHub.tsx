@@ -192,7 +192,7 @@ export function AdminPortalAccessHub() {
   ];
 
   return (
-    <ChurchWorkAppShell organization="Platform Admin" accountLabel={operatorEmail ?? "Operator"} navItems={navItems} activeKey={activeNav} onNavigate={setActiveNav}>
+    <ChurchWorkAppShell organization="Platform Admin" currentPortal="admin" accountLabel={operatorEmail ?? "Operator"} navItems={navItems} activeKey={activeNav} onNavigate={setActiveNav}>
       <div className="mb-5 flex justify-end gap-4">
         <button onClick={() => void loadOverview()} disabled={isBusy} className="text-xs font-extrabold text-[#65767a] hover:text-[#164f3e]">Refresh</button>
         <button onClick={() => void handleSignOut()} disabled={isBusy} className="text-xs font-extrabold text-[#65767a] hover:text-[#164f3e]">Sign out</button>

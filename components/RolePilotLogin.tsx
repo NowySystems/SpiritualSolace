@@ -94,7 +94,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       const body = await response.json().catch(() => null);
 
       if (!response.ok || !body?.ok) {
-        setStatus(messageFromResponse(body, "ChurchWork auth did not complete. Check the server auth diagnostics."));
+        setStatus(messageFromResponse(body, "ChurchWork sign-in could not complete. Please try again."));
         setIsBusy(false);
         return;
       }
@@ -115,7 +115,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       setStatus(`${messageFromResponse(body, "Signed in.")} Opening pilot MVP...`);
       window.location.assign("/pilot-mvp");
     } catch {
-      setStatus("ChurchWork server auth route is unreachable. Check the latest deploy and /pilot-auth-server-check.");
+      setStatus("ChurchWork sign-in is temporarily unavailable. Please try again in a minute.");
       setIsBusy(false);
     }
   }

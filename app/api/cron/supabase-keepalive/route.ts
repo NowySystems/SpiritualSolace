@@ -12,15 +12,19 @@ export async function GET() {
       "Cache-Control": "no-cache"
     };
 
-    const response = await fetch(`${env.url}/rest/v1/`, {
-      method: "GET",
-      headers,
+    const response = await fetch(`${env.url}/rest/v1/rpc/churchwork_keepalive`, {
+      method: "POST",
+      headers: {
+        ...headers,
+        "Content-Type": "application/json"
+      },
+      body: "{}",
       cache: "no-store"
     });
 
     if (!response.ok) {
       const upstreamBody = await response.text().catch(() => "");
-      console.error("[churchwork-keepalive] Supabase ping failed", {
+      console.error("[churchwork-keepalive] Supabase heartbeat failed", {
         status: response.status,
         detail: upstreamBody.slice(0, 240)
       });

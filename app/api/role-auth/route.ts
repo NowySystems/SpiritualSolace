@@ -138,20 +138,6 @@ function isNetworkAuthError(message: string) {
   return /fetch failed|failed to fetch|network|timeout|undici|econnreset|enotfound|etimedout/i.test(message);
 }
 
-function keyKind(key: string) {
-  if (key.startsWith("sb_publishable_")) return "publishable";
-  if (key.startsWith("eyJ")) return "jwt-anon";
-  return "unknown";
-}
-
-function safeHost(url: string) {
-  try {
-    return new URL(url).host;
-  } catch {
-    return "invalid-url";
-  }
-}
-
 function bodyMessage(body: Record<string, unknown>, fallback: string) {
   return typeof body.msg === "string"
     ? body.msg
@@ -324,29 +310,53 @@ export async function POST(request: NextRequest) {
   try {
     env = getSupabaseServerEnv();
   } catch (error) {
-    return json(500, {
+    console.error("[churchwork-role-auth] missing server auth configuration", error);
+    return json(503, {
       ok: false,
-      code: "missing-env",
-      message: error instanceof Error ? error.message : "Missing Supabase environment configuration."
+      code: "auth-service-unavailable",
+      message: "ChurchWork sign-in is temporarily unavailable. Please try again shortly."
     });
   }
 
   const primaryAttempt = await supabaseJsAttempt(env, mode, role, email, password);
-  const shouldTryFallback = primaryAttempt.error && isNetworkAuthError(primaryAttempt.error.message);
-  const finalAttempt = shouldTryFallback
+  const shouldTryFallback = Boolean(primaryAttempt.error && isNetworkAuthError(primaryAttempt.error.message));
+  let finalAttempt = shouldTryFallback
     ? await restFallbackAttempt(env, mode, role, email, password)
     : primaryAttempt;
 
-  if (finalAttempt.error || !finalAttempt.data) {
-    const primaryNote = shouldTryFallback && primaryAttempt.error
-      ? ` Primary auth failed first: ${primaryAttempt.error.message}.`
-      : "";
-    const diagnostic = `host=${safeHost(env.url)} key=${keyKind(env.anonKey)} source=${finalAttempt.source}.`;
+  if (finalAttempt.error && isNetworkAuthError(finalAttempt.error.message)) {
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    finalAttempt = await restFallbackAttempt(env, mode, role, email, password);
+  }
 
-    return json(finalAttempt.error?.status || 401, {
+  if (finalAttempt.error || !finalAttempt.data) {
+    const networkFailure = Boolean(finalAttempt.error && isNetworkAuthError(finalAttempt.error.message));
+
+    if (networkFailure) {
+      console.error("[churchwork-role-auth] authentication provider unavailable", {
+        source: finalAttempt.source,
+        status: finalAttempt.error?.status,
+        message: finalAttempt.error?.message
+      });
+
+      return json(503, {
+        ok: false,
+        code: "auth-service-unavailable",
+        message: "ChurchWork sign-in is temporarily unavailable. Please try again in a minute."
+      });
+    }
+
+    const rejectedStatus = finalAttempt.error?.status || 401;
+    const rejectedMessage = mode === "sign-in" && (rejectedStatus === 400 || rejectedStatus === 401)
+      ? "Email or password is incorrect."
+      : mode === "sign-up"
+        ? "ChurchWork could not create that requester account. Check the email and password and try again."
+        : "ChurchWork could not sign you in.";
+
+    return json(rejectedStatus, {
       ok: false,
-      code: shouldTryFallback ? "supabase-auth-fallback-failed" : "supabase-auth-rejected",
-      message: `${finalAttempt.error?.message ?? "Supabase auth failed."} ${diagnostic}${primaryNote}`
+      code: "auth-rejected",
+      message: rejectedMessage
     });
   }
 
@@ -404,8 +414,8 @@ export async function POST(request: NextRequest) {
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
     authSource: finalAttempt.source,
     message: mode === "sign-up"
-      ? "Requester account created. Check email confirmation settings if sign-in is not immediate."
-      : "Signed in through Supabase auth."
+      ? "Requester account created. Check your email if confirmation is required."
+      : "Signed in."
   });
 
   if (session?.access_token && roleVerified) {

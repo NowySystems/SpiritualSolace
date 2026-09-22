@@ -34,7 +34,7 @@ create policy "Requester can read own pilot requests"
 on public.churchwork_pilot_requests
 for select
 to authenticated
-using (requester_user_id = auth.uid());
+using (requester_user_id = (select auth.uid()));
 
 drop policy if exists "Requester can create own pilot requests"
 on public.churchwork_pilot_requests;
@@ -43,17 +43,14 @@ create policy "Requester can create own pilot requests"
 on public.churchwork_pilot_requests
 for insert
 to authenticated
-with check (requester_user_id = auth.uid());
+with check (requester_user_id = (select auth.uid()));
 
+-- Requester editing is intentionally not enabled yet.
 drop policy if exists "Requester can update own pilot requests"
 on public.churchwork_pilot_requests;
 
-create policy "Requester can update own pilot requests"
-on public.churchwork_pilot_requests
-for update
-to authenticated
-using (requester_user_id = auth.uid())
-with check (requester_user_id = auth.uid());
+drop policy if exists "Requester can update own draft requests"
+on public.churchwork_pilot_requests;
 
 create index if not exists churchwork_pilot_requests_requester_idx
 on public.churchwork_pilot_requests (requester_user_id, created_at desc);
@@ -64,6 +61,7 @@ on public.churchwork_pilot_requests (status, created_at desc);
 create or replace function public.set_churchwork_pilot_requests_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -78,3 +76,8 @@ create trigger set_churchwork_pilot_requests_updated_at
 before update on public.churchwork_pilot_requests
 for each row
 execute function public.set_churchwork_pilot_requests_updated_at();
+
+-- Requester pilot intake currently needs create + reload only.
+-- Keep anonymous users out and avoid granting update/truncate until requester editing is intentionally implemented.
+revoke all privileges on table public.churchwork_pilot_requests from anon, authenticated;
+grant select, insert on table public.churchwork_pilot_requests to authenticated;

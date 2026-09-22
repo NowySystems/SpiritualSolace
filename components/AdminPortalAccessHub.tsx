@@ -1,156 +1,302 @@
 "use client";
 
-type AdminPortalAccessHubProps = {
-  session?: { user?: { email?: string | null } } | null;
+import { FormEvent, useEffect, useState } from "react";
+import { ChurchWorkAppShell, type ChurchWorkNavKey } from "@/components/ChurchWorkAppShell";
+import { OperatorAccessManager } from "@/components/OperatorAccessManager";
+import { OperatorAuditFeed } from "@/components/OperatorAuditFeed";
+
+type PilotSummary = {
+  requests_total: number;
+  facility_review: number;
+  approved_for_partner: number;
+  partner_outcome_logged: number;
+  requester_updated: number;
+  closed: number;
 };
 
-const primaryCards = [
-  {
-    label: "Pilot MVP Workflow",
-    href: "/mvp",
-    eyebrow: "Working pilot surface",
-    description: "Run the active ChurchWork pilot workflow: requester intake, facility review, partner assignment, outcome, and requester status.",
-    status: "Primary"
-  },
-  {
-    label: "Requester Login",
-    href: "/requester-login",
-    eyebrow: "Role login",
-    description: "Open the requester-facing login entrance exactly as a family or requester would see it.",
-    status: "Portal"
-  },
-  {
-    label: "Facility Login",
-    href: "/facility-login",
-    eyebrow: "Role login",
-    description: "Open the facility reviewer login entrance for Grandview-style review and release control.",
-    status: "Portal"
-  },
-  {
-    label: "Partner Login",
-    href: "/partner-login",
-    eyebrow: "Role login",
-    description: "Open the approved partner login entrance for assignment and safe report-back review.",
-    status: "Portal"
-  }
-];
+type PilotStaffing = {
+  grandview_reviewers: number;
+  hope_partner_users: number;
+  pending_facility_invites: number;
+};
 
-const backendCards = [
-  { label: "Public Site", href: "/", eyebrow: "Front door", status: "Public" },
-  { label: "Synthetic Smoke", href: "/synthetic-smoke", eyebrow: "BI contract", status: "Test" },
-  { label: "AI Map", href: "/ai-map", eyebrow: "BI-readable map", status: "Contract" },
-  { label: "Pilot Auth Check", href: "/pilot-auth-check", eyebrow: "Browser diagnostic", status: "Diagnostic" },
-  { label: "Server Auth Check", href: "/pilot-auth-server-check", eyebrow: "Server diagnostic", status: "Diagnostic" },
-  { label: "Safe Preview Hub", href: "/preview", eyebrow: "Static review", status: "Internal" },
-  { label: "Synthetic Demo", href: "/demo/synthetic", eyebrow: "Demo theater", status: "Internal" },
-  { label: "PWA Check", href: "/pwa-check", eyebrow: "Install diagnostic", status: "Diagnostic" }
-];
+type OperatorRole = { role: string; status: string; organization_name: string; organization_slug: string };
+type OperatorUser = { id: string; email: string | null; full_name: string | null; status: string; created_at: string; roles: OperatorRole[] };
+type OperatorRequest = {
+  id: string;
+  requester_email: string | null;
+  support_options: string[] | null;
+  status: string;
+  partner_outcome: string | null;
+  requester_update: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
-const pilotPath = [
-  "Requester enters the correct role login.",
-  "Facility reviews the request before anything leaves the facility side.",
-  "Partner sees only approved context.",
-  "Partner logs a structured spiritual-care outcome.",
-  "Requester sees approved status only.",
-  "BI/synthetic checks confirm route boundaries and guardrails."
-];
+type OperatorSnapshot = {
+  is_admin: boolean;
+  current_user_id: string;
+  summary: PilotSummary;
+  staffing: PilotStaffing;
+  users: OperatorUser[];
+  recent_requests: OperatorRequest[];
+};
 
-function StatusPill({ children }: { children: string }) {
-  return <span className="rounded-full border border-[#d6a943]/40 bg-[#fff8e7] px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-[#7a5b20]">{children}</span>;
+type OverviewResponse = {
+  ok: boolean;
+  email?: string | null;
+  diagnosticsAccessConfigured?: boolean;
+  snapshot?: OperatorSnapshot;
+  message?: string;
+};
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown time";
+  return date.toLocaleString([], { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubProps) {
-  const userEmail = session?.user?.email ?? "Internal operator";
+function statusLabel(status: string) {
+  if (status === "facility_review") return "Needs Review";
+  if (status === "approved_for_partner") return "With Care Partner";
+  if (status === "partner_outcome_logged") return "Ready to Release";
+  if (status === "requester_updated") return "Requester Updated";
+  if (status === "closed") return "Closed";
+  return status.replaceAll("_", " ");
+}
+
+function statusClass(status: string) {
+  if (status === "facility_review") return "bg-[#fff0dc] text-[#85561a]";
+  if (status === "approved_for_partner") return "bg-[#e2edf8] text-[#285e8b]";
+  if (status === "partner_outcome_logged") return "bg-[#e5f1e8] text-[#2d6b50]";
+  return "bg-[#e7efe8] text-[#315f49]";
+}
+
+function messageFromBody(body: unknown, fallback: string) {
+  if (body && typeof body === "object" && "message" in body && typeof body.message === "string") return body.message;
+  return fallback;
+}
+
+function Metric({ value, label, tone }: { value: number; label: string; tone: string }) {
+  return (
+    <article className={`rounded-2xl border border-[#ded9cf] p-5 shadow-sm ${tone}`}>
+      <p className="text-3xl font-black tracking-[-0.04em] text-[#123044]">{value}</p>
+      <p className="mt-1 text-sm font-extrabold text-[#435b65]">{label}</p>
+    </article>
+  );
+}
+
+export function AdminPortalAccessHub() {
+  const [snapshot, setSnapshot] = useState<OperatorSnapshot | null>(null);
+  const [operatorEmail, setOperatorEmail] = useState<string | null>(null);
+  const [diagnosticsConfigured, setDiagnosticsConfigured] = useState(false);
+  const [activeNav, setActiveNav] = useState<ChurchWorkNavKey>("overview");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isBusy, setIsBusy] = useState(true);
+  const [message, setMessage] = useState("Checking operator session...");
+
+  async function loadOverview() {
+    setIsBusy(true);
+    const response = await fetch("/api/operator-overview", { cache: "no-store" }).catch(() => null);
+    if (!response) {
+      setSnapshot(null);
+      setMessage("ChurchWork operator service is unreachable.");
+      setIsBusy(false);
+      return;
+    }
+    const body = await response.json().catch(() => null) as OverviewResponse | null;
+    if (!response.ok || !body?.ok || !body.snapshot) {
+      setSnapshot(null);
+      setOperatorEmail(null);
+      setMessage(response.status === 401 ? "Sign in with a ChurchWork owner/admin account." : messageFromBody(body, "Operator data is unavailable."));
+      setIsBusy(false);
+      return;
+    }
+    setSnapshot(body.snapshot);
+    setOperatorEmail(body.email ?? null);
+    setDiagnosticsConfigured(body.diagnosticsAccessConfigured === true);
+    setMessage("Current");
+    setIsBusy(false);
+  }
+
+  useEffect(() => { void loadOverview(); }, []);
+
+  async function handleSignIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsBusy(true);
+    setMessage("Verifying ChurchWork owner/admin access...");
+    const response = await fetch("/api/operator-auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    }).catch(() => null);
+    if (!response) {
+      setMessage("ChurchWork operator authentication is unreachable.");
+      setIsBusy(false);
+      return;
+    }
+    const body = await response.json().catch(() => null);
+    if (!response.ok || !body?.ok) {
+      setMessage(messageFromBody(body, "Operator sign-in failed."));
+      setIsBusy(false);
+      return;
+    }
+    setPassword("");
+    await loadOverview();
+  }
+
+  async function handleSignOut() {
+    setIsBusy(true);
+    await fetch("/api/operator-sign-out", { method: "POST" }).catch(() => null);
+    setSnapshot(null);
+    setOperatorEmail(null);
+    setPassword("");
+    setMessage("Signed out.");
+    setIsBusy(false);
+  }
+
+  if (!snapshot) {
+    return (
+      <main className="min-h-screen bg-[#f6f2e9] px-5 py-8 text-[#123044]">
+        <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-5xl items-center gap-10 lg:grid-cols-[1fr_26rem]">
+          <div>
+            <a href="/" className="inline-flex items-center gap-3 rounded-xl border border-[#ded9cf] bg-[#fffdf9] px-4 py-3 shadow-sm">
+              <img src="/brand/churchwork-corner-logo.png" alt="ChurchWork logo" className="h-9 w-12 object-contain" />
+              <span className="font-serif text-2xl font-semibold tracking-[-0.04em]">Church<span className="text-[#2f7b65]">Work</span></span>
+            </a>
+            <p className="mt-10 text-xs font-black uppercase tracking-[0.2em] text-[#6c8452]">Platform admin</p>
+            <h1 className="mt-2 max-w-2xl font-serif text-5xl font-semibold tracking-[-0.05em]">ChurchWork operations.</h1>
+            <p className="mt-4 max-w-xl text-base font-medium leading-7 text-[#62747a]">Manage the pilot, requests, organizations, user access, and activity from one place.</p>
+          </div>
+          <form onSubmit={handleSignIn} className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-7 shadow-xl shadow-[#123044]/8">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#6c8452]">Owner / platform admin</p>
+            <h2 className="mt-2 text-2xl font-black">Sign in</h2>
+            <label className="mt-6 block text-sm font-black text-[#28463d]">Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
+            <label className="mt-4 block text-sm font-black text-[#28463d]">Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
+            <button type="submit" disabled={isBusy} className="mt-6 w-full rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white disabled:opacity-50">{isBusy ? "Checking..." : "Open admin"}</button>
+            <p className="mt-4 text-xs font-semibold leading-5 text-[#6a797d]">{message}</p>
+          </form>
+        </section>
+      </main>
+    );
+  }
+
+  const { summary, staffing, users, recent_requests: requests } = snapshot;
+  const navItems = [
+    { key: "overview" as const, label: "Overview", icon: "home" as const },
+    { key: "requests" as const, label: "Requests", icon: "request" as const },
+    { key: "organizations" as const, label: "Organizations", icon: "building" as const },
+    { key: "users" as const, label: "Users & Roles", icon: "people" as const },
+    { key: "activity" as const, label: "Activity", icon: "activity" as const }
+  ];
 
   return (
-    <main className="min-h-screen bg-[#edf4f0] text-[#0d2b3b]">
-      <header className="border-b border-white/10 bg-[#082838] text-white shadow-xl shadow-[#0d2b3b]/15">
-        <div className="mx-auto flex max-w-[118rem] flex-col gap-5 px-5 py-5 md:flex-row md:items-center md:justify-between md:px-8">
-          <div className="flex items-center gap-4">
-            <a href="/" className="flex h-14 w-20 shrink-0 items-center justify-center rounded-2xl bg-white p-2 shadow-sm" aria-label="Open ChurchWork public site">
-              <img src="/brand/churchwork-corner-logo.png" alt="ChurchWork logo" className="h-full w-full object-contain" />
-            </a>
-            <div>
-              <p className="font-serif text-2xl font-semibold tracking-[-0.03em] md:text-3xl">Church<span className="text-[#8dbd9e]">Work</span></p>
-              <p className="text-xs font-semibold text-[#d9e7df]">Internal Backend · Pilot Command Center</p>
+    <ChurchWorkAppShell organization="Platform Admin" accountLabel={operatorEmail ?? "Operator"} navItems={navItems} activeKey={activeNav} onNavigate={setActiveNav}>
+      <div className="mb-5 flex justify-end gap-4">
+        <button onClick={() => void loadOverview()} disabled={isBusy} className="text-xs font-extrabold text-[#65767a] hover:text-[#164f3e]">Refresh</button>
+        <button onClick={() => void handleSignOut()} disabled={isBusy} className="text-xs font-extrabold text-[#65767a] hover:text-[#164f3e]">Sign out</button>
+      </div>
+
+      {activeNav === "overview" ? (
+        <>
+          <div className="mb-6">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#6c8452]">Owner console</p>
+            <h1 className="mt-1 font-serif text-4xl font-semibold tracking-[-0.04em]">Platform overview</h1>
+            <p className="mt-2 text-sm font-medium text-[#66777c]">A live view of the ChurchWork pilot.</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <Metric value={summary.requests_total} label="Total Requests" tone="bg-[#f7f8f5]" />
+            <Metric value={summary.facility_review} label="Needs Review" tone="bg-[#fff0ee]" />
+            <Metric value={summary.approved_for_partner} label="With Care Partner" tone="bg-[#eef5fb]" />
+            <Metric value={summary.partner_outcome_logged} label="Ready to Release" tone="bg-[#edf6ef]" />
+            <Metric value={summary.requester_updated + summary.closed} label="Completed / Updated" tone="bg-[#f1f2ef]" />
+          </div>
+
+          <div className="mt-5 grid gap-5 xl:grid-cols-[1.45fr_.55fr]">
+            <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] shadow-sm">
+              <div className="flex items-center justify-between border-b border-[#ebe6dc] px-6 py-4"><h2 className="text-lg font-black text-[#183f35]">Recent requests</h2><button onClick={() => setActiveNav("requests")} className="text-xs font-extrabold text-[#28758a]">View all →</button></div>
+              {requests.length ? requests.slice(0, 6).map((request) => (
+                <div key={request.id} className="grid gap-2 border-b border-[#eee9df] px-6 py-4 last:border-0 md:grid-cols-[1.3fr_.8fr_auto] md:items-center">
+                  <div><p className="font-black text-[#183f35]">{request.support_options?.join(" + ") || "Spiritual care request"}</p><p className="mt-1 text-xs font-semibold text-[#7a8688]">{request.requester_email ?? "Requester"} · {formatDate(request.created_at)}</p></div>
+                  <p className="text-sm font-semibold text-[#64767b]">{request.requester_update ? "Update released" : request.partner_outcome ? "Partner responded" : "In progress"}</p>
+                  <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${statusClass(request.status)}`}>{statusLabel(request.status)}</span>
+                </div>
+              )) : <p className="p-6 text-sm font-semibold text-[#6d7b7e]">No pilot requests yet.</p>}
+            </section>
+
+            <div className="space-y-5">
+              <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
+                <h2 className="text-lg font-black text-[#183f35]">Partner readiness</h2>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between rounded-xl bg-[#f5f6f2] p-4"><div><p className="font-black">Grandview Post Acute</p><p className="text-xs font-semibold text-[#788481]">Facility reviewers</p></div><span className="text-2xl font-black">{staffing.grandview_reviewers}</span></div>
+                  <div className="flex items-center justify-between rounded-xl bg-[#f5f6f2] p-4"><div><p className="font-black">Hope Church</p><p className="text-xs font-semibold text-[#788481]">Care partner users</p></div><span className="text-2xl font-black">{staffing.hope_partner_users}</span></div>
+                </div>
+              </section>
+              <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
+                <h2 className="text-lg font-black text-[#183f35]">Quick actions</h2>
+                <div className="mt-4 grid gap-2">
+                  <button onClick={() => setActiveNav("users")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">Manage users</button>
+                  <button onClick={() => setActiveNav("requests")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">View requests</button>
+                  <button onClick={() => setActiveNav("activity")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">View activity</button>
+                </div>
+              </section>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <a href="/" className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-black text-[#d9e7df] hover:bg-white/14">Public site</a>
-            <StatusPill>{session ? "Signed in" : "Internal"}</StatusPill>
-            <div className="rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm font-bold text-[#d9e7df]">{userEmail}</div>
-          </div>
-        </div>
-      </header>
+        </>
+      ) : null}
 
-      <section className="mx-auto max-w-[118rem] px-5 py-7 md:px-8 md:py-10">
-        <section className="overflow-hidden rounded-[2rem] border border-[#d9dfd7] bg-white shadow-xl shadow-[#0d2b3b]/8">
-          <div className="bg-[#0f3f35] px-6 py-8 text-white md:px-10 md:py-10">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#c7e2d0]">Pilot backend</p>
-            <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-end">
-              <div>
-                <h1 className="max-w-4xl font-serif text-4xl font-semibold tracking-[-0.05em] md:text-6xl">One place to run the pilot.</h1>
-                <p className="mt-4 max-w-3xl text-base leading-7 text-[#d9e7df]">
-                  This backend is for internal operators only. Use it to reach the pilot MVP, role logins, public site, and BI/test surfaces without getting lost.
-                </p>
+      {activeNav === "requests" ? (
+        <>
+          <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Requests</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Recent live pilot request records.</p></div>
+          <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] shadow-sm">
+            {requests.length ? requests.map((request) => (
+              <div key={request.id} className="grid gap-3 border-b border-[#eee9df] px-6 py-4 last:border-0 md:grid-cols-[1.4fr_.8fr_.8fr] md:items-center">
+                <div><p className="font-black text-[#183f35]">{request.support_options?.join(" + ") || "Spiritual care request"}</p><p className="mt-1 text-xs font-semibold text-[#7a8688]">{request.requester_email ?? "Requester"} · {formatDate(request.created_at)}</p></div>
+                <span className={`w-fit rounded-full px-3 py-1 text-xs font-black ${statusClass(request.status)}`}>{statusLabel(request.status)}</span>
+                <p className="text-sm font-semibold text-[#64767b]">{request.partner_outcome ? request.partner_outcome.replaceAll("_", " ") : "No partner outcome yet"}</p>
               </div>
-              <div className="rounded-[1.5rem] border border-white/15 bg-white/10 p-5">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c7e2d0]">Boundary</p>
-                <p className="mt-3 text-sm leading-6 text-[#edf5e6]">The public site points to role logins only. Backend, diagnostics, previews, and sandbox surfaces stay internal.</p>
-              </div>
-            </div>
-          </div>
+            )) : <p className="p-6 text-sm font-semibold text-[#6d7b7e]">No pilot requests yet.</p>}
+          </section>
+        </>
+      ) : null}
 
-          <div className="grid gap-4 bg-[#f8fbf8] p-5 md:p-7 lg:grid-cols-4">
-            {primaryCards.map((card) => (
-              <a key={card.href} href={card.href} className="group flex min-h-[15rem] flex-col justify-between rounded-[1.5rem] border border-[#d9dfd7] bg-white p-5 shadow-sm shadow-[#0d2b3b]/5 transition hover:-translate-y-1 hover:border-[#8dbd9e] hover:shadow-xl hover:shadow-[#0d2b3b]/10">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">{card.eyebrow}</p>
-                  <h2 className="mt-3 font-serif text-2xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">{card.label}</h2>
-                  <p className="mt-3 text-sm leading-6 text-[#4f6259]">{card.description}</p>
-                </div>
-                <div className="mt-5 flex items-center justify-between gap-3">
-                  <span className="rounded-full bg-[#e7f1eb] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#0f6b54]">{card.status}</span>
-                  <span className="rounded-full bg-[#082838] px-3 py-2 text-sm font-black text-white group-hover:bg-[#0f3f35]">Open</span>
-                </div>
-              </a>
-            ))}
+      {activeNav === "organizations" ? (
+        <>
+          <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Organizations</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Pilot organizations and staffing readiness.</p></div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#6c8452]">Facility</p><h2 className="mt-2 text-2xl font-black">Grandview Post Acute</h2><p className="mt-4 text-sm font-semibold text-[#68787c]">{staffing.grandview_reviewers} active reviewer{staffing.grandview_reviewers === 1 ? "" : "s"} · {staffing.pending_facility_invites} pending invite{staffing.pending_facility_invites === 1 ? "" : "s"}</p></section>
+            <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#6c8452]">Care partner</p><h2 className="mt-2 text-2xl font-black">Hope Church</h2><p className="mt-4 text-sm font-semibold text-[#68787c]">{staffing.hope_partner_users} active partner user{staffing.hope_partner_users === 1 ? "" : "s"}</p></section>
           </div>
-        </section>
+        </>
+      ) : null}
 
-        <div className="mt-7 grid gap-6 lg:grid-cols-[1fr_24rem]">
-          <section className="rounded-[1.5rem] border border-[#d9dfd7] bg-white p-6 shadow-sm shadow-[#0d2b3b]/5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Pilot path</p>
-            <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">What the MVP must prove next.</h2>
-            <ol className="mt-5 grid gap-3 text-sm font-semibold leading-6 text-[#4f6259] md:grid-cols-2">
-              {pilotPath.map((step, index) => (
-                <li key={step} className="rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-4">
-                  <span className="mr-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#0f6b54] text-xs font-black text-white">{index + 1}</span>
-                  {step}
-                </li>
+      {activeNav === "users" ? (
+        <>
+          <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Users & Roles</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Manage access for existing ChurchWork accounts.</p></div>
+          <OperatorAccessManager />
+          <section className="mt-5 rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
+            <h2 className="text-lg font-black text-[#183f35]">Current users</h2>
+            <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              {users.map((user) => (
+                <article key={user.id} className="rounded-xl border border-[#e4e0d7] bg-[#faf8f3] p-4">
+                  <p className="font-black">{user.email ?? "No email"}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">{user.roles?.length ? user.roles.map((role) => <span key={`${role.organization_slug}-${role.role}`} className="rounded-full bg-white px-3 py-1 text-xs font-bold ring-1 ring-[#ded9cf]">{role.organization_name}: {role.role}</span>) : <span className="text-xs font-semibold text-[#7c8785]">No active role</span>}</div>
+                </article>
               ))}
-            </ol>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <a href="/mvp" className="rounded-xl bg-[#082838] px-5 py-3 text-sm font-black text-white hover:bg-[#0f3f35]">Open pilot MVP</a>
-              <a href="/" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open public site</a>
-              <a href="/synthetic-smoke" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Run smoke contract</a>
             </div>
           </section>
+        </>
+      ) : null}
 
-          <aside className="rounded-[1.5rem] border border-[#d9dfd7] bg-white p-6 shadow-sm shadow-[#0d2b3b]/5">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Backend links</p>
-            <div className="mt-5 grid gap-3">
-              {backendCards.map((card) => (
-                <a key={card.href} href={card.href} className="rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-4 transition hover:bg-white">
-                  <span className="block text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">{card.eyebrow}</span>
-                  <span className="mt-1 block font-black text-[#0d2b3b]">{card.label}</span>
-                  <span className="mt-2 inline-block rounded-full bg-[#e7f1eb] px-3 py-1 text-xs font-black uppercase tracking-[0.1em] text-[#0f6b54]">{card.status}</span>
-                </a>
-              ))}
-            </div>
-          </aside>
-        </div>
-      </section>
-    </main>
+      {activeNav === "activity" ? (
+        <>
+          <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Activity</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Recent operator and pilot actions.</p></div>
+          <OperatorAuditFeed />
+        </>
+      ) : null}
+
+      {!diagnosticsConfigured && activeNav === "overview" ? <p className="mt-5 text-[11px] font-semibold text-[#929995]">Internal diagnostics routes remain intentionally fail-closed.</p> : null}
+    </ChurchWorkAppShell>
   );
 }

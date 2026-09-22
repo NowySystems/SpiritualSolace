@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up";
@@ -61,6 +62,7 @@ function messageFromResponse(body: unknown, fallback: string) {
 
 export function RolePilotLogin({ role }: RolePilotLoginProps) {
   const copy = roleCopy[role];
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [signedIn, setSignedIn] = useState<SignedInState | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -92,7 +94,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       const body = await response.json().catch(() => null);
 
       if (!response.ok || !body?.ok) {
-        setStatus(messageFromResponse(body, "ChurchWork auth did not complete. Check the server auth diagnostics."));
+        setStatus(messageFromResponse(body, "ChurchWork sign-in could not complete. Please try again."));
         setIsBusy(false);
         return;
       }
@@ -113,9 +115,34 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       setStatus(`${messageFromResponse(body, "Signed in.")} Opening pilot MVP...`);
       window.location.assign("/pilot-mvp");
     } catch {
-      setStatus("ChurchWork server auth route is unreachable. Check the latest deploy and /pilot-auth-server-check.");
+      setStatus("ChurchWork sign-in is temporarily unavailable. Please try again in a minute.");
       setIsBusy(false);
     }
+  }
+
+  async function handlePasswordReset() {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setStatus("Enter your account email first, then choose Forgot password.");
+      return;
+    }
+
+    setIsBusy(true);
+    setStatus("Sending a secure password reset link...");
+
+    const redirectTo = `${window.location.origin}/pilot/reset-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
+
+    // Keep the response generic so the login page does not disclose whether an
+    // email address is registered.
+    if (error) {
+      setStatus("ChurchWork could not start password recovery right now. Try again shortly or contact the pilot admin.");
+      setIsBusy(false);
+      return;
+    }
+
+    setStatus("If that email belongs to a ChurchWork account, a secure reset link is on the way.");
+    setIsBusy(false);
   }
 
   function handleSignOut() {
@@ -159,7 +186,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
               </p>
               <div className="mt-4 rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] p-4 text-sm font-semibold leading-6 text-[#4d5d55]">
                 Role: <strong className="text-[#173b2d]">{signedIn.role}</strong>{" "}
-                {signedIn.roleVerified ? "· Metadata verified" : "· Metadata not yet verified"}
+                {signedIn.roleVerified ? "· Role verified" : "· Role not yet verified"}
               </div>
               <div className="mt-6 grid gap-3">
                 <a href="/pilot-mvp" className="rounded-xl bg-[#173b2d] px-4 py-3 text-center text-sm font-black text-white hover:bg-[#102b3a]">Open pilot MVP</a>
@@ -212,6 +239,17 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
               <button type="submit" disabled={isBusy} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">
                 {submitLabel()}
               </button>
+
+              {!isRequesterSignup ? (
+                <button
+                  type="button"
+                  onClick={handlePasswordReset}
+                  disabled={isBusy}
+                  className="w-full rounded-xl border border-[#d8d0c0] bg-white px-5 py-3 text-sm font-black text-[#173b2d] hover:bg-[#f8fbf8] disabled:opacity-60"
+                >
+                  Forgot password?
+                </button>
+              ) : null}
 
               {copy.canCreateAccount ? (
                 <button

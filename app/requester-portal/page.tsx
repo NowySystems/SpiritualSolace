@@ -1,10 +1,5 @@
-import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { RequesterPortalFinal } from "@/components/pilot-final/RequesterPortalFinal";
+import { redirect } from "next/navigation";
 
 export default function RequesterPortalPage() {
-  return (
-    <ChurchWorkAccessGate>
-      <RequesterPortalFinal />
-    </ChurchWorkAccessGate>
-  );
+  redirect("/requester-login");
 }

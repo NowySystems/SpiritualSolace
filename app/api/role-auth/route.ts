@@ -22,6 +22,11 @@ type AuthAttempt = {
   error: AuthFailure | null;
 };
 
+type MembershipRow = {
+  role: string;
+  status: string;
+};
+
 const allowedRoles = new Set<RoleKey>(["requester", "facility", "partner"]);
 
 function isRole(value: unknown): value is RoleKey {
@@ -40,10 +45,71 @@ function cleanMode(value: unknown): AuthMode {
   return value === "sign-up" ? "sign-up" : "sign-in";
 }
 
-function roleFromUser(user: AuthSuccess["user"] | null | undefined) {
-  const userRole = user?.user_metadata?.churchwork_role;
+function rolesFromMetadata(user: AuthSuccess["user"] | null | undefined) {
+  const roles = new Set<RoleKey>();
   const appRole = user?.app_metadata?.churchwork_role;
-  return typeof appRole === "string" ? appRole : typeof userRole === "string" ? userRole : null;
+  const userRole = user?.user_metadata?.churchwork_role;
+
+  if (isRole(appRole)) roles.add(appRole);
+  if (userRole === "requester") roles.add("requester");
+
+  return roles;
+}
+
+function addMembershipRole(roles: Set<RoleKey>, membershipRole: string) {
+  // ChurchWork owners/platform admins may enter any portal for operator oversight
+  // and demonstrations. Ordinary users remain strictly role-scoped.
+  if (membershipRole === "owner" || membershipRole === "platform_admin") {
+    roles.add("requester");
+    roles.add("facility");
+    roles.add("partner");
+    return;
+  }
+
+  if (membershipRole === "requester") roles.add("requester");
+  if (membershipRole === "facility_admin" || membershipRole === "facility_staff") roles.add("facility");
+  if (membershipRole === "partner_admin" || membershipRole === "partner_user") roles.add("partner");
+}
+
+async function approvedPortalRoles(
+  env: ReturnType<typeof getSupabaseServerEnv>,
+  token: string | undefined,
+  user: AuthSuccess["user"] | null | undefined
+) {
+  const roles = rolesFromMetadata(user);
+
+  if (!token || !user?.id) {
+    return { roles, error: null as string | null };
+  }
+
+  const supabase = createClient(env.url, env.anonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    },
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  });
+
+  const { data, error } = await supabase
+    .from("role_memberships")
+    .select("role,status")
+    .eq("user_id", user.id)
+    .eq("status", "active");
+
+  if (error) {
+    return { roles, error: error.message };
+  }
+
+  for (const row of (data ?? []) as MembershipRow[]) {
+    addMembershipRole(roles, row.role);
+  }
+
+  return { roles, error: null as string | null };
 }
 
 function json(status: number, body: Record<string, unknown>) {
@@ -70,20 +136,6 @@ function errorName(error: unknown) {
 
 function isNetworkAuthError(message: string) {
   return /fetch failed|failed to fetch|network|timeout|undici|econnreset|enotfound|etimedout/i.test(message);
-}
-
-function keyKind(key: string) {
-  if (key.startsWith("sb_publishable_")) return "publishable";
-  if (key.startsWith("eyJ")) return "jwt-anon";
-  return "unknown";
-}
-
-function safeHost(url: string) {
-  try {
-    return new URL(url).host;
-  } catch {
-    return "invalid-url";
-  }
 }
 
 function bodyMessage(body: Record<string, unknown>, fallback: string) {
@@ -258,41 +310,97 @@ export async function POST(request: NextRequest) {
   try {
     env = getSupabaseServerEnv();
   } catch (error) {
-    return json(500, {
+    console.error("[churchwork-role-auth] missing server auth configuration", error);
+    return json(503, {
       ok: false,
-      code: "missing-env",
-      message: error instanceof Error ? error.message : "Missing Supabase environment configuration."
+      code: "auth-service-unavailable",
+      message: "ChurchWork sign-in is temporarily unavailable. Please try again shortly."
     });
   }
 
   const primaryAttempt = await supabaseJsAttempt(env, mode, role, email, password);
-  const shouldTryFallback = primaryAttempt.error && isNetworkAuthError(primaryAttempt.error.message);
-  const finalAttempt = shouldTryFallback
+  const shouldTryFallback = Boolean(primaryAttempt.error && isNetworkAuthError(primaryAttempt.error.message));
+  let finalAttempt = shouldTryFallback
     ? await restFallbackAttempt(env, mode, role, email, password)
     : primaryAttempt;
 
-  if (finalAttempt.error || !finalAttempt.data) {
-    const primaryNote = shouldTryFallback && primaryAttempt.error
-      ? ` Primary auth failed first: ${primaryAttempt.error.message}.`
-      : "";
-    const diagnostic = `host=${safeHost(env.url)} key=${keyKind(env.anonKey)} source=${finalAttempt.source}.`;
+  if (finalAttempt.error && isNetworkAuthError(finalAttempt.error.message)) {
+    await new Promise((resolve) => setTimeout(resolve, 650));
+    finalAttempt = await restFallbackAttempt(env, mode, role, email, password);
+  }
 
-    return json(finalAttempt.error?.status || 401, {
+  if (finalAttempt.error || !finalAttempt.data) {
+    const networkFailure = Boolean(finalAttempt.error && isNetworkAuthError(finalAttempt.error.message));
+
+    if (networkFailure) {
+      console.error("[churchwork-role-auth] authentication provider unavailable", {
+        source: finalAttempt.source,
+        status: finalAttempt.error?.status,
+        message: finalAttempt.error?.message
+      });
+
+      return json(503, {
+        ok: false,
+        code: "auth-service-unavailable",
+        message: "ChurchWork sign-in is temporarily unavailable. Please try again in a minute."
+      });
+    }
+
+    const rejectedStatus = finalAttempt.error?.status || 401;
+    const rejectedMessage = mode === "sign-in" && (rejectedStatus === 400 || rejectedStatus === 401)
+      ? "Email or password is incorrect."
+      : mode === "sign-up"
+        ? "ChurchWork could not create that requester account. Check the email and password and try again."
+        : "ChurchWork could not sign you in.";
+
+    return json(rejectedStatus, {
       ok: false,
-      code: shouldTryFallback ? "supabase-auth-fallback-failed" : "supabase-auth-rejected",
-      message: `${finalAttempt.error?.message ?? "Supabase auth failed."} ${diagnostic}${primaryNote}`
+      code: "auth-rejected",
+      message: rejectedMessage
     });
   }
 
   const user = finalAttempt.data.user;
   const session = finalAttempt.data.session;
-  const actualRole = roleFromUser(user);
+  let roleVerified = mode === "sign-up" && role === "requester" && rolesFromMetadata(user).has("requester");
 
-  if (mode === "sign-in" && actualRole && actualRole !== role) {
-    return json(403, {
+  if (mode === "sign-in") {
+    const roleCheck = await approvedPortalRoles(env, session?.access_token, user);
+
+    if (roleCheck.error) {
+      return json(503, {
+        ok: false,
+        code: "role-check-unavailable",
+        message: "ChurchWork role verification is temporarily unavailable."
+      });
+    }
+
+    roleVerified = roleCheck.roles.has(role);
+
+    if (!roleVerified) {
+      const availableRoles = Array.from(roleCheck.roles);
+
+      if (availableRoles.length === 0) {
+        return json(403, {
+          ok: false,
+          code: "role-not-assigned",
+          message: "This account does not have an active ChurchWork pilot role yet. Contact the pilot admin before signing in."
+        });
+      }
+
+      return json(403, {
+        ok: false,
+        code: "wrong-role",
+        message: `This account is approved for ${availableRoles.join(" / ")} access, not ${role}. Use the correct ChurchWork portal.`
+      });
+    }
+  }
+
+  if (mode === "sign-up" && session?.access_token && !roleVerified) {
+    return json(500, {
       ok: false,
-      code: "wrong-role",
-      message: `This account is approved as ${actualRole}, not ${role}. Use the correct ChurchWork portal.`
+      code: "requester-role-setup-failed",
+      message: "Requester account was created, but its pilot role could not be verified."
     });
   }
 
@@ -302,15 +410,15 @@ export async function POST(request: NextRequest) {
     role,
     email: user?.email ?? email,
     userId: user?.id ?? null,
-    roleVerified: actualRole === role,
+    roleVerified,
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
     authSource: finalAttempt.source,
     message: mode === "sign-up"
-      ? "Requester account created. Check email confirmation settings if sign-in is not immediate."
-      : "Signed in through Supabase auth."
+      ? "Requester account created. Check your email if confirmation is required."
+      : "Signed in."
   });
 
-  if (session?.access_token) {
+  if (session?.access_token && roleVerified) {
     result.cookies.set("churchwork_role_session", session.access_token, {
       httpOnly: true,
       secure: true,

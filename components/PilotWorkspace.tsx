@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { ChurchWorkAppShell, type ChurchWorkNavKey } from "@/components/ChurchWorkAppShell";
+import { ChurchWorkAppShell, type ChurchWorkNavKey, type ChurchWorkNotification } from "@/components/ChurchWorkAppShell";
 
 type RoleKey = "requester" | "facility" | "partner";
 type SupportOption = "Prayer" | "Friendly visit" | "Encouragement" | "Pastoral call";
@@ -18,6 +18,18 @@ type StoredPilotRequest = {
   requester_update_status: string;
   partner_outcome?: string | null;
   requester_update?: string | null;
+  facility_approved_at?: string | null;
+  partner_assigned_at?: string | null;
+  partner_outcome_at?: string | null;
+  requester_update_released_at?: string | null;
+  facility_owner_user_id?: string | null;
+  facility_owner_name?: string | null;
+  facility_owner_email?: string | null;
+  facility_claimed_at?: string | null;
+  partner_owner_user_id?: string | null;
+  partner_owner_name?: string | null;
+  partner_owner_email?: string | null;
+  partner_claimed_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -70,6 +82,57 @@ function formatDate(value: string, withTime = false) {
 
 function shortId(id: string) {
   return `CW-${id.replaceAll("-", "").slice(0, 6).toUpperCase()}`;
+}
+
+function minutesBetween(start?: string | null, end?: string | null) {
+  if (!start || !end) return null;
+  const startMs = new Date(start).getTime();
+  const endMs = new Date(end).getTime();
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs < startMs) return null;
+  return (endMs - startMs) / 60000;
+}
+
+function minutesSince(value?: string | null) {
+  if (!value) return null;
+  return minutesBetween(value, new Date().toISOString());
+}
+
+function ageLabel(value?: string | null) {
+  const minutes = minutesSince(value);
+  if (minutes === null) return "Waiting";
+  if (minutes < 60) return `${Math.max(1, Math.round(minutes))}m`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
+  return `${Math.round(minutes / 1440)}d`;
+}
+
+function stageStartedAt(request: StoredPilotRequest) {
+  const status = rawStatus(request);
+  if (status === "facility_review") return request.created_at;
+  if (status === "approved_for_partner") return request.partner_assigned_at ?? request.facility_approved_at ?? request.updated_at;
+  if (status === "partner_outcome_logged") return request.partner_outcome_at ?? request.updated_at;
+  return request.requester_update_released_at ?? request.updated_at;
+}
+
+function formatDuration(minutes: number | null) {
+  if (minutes === null || !Number.isFinite(minutes)) return "—";
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 1440) return `${(minutes / 60).toFixed(minutes >= 600 ? 0 : 1)}h`;
+  return `${(minutes / 1440).toFixed(1)}d`;
+}
+
+function average(values: Array<number | null>) {
+  const valid = values.filter((value): value is number => value !== null && Number.isFinite(value));
+  if (!valid.length) return null;
+  return valid.reduce((sum, value) => sum + value, 0) / valid.length;
+}
+
+function ownerDisplay(request: StoredPilotRequest, role: RoleKey, currentUserId?: string | null) {
+  const userId = role === "facility" ? request.facility_owner_user_id : request.partner_owner_user_id;
+  const name = role === "facility" ? request.facility_owner_name : request.partner_owner_name;
+  const email = role === "facility" ? request.facility_owner_email : request.partner_owner_email;
+  if (!userId) return "Unassigned";
+  if (currentUserId && userId === currentUserId) return "Assigned to you";
+  return name?.trim() || email?.trim() || "Assigned";
 }
 
 function rawStatus(request: StoredPilotRequest) {
@@ -201,6 +264,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [message, setMessage] = useState("Loading ChurchWork...");
 
   const selectedRequest = requests.find((item) => item.id === selectedRequestId) ?? null;
@@ -212,6 +276,66 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     release: requests.filter((r) => rawStatus(r) === "partner_outcome_logged").length,
     updated: requests.filter((r) => rawStatus(r) === "requester_updated" || rawStatus(r) === "closed").length
   }), [requests]);
+
+  const notifications = useMemo<ChurchWorkNotification[]>(() => {
+    if (role === "requester") return [];
+
+    const items: ChurchWorkNotification[] = [];
+
+    for (const request of requests) {
+      const status = rawStatus(request);
+      const age = minutesSince(stageStartedAt(request)) ?? 0;
+
+      if (role === "facility" && status === "facility_review") {
+        if (!request.facility_owner_user_id) {
+          items.push({
+            id: `unassigned-review-${request.id}`,
+            title: "Grandview review is unassigned",
+            detail: `${shortId(request.id)} · waiting ${ageLabel(stageStartedAt(request))}`,
+            tone: age >= 1440 ? "urgent" : "attention"
+          });
+        } else if (age >= 240) {
+          items.push({
+            id: `aging-review-${request.id}`,
+            title: "Grandview review is aging",
+            detail: `${shortId(request.id)} · ${ownerDisplay(request, "facility", currentUserId)} · waiting ${ageLabel(stageStartedAt(request))}`,
+            tone: age >= 1440 ? "urgent" : "attention"
+          });
+        }
+      }
+
+      if (role === "facility" && status === "partner_outcome_logged") {
+        if (!request.facility_owner_user_id || age >= 120) {
+          items.push({
+            id: `release-${request.id}`,
+            title: "Requester update needs release",
+            detail: `${shortId(request.id)} · Hope Church responded ${ageLabel(stageStartedAt(request))} ago`,
+            tone: age >= 480 ? "urgent" : "attention"
+          });
+        }
+      }
+
+      if (role === "partner" && status === "approved_for_partner") {
+        if (!request.partner_owner_user_id) {
+          items.push({
+            id: `unassigned-partner-${request.id}`,
+            title: "Hope Church assignment is unassigned",
+            detail: `${shortId(request.id)} · waiting ${ageLabel(stageStartedAt(request))}`,
+            tone: age >= 1440 ? "urgent" : "attention"
+          });
+        } else if (age >= 1440) {
+          items.push({
+            id: `aging-partner-${request.id}`,
+            title: "Care assignment is aging",
+            detail: `${shortId(request.id)} · ${ownerDisplay(request, "partner", currentUserId)} · waiting ${ageLabel(stageStartedAt(request))}`,
+            tone: age >= 4320 ? "urgent" : "attention"
+          });
+        }
+      }
+    }
+
+    return items.slice(0, 12);
+  }, [currentUserId, requests, role]);
 
   async function loadRequests() {
     setIsLoading(true);
@@ -229,6 +353,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     }
     const nextRequests = Array.isArray(body.requests) ? body.requests as StoredPilotRequest[] : [];
     setRequests(nextRequests);
+    setCurrentUserId(typeof body.current_user_id === "string" ? body.current_user_id : null);
     setMessage(nextRequests.length ? "Current" : "No requests yet");
     setIsLoading(false);
   }
@@ -316,6 +441,27 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     setActiveRequestId(null);
   }
 
+
+  async function ownershipAction(requestId: string, scope: "facility" | "partner", claim: boolean) {
+    setActiveRequestId(requestId);
+    const endpoint = scope === "facility" ? "/api/pilot-facility-requests" : "/api/pilot-partner-requests";
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId, action: claim ? "claim" : "release_claim" })
+    }).catch(() => null);
+    const body = await response?.json().catch(() => null);
+    if (!response || !response.ok || !body?.ok) {
+      setMessage(typeof body?.message === "string" ? body.message : "Ownership could not be updated.");
+      setActiveRequestId(null);
+      return;
+    }
+    if (body.request) replaceRequest(body.request as StoredPilotRequest);
+    if (typeof body.current_user_id === "string") setCurrentUserId(body.current_user_id);
+    setMessage(typeof body.message === "string" ? body.message : claim ? "Claimed." : "Claim released.");
+    setActiveRequestId(null);
+  }
+
   const navItems = role === "requester"
     ? [
         { key: "home" as const, label: "Home", icon: "home" as const },
@@ -344,6 +490,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
       onNavigate={navigate}
       primaryAction={role === "requester" ? { label: "New Request", onClick: () => navigate("new") } : undefined}
       onSignOut={() => void signOut()}
+      notifications={notifications}
     >
 
       {selectedRequest ? (
@@ -352,8 +499,10 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
           request={selectedRequest}
           isBusy={activeRequestId === selectedRequest.id}
           onBack={() => setSelectedRequestId(null)}
+          currentUserId={currentUserId}
           onFacilityAction={facilityAction}
           onPartnerAction={partnerAction}
+          onOwnershipAction={ownershipAction}
         />
       ) : role === "requester" ? (
         activeNav === "new"
@@ -372,14 +521,14 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
             : <RequesterHome requests={requests} isLoading={isLoading} onOpen={openRequest} onNew={() => navigate("new")} />
       ) : role === "facility" ? (
         activeNav === "requests"
-          ? <FacilityRequests requests={requests} isLoading={isLoading} onOpen={openRequest} />
-          : <FacilityHome requests={requests} counts={counts} isLoading={isLoading} onOpen={openRequest} />
+          ? <FacilityRequests requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+          : <FacilityHome requests={requests} counts={counts} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
       ) : (
         activeNav === "completed"
           ? <PartnerCompleted requests={requests} onOpen={openRequest} />
           : activeNav === "assignments"
-            ? <PartnerAssignments requests={requests} isLoading={isLoading} onOpen={openRequest} />
-            : <PartnerHome requests={requests} isLoading={isLoading} onOpen={openRequest} />
+            ? <PartnerAssignments requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+            : <PartnerHome requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
       )}
 
       {message !== "Current" && message !== "No requests yet" ? (

@@ -347,7 +347,7 @@ function IntroScene() {
             </div>
           ))}
         </div>
-        <div className="mt-8 flex items-center gap-3 text-[10px] font-bold text-white/60"><Icon name="shield" /> Demo uses fictional data and makes no database changes.</div>
+        <div className="mt-8 flex items-center gap-3 text-[10px] font-bold text-white/60"><Icon name="shield" /> Demo uses fictional requester details with the real pilot organizations and makes no database changes.</div>
       </div>
     </div>
   );

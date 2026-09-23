@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type SceneKey =
   | "intro"
@@ -372,17 +372,17 @@ export function ChurchWorkLaunchDemo() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const speechAbortRef = useRef<AbortController | null>(null);
-  const fallbackTimerRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null);
   const scene = scenes[index];
   const percent = ((index + 1) / scenes.length) * 100;
 
-  const clearPlayback = useCallback(() => {
+  function stopNarration() {
     speechAbortRef.current?.abort();
     speechAbortRef.current = null;
 
-    if (fallbackTimerRef.current !== null) {
-      window.clearTimeout(fallbackTimerRef.current);
-      fallbackTimerRef.current = null;
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
 
     if (audioRef.current) {
@@ -396,31 +396,32 @@ export function ChurchWorkLaunchDemo() {
       audioUrlRef.current = null;
     }
 
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  }
+
+  function continueFrom(currentIndex: number) {
+    if (currentIndex >= scenes.length - 1) {
+      setPlaying(false);
+      setIsSpeaking(false);
+      return;
     }
 
-    setIsSpeaking(false);
-  }, []);
+    const nextIndex = currentIndex + 1;
+    setIndex(nextIndex);
 
-  const advanceAfterNarration = useCallback(() => {
-    setIndex((value) => {
-      if (value >= scenes.length - 1) {
-        setPlaying(false);
-        return value;
-      }
-      return value + 1;
-    });
-  }, []);
+    if (narrationEnabled) {
+      window.setTimeout(() => {
+        void playNarration(nextIndex, true);
+      }, 220);
+    }
+  }
 
-  const speakBrowserFallback = useCallback((text: string, advanceWhenDone: boolean) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+  function browserFallback(text: string, currentIndex: number, advanceWhenDone: boolean) {
+    if (!("speechSynthesis" in window)) {
       setSpeechSupported(false);
-      if (typeof window !== "undefined") {
-        fallbackTimerRef.current = window.setTimeout(() => {
-          setIsSpeaking(false);
-          if (advanceWhenDone) advanceAfterNarration();
-        }, 6500);
+      if (advanceWhenDone) {
+        timerRef.current = window.setTimeout(() => continueFrom(currentIndex), 6500);
       }
       return;
     }
@@ -432,18 +433,20 @@ export function ChurchWorkLaunchDemo() {
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => {
       setIsSpeaking(false);
-      if (advanceWhenDone) advanceAfterNarration();
+      if (advanceWhenDone) continueFrom(currentIndex);
     };
     utterance.onerror = () => {
       setIsSpeaking(false);
       setSpeechSupported(false);
-      if (advanceWhenDone) advanceAfterNarration();
+      if (advanceWhenDone) continueFrom(currentIndex);
     };
     window.speechSynthesis.speak(utterance);
-  }, [advanceAfterNarration]);
+  }
 
-  const speakScene = useCallback(async (targetScene: Scene, advanceWhenDone: boolean) => {
-    clearPlayback();
+  async function playNarration(sceneIndex: number, advanceWhenDone: boolean) {
+    stopNarration();
+
+    const targetScene = scenes[sceneIndex];
     const text = `${targetScene.title} ${targetScene.body}`;
     const controller = new AbortController();
     speechAbortRef.current = controller;
@@ -463,6 +466,7 @@ export function ChurchWorkLaunchDemo() {
 
       const url = URL.createObjectURL(blob);
       audioUrlRef.current = url;
+
       const audio = new Audio(url);
       audioRef.current = audio;
       audio.onplay = () => {
@@ -476,46 +480,44 @@ export function ChurchWorkLaunchDemo() {
           audioUrlRef.current = null;
         }
         audioRef.current = null;
-        if (advanceWhenDone) advanceAfterNarration();
+        if (advanceWhenDone) continueFrom(sceneIndex);
       };
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        speakBrowserFallback(text, advanceWhenDone);
-      };
+      audio.onerror = () => browserFallback(text, sceneIndex, advanceWhenDone);
 
       await audio.play();
     } catch (error) {
       if (controller.signal.aborted) return;
       console.warn("ChurchWork neural narration unavailable; using browser fallback", error);
-      speakBrowserFallback(text, advanceWhenDone);
+      browserFallback(text, sceneIndex, advanceWhenDone);
     } finally {
       if (speechAbortRef.current === controller) speechAbortRef.current = null;
     }
-  }, [advanceAfterNarration, clearPlayback, speakBrowserFallback]);
+  }
 
   useEffect(() => {
-    if (!playing) {
-      clearPlayback();
-      return;
-    }
+    if (!playing || narrationEnabled) return;
 
-    if (narrationEnabled) {
-      void speakScene(scene, true);
-      return () => clearPlayback();
-    }
-
-    fallbackTimerRef.current = window.setTimeout(() => {
-      if (index >= scenes.length - 1) {
-        setPlaying(false);
-        return;
-      }
-      setIndex((value) => value + 1);
+    timerRef.current = window.setTimeout(() => {
+      continueFrom(index);
     }, 6500);
 
-    return () => clearPlayback();
-  }, [clearPlayback, index, narrationEnabled, playing, scene, speakScene]);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [index, narrationEnabled, playing]);
 
-  useEffect(() => () => clearPlayback(), [clearPlayback]);
+  useEffect(() => {
+    return () => {
+      speechAbortRef.current?.abort();
+      if (audioRef.current) audioRef.current.pause();
+      if (audioUrlRef.current) URL.revokeObjectURL(audioUrlRef.current);
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    };
+  }, []);
 
   const nextLabel = useMemo(
     () => index === scenes.length - 1 ? "Replay demo" : index === 0 ? "Start walkthrough" : "Next",
@@ -524,36 +526,40 @@ export function ChurchWorkLaunchDemo() {
 
   function next() {
     if (index === scenes.length - 1) {
+      stopNarration();
       setIndex(0);
       setPlaying(true);
+      if (narrationEnabled) void playNarration(0, true);
       return;
     }
 
     if (index === 0 && !playing) {
       setPlaying(true);
+      if (narrationEnabled) void playNarration(0, true);
       return;
     }
 
+    stopNarration();
     setPlaying(false);
-    clearPlayback();
     setIndex((value) => Math.min(value + 1, scenes.length - 1));
   }
 
   function back() {
+    stopNarration();
     setPlaying(false);
-    clearPlayback();
     setIndex((value) => Math.max(value - 1, 0));
   }
 
   function replayNarration() {
+    stopNarration();
     setPlaying(false);
-    void speakScene(scene, false);
+    void playNarration(index, false);
   }
 
   function toggleNarration() {
-    const nextValue = !narrationEnabled;
-    setNarrationEnabled(nextValue);
-    if (!nextValue) clearPlayback();
+    stopNarration();
+    setNarrationEnabled((value) => !value);
+    setPlaying(false);
   }
 
   return (

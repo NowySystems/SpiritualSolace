@@ -383,44 +383,96 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
 
 function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; onNew: () => void }) {
   const current = requests.find((item) => !["requester_updated", "closed"].includes(rawStatus(item))) ?? requests[0] ?? null;
+  const completedCount = requests.filter((item) => ["requester_updated", "closed"].includes(rawStatus(item))).length;
+
   return (
     <>
-      <PageTitle title="Welcome back" description="Here’s the latest on your spiritual-care requests." action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white">+ New Request</button>} />
-      {isLoading ? <Card className="p-7 text-sm font-bold text-[#68787c]">Loading your requests…</Card> : current ? (
-        <Card className="p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <span className={cx("inline-flex rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.08em]", statusPill(rawStatus(current)))}>{statusLabel(rawStatus(current), "requester")}</span>
-              <h2 className="mt-3 text-xl font-black text-[#183f35]">Spiritual care request</h2>
-              <p className="mt-1 text-sm font-semibold text-[#65767a]">Submitted {formatDate(current.created_at)} · {current.support.join(", ")}</p>
+      <PageTitle
+        eyebrow="Requester"
+        title="Your spiritual care"
+        description="A simple place to ask for support and follow what happens next."
+        action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15 transition hover:-translate-y-0.5">+ New Request</button>}
+      />
+
+      {isLoading ? (
+        <Card className="overflow-hidden p-7">
+          <div className="h-3 w-28 animate-pulse rounded-full bg-[#e6e1d8]" />
+          <div className="mt-5 h-9 w-64 animate-pulse rounded-xl bg-[#ece8df]" />
+          <div className="mt-5 h-24 animate-pulse rounded-2xl bg-[#f1eee7]" />
+        </Card>
+      ) : current ? (
+        <Card className="relative overflow-hidden">
+          <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-[#2f7b65] via-[#6da18d] to-[#d7c47f]" />
+          <div className="grid gap-0 xl:grid-cols-[1.25fr_.75fr]">
+            <div className="p-6 sm:p-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#74847f]">Current request</p>
+                  <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.045em] text-[#14384a]">{current.support.join(" + ") || "Spiritual care"}</h2>
+                  <p className="mt-2 text-sm font-semibold text-[#738185]">{shortId(current.id)} · Submitted {formatDate(current.created_at)}</p>
+                </div>
+                <span className={cx("rounded-full px-3.5 py-2 text-[10px] font-black uppercase tracking-[0.08em]", statusPill(rawStatus(current)))}>{statusLabel(rawStatus(current), "requester")}</span>
+              </div>
+
+              <div className="mt-7 rounded-2xl border border-[#e1ddd3] bg-[#faf8f3] px-4 py-5 sm:px-6">
+                <RequestProgress request={current} role="requester" />
+              </div>
+
+              <div className="mt-6 flex flex-col gap-4 rounded-2xl bg-[#eaf4ef] p-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#2f7b65] shadow-sm"><SupportIcon name="heart" /></span>
+                  <div>
+                    <p className="text-sm font-black text-[#183f35]">
+                      {rawStatus(current) === "facility_review" ? "Grandview is reviewing your request."
+                        : rawStatus(current) === "approved_for_partner" ? "Hope Church is caring for this request."
+                        : rawStatus(current) === "partner_outcome_logged" ? "Grandview is reviewing the care update."
+                        : current.requester_update ?? "Your request has been updated."}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold leading-5 text-[#64786f]">You do not need to coordinate the handoffs. ChurchWork keeps the care loop moving for you.</p>
+                  </div>
+                </div>
+                <button onClick={() => onOpen(current.id)} className="shrink-0 rounded-xl border border-[#bfd3c9] bg-white px-4 py-2.5 text-xs font-black text-[#215b48] shadow-sm">View request →</button>
+              </div>
             </div>
-            <button onClick={() => onOpen(current.id)} className="text-sm font-extrabold text-[#1f6f85]">View request →</button>
-          </div>
-          <RequestProgress request={current} role="requester" />
-          <div className="mt-6 rounded-xl bg-[#eef5f1] p-4">
-            <p className="text-sm font-black text-[#183f35]">
-              {rawStatus(current) === "facility_review" ? "Your request is being reviewed by Grandview."
-                : rawStatus(current) === "approved_for_partner" ? "A care partner is working on your request."
-                : rawStatus(current) === "partner_outcome_logged" ? "Grandview is reviewing an update from the care partner."
-                : current.requester_update ?? "Your request has been updated."}
-            </p>
-            <p className="mt-1 text-xs font-semibold leading-5 text-[#697a77]">ChurchWork keeps the request moving while Grandview controls what is shared.</p>
+
+            <aside className="border-t border-[#e6e1d7] bg-[#f8f5ee] p-6 sm:p-8 xl:border-l xl:border-t-0">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#7a8783]">At a glance</p>
+              <div className="mt-5 grid grid-cols-2 gap-3 xl:grid-cols-1">
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-2xl font-black tracking-[-0.04em] text-[#14384a]">{requests.length}</p>
+                  <p className="mt-1 text-xs font-bold text-[#6d7c80]">Total requests</p>
+                </div>
+                <div className="rounded-2xl bg-white p-4 shadow-sm">
+                  <p className="text-2xl font-black tracking-[-0.04em] text-[#14384a]">{completedCount}</p>
+                  <p className="mt-1 text-xs font-bold text-[#6d7c80]">Completed</p>
+                </div>
+              </div>
+              <p className="mt-5 text-xs font-semibold leading-5 text-[#7a8785]">Grandview Post Acute reviews requests before they are shared with Hope Church.</p>
+            </aside>
           </div>
         </Card>
       ) : (
-        <EmptyState title="No requests yet" detail="When you’re ready, start a spiritual-care request. It only takes a minute." action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white">Request spiritual care</button>} />
+        <EmptyState title="Ask for spiritual care" detail="Prayer, a friendly visit, encouragement, or a pastoral call can be requested in about a minute." action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15">Request spiritual care</button>} />
       )}
 
       {requests.length > 1 ? (
-        <Card className="mt-5 overflow-hidden">
-          <div className="border-b border-[#ebe6dc] px-6 py-4"><h2 className="text-lg font-black text-[#183f35]">Recent requests</h2></div>
-          {requests.slice(0, 4).map((request) => (
-            <button key={request.id} onClick={() => onOpen(request.id)} className="flex w-full items-center justify-between gap-4 border-b border-[#eee9df] px-6 py-4 text-left last:border-0 hover:bg-[#faf8f2]">
-              <div><p className="font-extrabold text-[#183f35]">{request.support.join(" + ") || "Spiritual care"}</p><p className="mt-1 text-xs font-semibold text-[#778488]">{formatDate(request.created_at)} · {shortId(request.id)}</p></div>
-              <span className={cx("rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request), "requester")}</span>
-            </button>
-          ))}
-        </Card>
+        <section className="mt-7">
+          <div className="mb-3 flex items-end justify-between">
+            <div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#7b8884]">History</p><h2 className="mt-1 text-lg font-black text-[#183f35]">Recent requests</h2></div>
+            <span className="text-xs font-bold text-[#7b8786]">{requests.length} total</span>
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {requests.slice(0, 4).map((request) => (
+              <button key={request.id} onClick={() => onOpen(request.id)} className="group rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-5 text-left shadow-[0_10px_30px_rgba(18,48,68,.04)] transition hover:-translate-y-0.5 hover:border-[#bfd0c6] hover:shadow-[0_14px_34px_rgba(18,48,68,.08)]">
+                <div className="flex items-start justify-between gap-4">
+                  <div><p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care"}</p><p className="mt-1 text-xs font-semibold text-[#778488]">{formatDate(request.created_at)} · {shortId(request.id)}</p></div>
+                  <span className={cx("rounded-full px-3 py-1 text-[10px] font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request), "requester")}</span>
+                </div>
+                <p className="mt-4 text-xs font-black text-[#2a6b57] group-hover:underline">Open request →</p>
+              </button>
+            ))}
+          </div>
+        </section>
       ) : null}
     </>
   );
@@ -451,69 +503,100 @@ function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, 
   onToggle: (option: SupportOption) => void; onAck: (value: boolean) => void; onStep: (step: number) => void; onSubmit: () => void;
 }) {
   const canContinue = step === 1 ? support.length > 0 : step === 2 ? noMedicalAck : true;
+  const stepCopy = [
+    ["Choose support", "What would feel helpful right now?"],
+    ["Keep it safe", "Confirm this stays within spiritual care."],
+    ["Review & send", "Make sure the request looks right."]
+  ][step - 1];
+
   return (
     <>
-      <PageTitle eyebrow="New request" title="Request Spiritual Care" description="Tell us what would be most helpful. Grandview will review the request before anything is shared." />
-      <div className="mb-6 flex max-w-3xl items-center gap-3">
-        {["Request", "Confirm", "Submit"].map((label, index) => {
-          const n = index + 1;
-          return <div key={label} className="flex flex-1 items-center gap-2"><span className={cx("flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black", n <= step ? "border-[#2f7b65] bg-[#2f7b65] text-white" : "border-[#cfd2cc] bg-white text-[#7b8787]")}>{n}</span><span className={cx("text-xs font-bold", n <= step ? "text-[#183f35]" : "text-[#8b9491]")}>{label}</span>{n < 3 ? <span className="ml-2 h-px flex-1 bg-[#d9d8d2]" /> : null}</div>;
-        })}
+      <PageTitle eyebrow="New request" title="Request spiritual care" description="A few simple choices are all Grandview needs to begin the care process." />
+
+      <div className="mb-7 rounded-2xl border border-[#ddd8ce] bg-white/70 p-3 shadow-sm backdrop-blur">
+        <div className="grid grid-cols-3 gap-2">
+          {["Support", "Confirm", "Submit"].map((label, index) => {
+            const n = index + 1;
+            const active = n === step;
+            const complete = n < step;
+            return (
+              <div key={label} className={cx("rounded-xl px-3 py-3 transition", active ? "bg-[#e6f1eb]" : "")}>
+                <div className="flex items-center gap-2">
+                  <span className={cx("flex h-7 w-7 items-center justify-center rounded-full border text-[11px] font-black", complete || active ? "border-[#2f7b65] bg-[#2f7b65] text-white" : "border-[#d1d2cc] bg-white text-[#8a9491]")}>{complete ? "✓" : n}</span>
+                  <span className={cx("text-xs font-black", active || complete ? "text-[#183f35]" : "text-[#8b9491]")}>{label}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1fr_21rem]">
-        <Card className="p-6">
-          {step === 1 ? (
-            <>
-              <h2 className="text-xl font-black text-[#183f35]">What kind of support would be helpful?</h2>
-              <p className="mt-1 text-sm font-medium text-[#6b7b7f]">Choose one or more options.</p>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-5 xl:grid-cols-[1fr_22rem]">
+        <Card className="overflow-hidden">
+          <div className="border-b border-[#ebe6dc] bg-[#fffdf9] px-6 py-5 sm:px-8">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#72837d]">Step {step} of 3</p>
+            <h2 className="mt-1 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#14384a]">{stepCopy[0]}</h2>
+            <p className="mt-1 text-sm font-medium text-[#6b7b7f]">{stepCopy[1]}</p>
+          </div>
+
+          <div className="p-6 sm:p-8">
+            {step === 1 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
                 {supportOptions.map((option) => {
                   const active = support.includes(option.value);
                   return (
-                    <button key={option.value} type="button" onClick={() => onToggle(option.value)} className={cx("relative rounded-xl border p-5 text-left transition", active ? "border-[#2f7b65] bg-[#f0f7f3] ring-1 ring-[#2f7b65]" : "border-[#ded9cf] bg-white hover:border-[#9bb5a9]")}>
-                      <span className="text-2xl">{option.symbol}</span>
-                      <span className="mt-3 block text-base font-black text-[#183f35]">{option.title}</span>
+                    <button key={option.value} type="button" onClick={() => onToggle(option.value)} className={cx("group relative min-h-[9.5rem] rounded-2xl border p-5 text-left transition", active ? "border-[#2f7b65] bg-[#edf6f1] shadow-[0_10px_28px_rgba(47,123,101,.10)] ring-1 ring-[#2f7b65]" : "border-[#ded9cf] bg-white hover:-translate-y-0.5 hover:border-[#9bb5a9] hover:shadow-md")}>
+                      <span className={cx("flex h-11 w-11 items-center justify-center rounded-xl transition", active ? "bg-[#2f7b65] text-white" : "bg-[#f1eee7] text-[#526a62] group-hover:bg-[#e8f0eb]")}><SupportIcon name={option.icon} /></span>
+                      <span className="mt-4 block text-base font-black text-[#183f35]">{option.title}</span>
                       <span className="mt-1 block text-xs font-medium leading-5 text-[#6c7b7e]">{option.detail}</span>
-                      <span className={cx("absolute right-4 top-4 flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-black", active ? "border-[#2f7b65] bg-[#2f7b65] text-white" : "border-[#c9cbc6] text-transparent")}>✓</span>
+                      <span className={cx("absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-black", active ? "border-[#2f7b65] bg-[#2f7b65] text-white" : "border-[#c9cbc6] bg-white text-transparent")}>✓</span>
                     </button>
                   );
                 })}
               </div>
-            </>
-          ) : step === 2 ? (
-            <>
-              <h2 className="text-xl font-black text-[#183f35]">Confirm this is a spiritual-care request</h2>
-              <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[#68787c]">ChurchWork is designed for spiritual care and encouragement. Medical, emergency, insurance, chart, diagnosis, medication, symptom, and treatment information should not be submitted here.</p>
-              <label className="mt-6 flex cursor-pointer items-start gap-4 rounded-xl border border-[#cfe0d5] bg-[#f0f7f3] p-5">
-                <input type="checkbox" checked={noMedicalAck} onChange={(event) => onAck(event.target.checked)} className="mt-1 h-5 w-5 accent-[#2f7b65]" />
-                <span><span className="block text-sm font-black text-[#183f35]">I confirm this request is for spiritual care only.</span><span className="mt-1 block text-xs font-semibold leading-5 text-[#667773]">Grandview will review the request before it is shared with a care partner.</span></span>
-              </label>
-            </>
-          ) : (
-            <>
-              <h2 className="text-xl font-black text-[#183f35]">Review your request</h2>
-              <div className="mt-5 rounded-xl bg-[#f6f4ee] p-5">
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-[#738078]">Support requested</p>
-                <div className="mt-3 flex flex-wrap gap-2">{support.map((item) => <span key={item} className="rounded-full bg-[#e3eee7] px-3 py-2 text-xs font-black text-[#245f48]">{item}</span>)}</div>
-              </div>
-              <div className="mt-4 rounded-xl border border-[#cfe0d5] bg-[#f0f7f3] p-5 text-sm font-semibold leading-6 text-[#355b4d]">
-                ✓ Spiritual-care-only confirmation complete. ChurchWork will generate the safe summary from the options above.
-              </div>
-            </>
-          )}
+            ) : step === 2 ? (
+              <>
+                <div className="rounded-2xl bg-[#f5f2eb] p-5">
+                  <div className="flex gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#2f7b65] shadow-sm"><SupportIcon name="heart" /></span><div><p className="text-sm font-black text-[#183f35]">ChurchWork is for spiritual care—not clinical information.</p><p className="mt-1 text-sm font-medium leading-6 text-[#68787c]">Please do not submit emergency, insurance, chart, diagnosis, medication, symptom, or treatment information.</p></div></div>
+                </div>
+                <label className="mt-5 flex cursor-pointer items-start gap-4 rounded-2xl border border-[#bcd5c7] bg-[#edf6f1] p-5 shadow-sm">
+                  <input type="checkbox" checked={noMedicalAck} onChange={(event) => onAck(event.target.checked)} className="mt-1 h-5 w-5 accent-[#2f7b65]" />
+                  <span><span className="block text-sm font-black text-[#183f35]">I confirm this request is for spiritual care only.</span><span className="mt-1 block text-xs font-semibold leading-5 text-[#667773]">Grandview Post Acute reviews every request before anything is shared with Hope Church.</span></span>
+                </label>
+              </>
+            ) : (
+              <>
+                <div className="rounded-2xl border border-[#ded9cf] bg-[#faf8f3] p-5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#738078]">Support requested</p>
+                  <div className="mt-4 flex flex-wrap gap-2">{support.map((item) => <span key={item} className="rounded-full bg-[#e3eee7] px-3.5 py-2 text-xs font-black text-[#245f48]">{item}</span>)}</div>
+                </div>
+                <div className="mt-4 flex gap-3 rounded-2xl border border-[#cfe0d5] bg-[#f0f7f3] p-5">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2f7b65] text-xs font-black text-white">✓</span>
+                  <div><p className="text-sm font-black text-[#294e42]">Safe to submit</p><p className="mt-1 text-xs font-semibold leading-5 text-[#587168]">ChurchWork will create the safe summary from your selections and send it to Grandview for review.</p></div>
+                </div>
+              </>
+            )}
 
-          <div className="mt-6 flex items-center justify-between">
-            {step > 1 ? <button type="button" onClick={() => onStep(step - 1)} className="rounded-xl border border-[#d5d2ca] px-5 py-3 text-sm font-extrabold text-[#4d626a]">Back</button> : <span />}
-            {step < 3 ? <button type="button" disabled={!canContinue} onClick={() => onStep(step + 1)} className="rounded-xl bg-[#164f3e] px-6 py-3 text-sm font-extrabold text-white disabled:opacity-40">Continue →</button> : <button type="button" disabled={isSaving} onClick={onSubmit} className="rounded-xl bg-[#164f3e] px-6 py-3 text-sm font-extrabold text-white disabled:opacity-50">{isSaving ? "Submitting…" : "Submit request"}</button>}
+            <div className="mt-7 flex items-center justify-between border-t border-[#ebe6dc] pt-5">
+              {step > 1 ? <button type="button" onClick={() => onStep(step - 1)} className="rounded-xl border border-[#d5d2ca] bg-white px-5 py-3 text-sm font-black text-[#4d626a] shadow-sm">Back</button> : <span />}
+              {step < 3
+                ? <button type="button" disabled={!canContinue} onClick={() => onStep(step + 1)} className="rounded-xl bg-[#164f3e] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15 transition hover:-translate-y-0.5 disabled:opacity-40 disabled:hover:translate-y-0">Continue →</button>
+                : <button type="button" disabled={isSaving} onClick={onSubmit} className="rounded-xl bg-[#164f3e] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15 disabled:opacity-50">{isSaving ? "Submitting…" : "Submit request"}</button>}
+            </div>
           </div>
         </Card>
 
-        <Card className="h-fit p-5">
-          <h3 className="text-lg font-black text-[#183f35]">Request summary</h3>
-          <div className="mt-5 border-t border-[#ebe6dc] pt-4"><p className="text-xs font-black uppercase tracking-[0.12em] text-[#7d8784]">Facility</p><p className="mt-1 text-sm font-black text-[#183f35]">Grandview Post Acute</p></div>
-          <div className="mt-4 border-t border-[#ebe6dc] pt-4"><p className="text-xs font-black uppercase tracking-[0.12em] text-[#7d8784]">Support</p><p className="mt-1 text-sm font-bold text-[#4f646c]">{support.length ? support.join(", ") : "Not selected yet"}</p></div>
-          <div className="mt-4 border-t border-[#ebe6dc] pt-4"><p className="text-xs font-black uppercase tracking-[0.12em] text-[#7d8784]">Privacy</p><p className="mt-1 text-sm font-bold text-[#4f646c]">{noMedicalAck ? "Spiritual-care scope confirmed" : "Confirmation required"}</p></div>
+        <Card className="h-fit overflow-hidden">
+          <div className="bg-[#173f34] p-5 text-white">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">Request summary</p>
+            <h3 className="mt-1 font-serif text-xl font-semibold">What Grandview will receive</h3>
+          </div>
+          <div className="p-5">
+            <div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Facility</p><p className="mt-1 text-sm font-black text-[#183f35]">Grandview Post Acute</p></div>
+            <div className="mt-5 border-t border-[#ebe6dc] pt-4"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Support</p><p className="mt-1 text-sm font-bold leading-6 text-[#4f646c]">{support.length ? support.join(", ") : "Choose support to continue"}</p></div>
+            <div className="mt-5 border-t border-[#ebe6dc] pt-4"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Privacy</p><p className="mt-1 text-sm font-bold text-[#4f646c]">{noMedicalAck ? "✓ Spiritual-care scope confirmed" : "Confirmation required"}</p></div>
+            <div className="mt-5 rounded-xl bg-[#f4f1ea] p-4 text-xs font-semibold leading-5 text-[#6d7978]">You will be able to follow the request from review through care and final update.</div>
+          </div>
         </Card>
       </div>
     </>
@@ -521,30 +604,58 @@ function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, 
 }
 
 function FacilityMetric({ value, label, tone }: { value: number; label: string; tone: "rose" | "blue" | "green" | "gray" }) {
-  const toneClass = tone === "rose" ? "bg-[#fff0ee]" : tone === "blue" ? "bg-[#eef5fb]" : tone === "green" ? "bg-[#edf6ef]" : "bg-[#f1f2ef]";
-  return <Card className={cx("p-5", toneClass)}><p className="text-3xl font-black text-[#123044]">{value}</p><p className="mt-1 text-sm font-extrabold text-[#425a64]">{label}</p></Card>;
+  const toneClass = tone === "rose" ? "from-[#fff1ee] to-[#fffaf8]" : tone === "blue" ? "from-[#edf4fa] to-[#fbfdff]" : tone === "green" ? "from-[#eaf5ed] to-[#fbfdfb]" : "from-[#f2f2ef] to-[#fbfbf8]";
+  const accent = tone === "rose" ? "#a65d51" : tone === "blue" ? "#416f96" : tone === "green" ? "#3f7f5a" : "#687574";
+  return <Card className={cx("relative overflow-hidden bg-gradient-to-br p-5", toneClass)}><span className="absolute left-0 top-0 h-full w-1.5" style={{ background: accent }} /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{value}</p><p className="mt-1 text-sm font-black text-[#425a64]">{label}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: accent }}>{value ? "Active" : "Clear"}</p></Card>;
 }
 
 function FacilityHome({ requests, counts, isLoading, onOpen }: { requests: StoredPilotRequest[]; counts: { review: number; partner: number; release: number; updated: number }; isLoading: boolean; onOpen: (id: string) => void }) {
   const needsReview = requests.filter((r) => rawStatus(r) === "facility_review");
+  const readyToRelease = requests.filter((r) => rawStatus(r) === "partner_outcome_logged");
+  const needsAction = needsReview.length + readyToRelease.length;
+
   return (
     <>
-      <PageTitle eyebrow="Facility portal" title="Good morning" description="Here’s what needs Grandview’s attention." />
+      <PageTitle eyebrow="Grandview Post Acute" title="Care coordination" description={needsAction ? `${needsAction} request${needsAction === 1 ? "" : "s"} need Grandview's attention.` : "Everything is moving. There are no facility actions waiting right now."} />
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <FacilityMetric value={counts.review} label="Needs Review" tone="rose" />
-        <FacilityMetric value={counts.partner} label="With Care Partner" tone="blue" />
+        <FacilityMetric value={counts.partner} label="With Hope Church" tone="blue" />
         <FacilityMetric value={counts.release} label="Ready to Release" tone="green" />
         <FacilityMetric value={counts.updated} label="Requester Updated" tone="gray" />
       </div>
-      <Card className="mt-5 overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[#ebe6dc] px-6 py-4"><h2 className="text-lg font-black text-[#183f35]">Needs Review</h2><span className="text-xs font-extrabold text-[#73817f]">{needsReview.length} request{needsReview.length === 1 ? "" : "s"}</span></div>
-        {isLoading ? <p className="p-6 text-sm font-bold text-[#6d7b7e]">Loading queue…</p> : needsReview.length ? needsReview.map((request) => (
-          <div key={request.id} className="flex flex-col gap-4 border-b border-[#eee9df] px-6 py-4 last:border-0 sm:flex-row sm:items-center sm:justify-between">
-            <div><p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p><p className="mt-1 text-xs font-semibold text-[#768286]">{shortId(request.id)} · {formatDate(request.created_at, true)}</p></div>
-            <button onClick={() => onOpen(request.id)} className="rounded-lg bg-[#164f3e] px-5 py-2.5 text-sm font-extrabold text-white">Review</button>
+
+      <div className="mt-7 grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#fffdf9] px-6 py-5">
+            <div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#a05c52]">Action queue</p><h2 className="mt-1 text-lg font-black text-[#183f35]">Needs review</h2></div>
+            <span className="rounded-full bg-[#fff0ee] px-3 py-1.5 text-[10px] font-black text-[#9b564c]">{needsReview.length}</span>
           </div>
-        )) : <p className="p-6 text-sm font-semibold text-[#6d7b7e]">No requests are waiting for review.</p>}
-      </Card>
+          {isLoading ? <p className="p-6 text-sm font-bold text-[#6d7b7e]">Loading queue…</p> : needsReview.length ? needsReview.map((request) => (
+            <button key={request.id} onClick={() => onOpen(request.id)} className="group flex w-full flex-col gap-4 border-b border-[#eee9df] px-6 py-5 text-left last:border-0 hover:bg-[#fbfaf6] sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex flex-wrap items-center gap-2"><p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p><span className="rounded-full bg-[#fff0dc] px-2.5 py-1 text-[9px] font-black text-[#85561a]">NEW</span></div>
+                <p className="mt-1.5 text-xs font-semibold text-[#768286]">{shortId(request.id)} · {formatDate(request.created_at, true)}</p>
+              </div>
+              <span className="rounded-xl bg-[#315f83] px-4 py-2.5 text-xs font-black text-white shadow-sm transition group-hover:-translate-y-0.5">Review request →</span>
+            </button>
+          )) : <div className="p-7"><p className="text-sm font-black text-[#34564c]">Review queue is clear.</p><p className="mt-1 text-xs font-semibold text-[#788582]">New requester submissions will appear here first.</p></div>}
+        </Card>
+
+        <Card className="overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[#e7e2d9] bg-[#eff6f0] px-6 py-5">
+            <div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#4d805d]">Second gate</p><h2 className="mt-1 text-lg font-black text-[#183f35]">Ready to release</h2></div>
+            <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-[#417255] shadow-sm">{readyToRelease.length}</span>
+          </div>
+          {readyToRelease.length ? readyToRelease.map((request) => (
+            <button key={request.id} onClick={() => onOpen(request.id)} className="group w-full border-b border-[#e6ece7] px-6 py-5 text-left last:border-0 hover:bg-[#f8fbf8]">
+              <p className="font-black text-[#183f35]">{outcomeLabel(request.partner_outcome)}</p>
+              <p className="mt-1.5 text-xs font-semibold text-[#71807d]">{shortId(request.id)} · Hope Church update received</p>
+              <p className="mt-4 text-xs font-black text-[#3f7653]">Review & release →</p>
+            </button>
+          )) : <div className="p-7"><p className="text-sm font-black text-[#34564c]">No updates waiting.</p><p className="mt-1 text-xs font-semibold leading-5 text-[#788582]">Hope Church outcomes return here before the requester sees anything.</p></div>}
+        </Card>
+      </div>
     </>
   );
 }
@@ -572,12 +683,21 @@ function FacilityRequests({ requests, isLoading, onOpen }: { requests: StoredPil
 
 function PartnerHome({ requests, isLoading, onOpen }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void }) {
   const newAssignments = requests.filter((r) => rawStatus(r) === "approved_for_partner");
+  const completed = requests.filter((r) => rawStatus(r) !== "approved_for_partner");
+
   return (
     <>
-      <PageTitle eyebrow="Hope Church" title="Welcome" description="Here are your current spiritual-care assignments." />
-      <div className="mb-4 flex gap-6 border-b border-[#ddd9d0] text-sm font-extrabold text-[#6c7b7e]"><span className="border-b-2 border-[#2f7b65] px-1 pb-3 text-[#164f3e]">New ({newAssignments.length})</span><span className="px-1 pb-3">Completed ({requests.length - newAssignments.length})</span></div>
-      {isLoading ? <Card className="p-6 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : newAssignments.length ? (
-        <div className="space-y-3">{newAssignments.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div>
+      <PageTitle eyebrow="Hope Church" title="Care assignments" description={newAssignments.length ? `${newAssignments.length} Grandview-approved request${newAssignments.length === 1 ? " is" : "s are"} ready for care.` : "No new assignments are waiting right now."} />
+
+      <div className="mb-7 grid gap-3 sm:grid-cols-2">
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#f5edd8] to-[#fffdf9] p-5"><span className="absolute left-0 top-0 h-full w-1.5 bg-[#87713a]" /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{newAssignments.length}</p><p className="mt-1 text-sm font-black text-[#514a34]">Ready for care</p><p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#87713a]">Grandview approved</p></Card>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#edf5ef] to-[#fffdf9] p-5"><span className="absolute left-0 top-0 h-full w-1.5 bg-[#4f8160]" /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{completed.length}</p><p className="mt-1 text-sm font-black text-[#425a64]">Outcome logged</p><p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#4f8160]">Returned to Grandview</p></Card>
+      </div>
+
+      <div className="mb-4 flex items-end justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Assignments</p><h2 className="mt-1 text-xl font-black text-[#183f35]">Ready for your care team</h2></div><span className="text-xs font-bold text-[#7c8885]">{newAssignments.length} open</span></div>
+
+      {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : newAssignments.length ? (
+        <div className="grid gap-4 xl:grid-cols-2">{newAssignments.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div>
       ) : <EmptyState title="No new assignments" detail="Grandview-approved requests will appear here when they are ready for Hope Church." />}
     </>
   );
@@ -603,13 +723,20 @@ function PartnerCompleted({ requests, onOpen }: { requests: StoredPilotRequest[]
 }
 
 function AssignmentRow({ request, onOpen }: { request: StoredPilotRequest; onOpen: (id: string) => void }) {
+  const isNew = rawStatus(request) === "approved_for_partner";
   return (
-    <Card className="p-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div><p className="font-black text-[#183f35]">Spiritual care request</p><p className="mt-1 text-xs font-semibold text-[#738184]">{shortId(request.id)} · {request.support.join(", ")}</p></div>
-        <div className="flex items-center gap-3"><span className={cx("rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{request.partner_outcome ? outcomeLabel(request.partner_outcome) : "New"}</span><button onClick={() => onOpen(request.id)} className="rounded-lg bg-[#164f3e] px-5 py-2.5 text-sm font-extrabold text-white">View</button></div>
+    <button onClick={() => onOpen(request.id)} className="group w-full rounded-[1.35rem] border border-[#ded9cf] bg-[#fffdf9] p-5 text-left shadow-[0_12px_38px_rgba(18,48,68,.05)] transition hover:-translate-y-0.5 hover:border-[#c9bd99] hover:shadow-[0_16px_42px_rgba(18,48,68,.09)]">
+      <div className="flex items-start justify-between gap-4">
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f4edda] text-[#806c39]"><SupportIcon name={request.support.includes("Friendly visit") ? "visit" : request.support.includes("Pastoral call") ? "phone" : request.support.includes("Encouragement") ? "heart" : "prayer"} /></span>
+        <span className={cx("rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em]", isNew ? "bg-[#f4edda] text-[#745f2b]" : "bg-[#e7f0e9] text-[#346247]")}>{request.partner_outcome ? outcomeLabel(request.partner_outcome) : "New assignment"}</span>
       </div>
-    </Card>
+      <p className="mt-5 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#183f35]">{request.support.join(" + ") || "Spiritual care"}</p>
+      <p className="mt-2 text-xs font-semibold text-[#738184]">{shortId(request.id)} · Approved by Grandview</p>
+      <div className="mt-5 flex items-center justify-between border-t border-[#eee9df] pt-4">
+        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8a8a78]">Safe spiritual-care context</span>
+        <span className="text-xs font-black text-[#806c39]">Open assignment →</span>
+      </div>
+    </button>
   );
 }
 

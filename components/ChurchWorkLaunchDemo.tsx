@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type SceneKey =
   | "intro"
@@ -369,69 +369,140 @@ export function ChurchWorkLaunchDemo() {
   const [narrationEnabled, setNarrationEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlRef = useRef<string | null>(null);
+  const speechAbortRef = useRef<AbortController | null>(null);
+  const fallbackTimerRef = useRef<number | null>(null);
   const scene = scenes[index];
   const percent = ((index + 1) / scenes.length) * 100;
 
-  const speakScene = useCallback((targetScene: Scene, advanceWhenDone: boolean) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
-      setSpeechSupported(false);
-      return false;
+  const clearPlayback = useCallback(() => {
+    speechAbortRef.current?.abort();
+    speechAbortRef.current = null;
+
+    if (fallbackTimerRef.current !== null) {
+      window.clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = null;
     }
 
-    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = "";
+      audioRef.current = null;
+    }
 
-    const utterance = new SpeechSynthesisUtterance(
-      `${targetScene.title} ${targetScene.body}`
-    );
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
+    }
+
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+
+    setIsSpeaking(false);
+  }, []);
+
+  const advanceAfterNarration = useCallback(() => {
+    setIndex((value) => {
+      if (value >= scenes.length - 1) {
+        setPlaying(false);
+        return value;
+      }
+      return value + 1;
+    });
+  }, []);
+
+  const speakBrowserFallback = useCallback((text: string, advanceWhenDone: boolean) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setSpeechSupported(false);
+      fallbackTimerRef.current = window.setTimeout(() => {
+        setIsSpeaking(false);
+        if (advanceWhenDone) advanceAfterNarration();
+      }, 6500);
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "en-US";
     utterance.rate = 0.94;
     utterance.pitch = 0.98;
-
-    const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find((voice) =>
-      voice.lang.toLowerCase().startsWith("en-us") &&
-      /natural|samantha|ava|aria|jenny|guy|davis/i.test(voice.name)
-    ) ?? voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us"));
-
-    if (preferredVoice) utterance.voice = preferredVoice;
-
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => {
       setIsSpeaking(false);
-      if (advanceWhenDone) {
-        setIndex((value) => {
-          if (value >= scenes.length - 1) {
-            setPlaying(false);
-            return value;
-          }
-          return value + 1;
-        });
-      }
+      if (advanceWhenDone) advanceAfterNarration();
     };
     utterance.onerror = () => {
       setIsSpeaking(false);
       setSpeechSupported(false);
+      if (advanceWhenDone) advanceAfterNarration();
     };
-
     window.speechSynthesis.speak(utterance);
-    return true;
-  }, []);
+  }, [advanceAfterNarration]);
+
+  const speakScene = useCallback(async (targetScene: Scene, advanceWhenDone: boolean) => {
+    clearPlayback();
+    const text = `${targetScene.title} ${targetScene.body}`;
+    const controller = new AbortController();
+    speechAbortRef.current = controller;
+
+    try {
+      const response = await fetch("/api/tour-speech", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input: text, voice: "marin" }),
+        signal: controller.signal
+      });
+
+      if (!response.ok) throw new Error("Neural narration unavailable");
+
+      const blob = await response.blob();
+      if (controller.signal.aborted) return;
+
+      const url = URL.createObjectURL(blob);
+      audioUrlRef.current = url;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onplay = () => {
+        setSpeechSupported(true);
+        setIsSpeaking(true);
+      };
+      audio.onended = () => {
+        setIsSpeaking(false);
+        if (audioUrlRef.current) {
+          URL.revokeObjectURL(audioUrlRef.current);
+          audioUrlRef.current = null;
+        }
+        audioRef.current = null;
+        if (advanceWhenDone) advanceAfterNarration();
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        speakBrowserFallback(text, advanceWhenDone);
+      };
+
+      await audio.play();
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      console.warn("ChurchWork neural narration unavailable; using browser fallback", error);
+      speakBrowserFallback(text, advanceWhenDone);
+    } finally {
+      if (speechAbortRef.current === controller) speechAbortRef.current = null;
+    }
+  }, [advanceAfterNarration, clearPlayback, speakBrowserFallback]);
 
   useEffect(() => {
     if (!playing) {
-      if (typeof window !== "undefined" && "speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
-      }
-      setIsSpeaking(false);
+      clearPlayback();
       return;
     }
 
-    if (narrationEnabled && speechSupported) {
-      const started = speakScene(scene, true);
-      if (started) return;
+    if (narrationEnabled) {
+      void speakScene(scene, true);
+      return () => clearPlayback();
     }
 
-    const timer = window.setTimeout(() => {
+    fallbackTimerRef.current = window.setTimeout(() => {
       if (index >= scenes.length - 1) {
         setPlaying(false);
         return;
@@ -439,7 +510,48 @@ export function ChurchWorkLaunchDemo() {
       setIndex((value) => value + 1);
     }, 6500);
 
-    return () => window.clearTimeout(timer);
+    return () => clearPlayback();
+  }, [clearPlayback, index, narrationEnabled, playing, scene, speakScene]);
+
+  useEffect(() => () => clearPlayback(), [clearPlayback]);
+
+  const nextLabel = useMemo(() => index === scenes.length - 1 ? "Replay demo" : index === 0 ? "Start walkthrough" : "Next", [index]);
+
+  function next() {
+    if (index === scenes.length - 1) {
+      setIndex(0);
+      setPlaying(true);
+      return;
+    }
+
+    if (index === 0 && !playing) {
+      setPlaying(true);
+      return;
+    }
+
+    setPlaying(false);
+    clearPlayback();
+    setIndex((value) => Math.min(value + 1, scenes.length - 1));
+  }
+
+  function back() {
+    setPlaying(false);
+    clearPlayback();
+    setIndex((value) => Math.max(value - 1, 0));
+  }
+
+  function replayNarration() {
+    setPlaying(false);
+    void speakScene(scene, false);
+  }
+
+  function toggleNarration() {
+    const nextValue = !narrationEnabled;
+    setNarrationEnabled(nextValue);
+    if (!nextValue) clearPlayback();
+  }
+
+  return () => window.clearTimeout(timer);
   }, [index, narrationEnabled, playing, scene, speakScene, speechSupported]);
 
   useEffect(() => () => {
@@ -558,9 +670,10 @@ export function ChurchWorkLaunchDemo() {
             <div className="mt-4 rounded-2xl border border-[#d9d3c7] bg-[#fffdf9]/70 p-4 backdrop-blur" aria-live="polite">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#71807e]">Narration</p>
-                <span className="text-[10px] font-bold text-[#87928f]">{speechSupported ? (narrationEnabled ? "Voice + captions" : "Captions only") : "Captions only"}</span>
+                <span className="text-[10px] font-bold text-[#87928f]">{narrationEnabled ? (speechSupported ? "Marin · AI voice + captions" : "AI voice fallback + captions") : "Captions only"}</span>
               </div>
               <p className="mt-2 text-xs font-semibold leading-5 text-[#52676d]">{scene.title} {scene.body}</p>
+              <p className="mt-3 text-[9px] font-semibold leading-4 text-[#8a9491]">Narration is AI-generated.</p>
             </div>
 
             <div className="mt-8 space-y-2">

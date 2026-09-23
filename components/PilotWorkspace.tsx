@@ -780,7 +780,7 @@ function FacilityMetric({ value, label, tone }: { value: number; label: string; 
   return <Card className={cx("relative overflow-hidden bg-gradient-to-br p-5", toneClass)}><span className="absolute left-0 top-0 h-full w-1.5" style={{ background: accent }} /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{value}</p><p className="mt-1 text-sm font-black text-[#425a64]">{label}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: accent }}>{value ? "Active" : "Clear"}</p></Card>;
 }
 
-function FacilityHome({ requests, counts, isLoading, onOpen }: { requests: StoredPilotRequest[]; counts: { review: number; partner: number; release: number; updated: number }; isLoading: boolean; onOpen: (id: string) => void }) {
+function FacilityHome({ requests, counts, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; counts: { review: number; partner: number; release: number; updated: number }; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
   const needsReview = requests.filter((r) => rawStatus(r) === "facility_review");
   const readyToRelease = requests.filter((r) => rawStatus(r) === "partner_outcome_logged");
   const needsAction = needsReview.length + readyToRelease.length;
@@ -805,8 +805,8 @@ function FacilityHome({ requests, counts, isLoading, onOpen }: { requests: Store
           {isLoading ? <p className="p-6 text-sm font-bold text-[#6d7b7e]">Loading queue…</p> : needsReview.length ? needsReview.map((request) => (
             <button key={request.id} onClick={() => onOpen(request.id)} className="group flex w-full flex-col gap-4 border-b border-[#eee9df] px-6 py-5 text-left last:border-0 hover:bg-[#fbfaf6] sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <div className="flex flex-wrap items-center gap-2"><p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p><span className="rounded-full bg-[#fff0dc] px-2.5 py-1 text-[9px] font-black text-[#85561a]">NEW</span></div>
-                <p className="mt-1.5 text-xs font-semibold text-[#768286]">{shortId(request.id)} · {formatDate(request.created_at, true)}</p>
+                <div className="flex flex-wrap items-center gap-2"><p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p><span className="rounded-full bg-[#fff0dc] px-2.5 py-1 text-[9px] font-black text-[#85561a]">{ageLabel(stageStartedAt(request))}</span></div>
+                <p className="mt-1.5 text-xs font-semibold text-[#768286]">{shortId(request.id)} · {ownerDisplay(request, "facility", currentUserId)}</p>
               </div>
               <span className="rounded-xl bg-[#315f83] px-4 py-2.5 text-xs font-black text-white shadow-sm transition group-hover:-translate-y-0.5">Review request →</span>
             </button>
@@ -820,38 +820,35 @@ function FacilityHome({ requests, counts, isLoading, onOpen }: { requests: Store
           </div>
           {readyToRelease.length ? readyToRelease.map((request) => (
             <button key={request.id} onClick={() => onOpen(request.id)} className="group w-full border-b border-[#e6ece7] px-6 py-5 text-left last:border-0 hover:bg-[#f8fbf8]">
-              <p className="font-black text-[#183f35]">{outcomeLabel(request.partner_outcome)}</p>
-              <p className="mt-1.5 text-xs font-semibold text-[#71807d]">{shortId(request.id)} · Hope Church update received</p>
+              <div className="flex items-center justify-between gap-3"><p className="font-black text-[#183f35]">{outcomeLabel(request.partner_outcome)}</p><span className="rounded-full bg-white px-2.5 py-1 text-[9px] font-black text-[#4f765d] shadow-sm">{ageLabel(stageStartedAt(request))}</span></div>
+              <p className="mt-1.5 text-xs font-semibold text-[#71807d]">{shortId(request.id)} · {ownerDisplay(request, "facility", currentUserId)}</p>
               <p className="mt-4 text-xs font-black text-[#3f7653]">Review & release →</p>
             </button>
           )) : <div className="p-7"><p className="text-sm font-black text-[#34564c]">No updates waiting.</p><p className="mt-1 text-xs font-semibold leading-5 text-[#788582]">Hope Church outcomes return here before the requester sees anything.</p></div>}
         </Card>
       </div>
+
+      <FacilityImpact requests={requests} />
     </>
   );
 }
 
-function FacilityRequests({ requests, isLoading, onOpen }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void }) {
+function FacilityRequests({ requests, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
   return (
     <>
       <PageTitle eyebrow="Grandview Post Acute" title="Request queue" description="One view of every spiritual-care request moving through Grandview's review and release process." />
       {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading requests…</Card> : requests.length ? (
         <Card className="overflow-hidden">
-          <div className="hidden grid-cols-[1.4fr_.8fr_.85fr_auto] gap-4 border-b border-[#e7e2d9] bg-[#f7f5ef] px-6 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#84908e] md:grid"><span>Request</span><span>Submitted</span><span>Status</span><span></span></div>
+          <div className="hidden grid-cols-[1.3fr_.7fr_.8fr_.9fr_auto] gap-4 border-b border-[#e7e2d9] bg-[#f7f5ef] px-6 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#84908e] md:grid"><span>Request</span><span>Waiting</span><span>Status</span><span>Owner</span><span></span></div>
           {requests.map((request) => {
             const status = rawStatus(request);
             const needsAction = status === "facility_review" || status === "partner_outcome_logged";
             return (
-              <button key={request.id} onClick={() => onOpen(request.id)} className={cx("grid w-full gap-3 border-b border-[#eee9df] px-6 py-5 text-left last:border-0 md:grid-cols-[1.4fr_.8fr_.85fr_auto] md:items-center", needsAction ? "bg-[#fffdf9] hover:bg-[#fbfaf6]" : "bg-white/50 hover:bg-white")}>
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p>
-                    {needsAction ? <span className="rounded-full bg-[#fff0dc] px-2 py-1 text-[9px] font-black text-[#8a5b20]">ACTION</span> : null}
-                  </div>
-                  <p className="mt-1 text-xs font-semibold text-[#7a8688]">{shortId(request.id)}</p>
-                </div>
-                <p className="text-sm font-semibold text-[#64767b]">{formatDate(request.created_at)}</p>
+              <button key={request.id} onClick={() => onOpen(request.id)} className={cx("grid w-full gap-3 border-b border-[#eee9df] px-6 py-5 text-left last:border-0 md:grid-cols-[1.3fr_.7fr_.8fr_.9fr_auto] md:items-center", needsAction ? "bg-[#fffdf9] hover:bg-[#fbfaf6]" : "bg-white/50 hover:bg-white")}>
+                <div><p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p><p className="mt-1 text-xs font-semibold text-[#7a8688]">{shortId(request.id)} · {formatDate(request.created_at)}</p></div>
+                <p className="text-sm font-black text-[#63757a]">{needsAction ? ageLabel(stageStartedAt(request)) : "—"}</p>
                 <span className={cx("w-fit rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.06em]", statusPill(status))}>{statusLabel(status)}</span>
+                <p className="text-xs font-bold text-[#62757a]">{needsAction ? ownerDisplay(request, "facility", currentUserId) : "Stage complete"}</p>
                 <span className={cx("w-fit rounded-lg px-4 py-2 text-xs font-black", needsAction ? "bg-[#315f83] text-white" : "border border-[#cfd7d8] bg-white text-[#48616b]")}>{status === "facility_review" ? "Review →" : status === "partner_outcome_logged" ? "Release →" : "View →"}</span>
               </button>
             );
@@ -862,7 +859,7 @@ function FacilityRequests({ requests, isLoading, onOpen }: { requests: StoredPil
   );
 }
 
-function PartnerHome({ requests, isLoading, onOpen }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void }) {
+function PartnerHome({ requests, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
   const newAssignments = requests.filter((r) => rawStatus(r) === "approved_for_partner");
   const completed = requests.filter((r) => rawStatus(r) !== "approved_for_partner");
 
@@ -878,18 +875,20 @@ function PartnerHome({ requests, isLoading, onOpen }: { requests: StoredPilotReq
       <div className="mb-4 flex items-end justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Assignments</p><h2 className="mt-1 text-xl font-black text-[#183f35]">Ready for your care team</h2></div><span className="text-xs font-bold text-[#7c8885]">{newAssignments.length} open</span></div>
 
       {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : newAssignments.length ? (
-        <div className="grid gap-4 xl:grid-cols-2">{newAssignments.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div>
+        <div className="grid gap-4 xl:grid-cols-2">{newAssignments.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} currentUserId={currentUserId} />)}</div>
       ) : <EmptyState title="No new assignments" detail="Grandview-approved requests will appear here when they are ready for Hope Church." />}
+
+      <PartnerImpact requests={requests} />
     </>
   );
 }
 
-function PartnerAssignments({ requests, isLoading, onOpen }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void }) {
+function PartnerAssignments({ requests, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
   const open = requests.filter((request) => rawStatus(request) === "approved_for_partner");
   return (
     <>
       <PageTitle eyebrow="Hope Church" title="Assignments" description="Grandview-approved spiritual-care requests available to Hope Church." />
-      {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : open.length ? <div className="grid gap-4 xl:grid-cols-2">{open.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div> : <EmptyState title="No open assignments" detail="Grandview-approved requests will appear here when they are ready for Hope Church." />}
+      {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : open.length ? <div className="grid gap-4 xl:grid-cols-2">{open.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} currentUserId={currentUserId} />)}</div> : <EmptyState title="No open assignments" detail="Grandview-approved requests will appear here when they are ready for Hope Church." />}
     </>
   );
 }
@@ -904,7 +903,7 @@ function PartnerCompleted({ requests, onOpen }: { requests: StoredPilotRequest[]
   );
 }
 
-function AssignmentRow({ request, onOpen }: { request: StoredPilotRequest; onOpen: (id: string) => void }) {
+function AssignmentRow({ request, onOpen, currentUserId }: { request: StoredPilotRequest; onOpen: (id: string) => void; currentUserId?: string | null }) {
   const isNew = rawStatus(request) === "approved_for_partner";
   return (
     <button onClick={() => onOpen(request.id)} className="group w-full rounded-[1.35rem] border border-[#ded9cf] bg-[#fffdf9] p-5 text-left shadow-[0_12px_38px_rgba(18,48,68,.05)] transition hover:-translate-y-0.5 hover:border-[#c9bd99] hover:shadow-[0_16px_42px_rgba(18,48,68,.09)]">
@@ -913,12 +912,50 @@ function AssignmentRow({ request, onOpen }: { request: StoredPilotRequest; onOpe
         <span className={cx("rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em]", isNew ? "bg-[#f4edda] text-[#745f2b]" : "bg-[#e7f0e9] text-[#346247]")}>{request.partner_outcome ? outcomeLabel(request.partner_outcome) : "New assignment"}</span>
       </div>
       <p className="mt-5 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#183f35]">{request.support.join(" + ") || "Spiritual care"}</p>
-      <p className="mt-2 text-xs font-semibold text-[#738184]">{shortId(request.id)} · Approved by Grandview</p>
+      <p className="mt-2 text-xs font-semibold text-[#738184]">{shortId(request.id)} · {isNew ? `waiting ${ageLabel(stageStartedAt(request))}` : "Outcome returned to Grandview"}</p>
+      <div className="mt-4 flex items-center gap-2"><span className={cx("rounded-full px-3 py-1.5 text-[10px] font-black", request.partner_owner_user_id ? "bg-[#f1ead7] text-[#6b5a2e]" : "bg-[#fff0dc] text-[#85561a]")}>{isNew ? ownerDisplay(request, "partner", currentUserId) : "Stage complete"}</span></div>
       <div className="mt-5 flex items-center justify-between border-t border-[#eee9df] pt-4">
         <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8a8a78]">Safe spiritual-care context</span>
         <span className="text-xs font-black text-[#806c39]">Open assignment →</span>
       </div>
     </button>
+  );
+}
+
+
+function FacilityImpact({ requests }: { requests: StoredPilotRequest[] }) {
+  const reviewAvg = average(requests.map((request) => minutesBetween(request.created_at, request.facility_approved_at)));
+  const releaseAvg = average(requests.map((request) => minutesBetween(request.partner_outcome_at, request.requester_update_released_at)));
+  const completed = requests.filter((request) => request.requester_update_released_at || rawStatus(request) === "closed").length;
+
+  return (
+    <section className="mt-8">
+      <div className="mb-4"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#416f96]">Pilot impact</p><h2 className="mt-1 text-xl font-black text-[#183f35]">How the care loop is performing</h2></div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{formatDuration(reviewAvg)}</p><p className="mt-1 text-sm font-black text-[#425a64]">Avg. Grandview review</p></Card>
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{formatDuration(releaseAvg)}</p><p className="mt-1 text-sm font-black text-[#425a64]">Avg. update release</p></Card>
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{completed}</p><p className="mt-1 text-sm font-black text-[#425a64]">Closed-loop requests</p></Card>
+      </div>
+    </section>
+  );
+}
+
+function PartnerImpact({ requests }: { requests: StoredPilotRequest[] }) {
+  const outcomeCount = requests.filter((request) => request.partner_outcome).length;
+  const visits = requests.filter((request) => request.partner_outcome === "visit_completed").length;
+  const prayers = requests.filter((request) => request.partner_outcome === "prayer_logged").length;
+  const responseAvg = average(requests.map((request) => minutesBetween(request.partner_assigned_at, request.partner_outcome_at)));
+
+  return (
+    <section className="mt-8">
+      <div className="mb-4"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Care impact</p><h2 className="mt-1 text-xl font-black text-[#183f35]">Hope Church activity</h2></div>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{outcomeCount}</p><p className="mt-1 text-sm font-black text-[#425a64]">Outcomes logged</p></Card>
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{visits}</p><p className="mt-1 text-sm font-black text-[#425a64]">Visits completed</p></Card>
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{prayers}</p><p className="mt-1 text-sm font-black text-[#425a64]">Prayers logged</p></Card>
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{formatDuration(responseAvg)}</p><p className="mt-1 text-sm font-black text-[#425a64]">Avg. response</p></Card>
+      </div>
+    </section>
   );
 }
 

@@ -30,6 +30,9 @@ type PilotRequestRow = {
   updated_at: string;
 };
 
+type RoleSession = Extract<Awaited<ReturnType<typeof getPilotRoleSession>>, { ok: true }>;
+type PilotSupabase = RoleSession["supabase"];
+
 type OwnershipRow = {
   request_id: string;
   facility_owner_user_id: string | null;
@@ -113,7 +116,7 @@ function toWorkspaceRequest(row: PilotRequestRow, ownership?: OwnershipRow | nul
 }
 
 async function ownershipMap(
-  supabase: Awaited<ReturnType<typeof getPilotRoleSession>> extends { ok: true; supabase: infer T } ? T : never,
+  supabase: PilotSupabase,
   ids: string[]
 ) {
   if (!ids.length) return new Map<string, OwnershipRow>();

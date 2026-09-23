@@ -416,10 +416,12 @@ export function ChurchWorkLaunchDemo() {
   const speakBrowserFallback = useCallback((text: string, advanceWhenDone: boolean) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       setSpeechSupported(false);
-      fallbackTimerRef.current = window.setTimeout(() => {
-        setIsSpeaking(false);
-        if (advanceWhenDone) advanceAfterNarration();
-      }, 6500);
+      if (typeof window !== "undefined") {
+        fallbackTimerRef.current = window.setTimeout(() => {
+          setIsSpeaking(false);
+          if (advanceWhenDone) advanceAfterNarration();
+        }, 6500);
+      }
       return;
     }
 
@@ -515,7 +517,10 @@ export function ChurchWorkLaunchDemo() {
 
   useEffect(() => () => clearPlayback(), [clearPlayback]);
 
-  const nextLabel = useMemo(() => index === scenes.length - 1 ? "Replay demo" : index === 0 ? "Start walkthrough" : "Next", [index]);
+  const nextLabel = useMemo(
+    () => index === scenes.length - 1 ? "Replay demo" : index === 0 ? "Start walkthrough" : "Next",
+    [index]
+  );
 
   function next() {
     if (index === scenes.length - 1) {
@@ -549,53 +554,6 @@ export function ChurchWorkLaunchDemo() {
     const nextValue = !narrationEnabled;
     setNarrationEnabled(nextValue);
     if (!nextValue) clearPlayback();
-  }
-
-  return () => window.clearTimeout(timer);
-  }, [index, narrationEnabled, playing, scene, speakScene, speechSupported]);
-
-  useEffect(() => () => {
-    if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-  }, []);
-
-  const nextLabel = useMemo(() => index === scenes.length - 1 ? "Replay demo" : index === 0 ? "Start walkthrough" : "Next", [index]);
-
-  function next() {
-    if (index === scenes.length - 1) {
-      setIndex(0);
-      setPlaying(true);
-      return;
-    }
-
-    if (index === 0 && !playing) {
-      setPlaying(true);
-      return;
-    }
-
-    setPlaying(false);
-    setIndex((value) => Math.min(value + 1, scenes.length - 1));
-  }
-
-  function back() {
-    setPlaying(false);
-    setIndex((value) => Math.max(value - 1, 0));
-  }
-
-  function replayNarration() {
-    setPlaying(false);
-    void speakScene(scene, false);
-  }
-
-  function toggleNarration() {
-    const nextValue = !narrationEnabled;
-    setNarrationEnabled(nextValue);
-
-    if (!nextValue && typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
   }
 
   return (

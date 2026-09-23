@@ -959,15 +959,21 @@ function PartnerImpact({ requests }: { requests: StoredPilotRequest[] }) {
   );
 }
 
-function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPartnerAction }: {
-  role: RoleKey; request: StoredPilotRequest; isBusy: boolean; onBack: () => void;
+function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilityAction, onPartnerAction, onOwnershipAction }: {
+  role: RoleKey; request: StoredPilotRequest; isBusy: boolean; currentUserId: string | null; onBack: () => void;
   onFacilityAction: (id: string, action: "approve" | "release_update") => Promise<void>;
   onPartnerAction: (id: string, outcome: PartnerOutcome) => Promise<void>;
+  onOwnershipAction: (id: string, scope: "facility" | "partner", claim: boolean) => Promise<void>;
 }) {
   const status = rawStatus(request);
   const canApprove = role === "facility" && status === "facility_review";
   const canRelease = role === "facility" && status === "partner_outcome_logged" && request.requester_update_status !== "released";
   const canPartnerReport = role === "partner" && status === "approved_for_partner";
+  const activeOwnershipStage = canApprove || canRelease || canPartnerReport;
+  const ownerUserId = role === "facility" ? request.facility_owner_user_id : role === "partner" ? request.partner_owner_user_id : null;
+  const claimedByMe = Boolean(ownerUserId && currentUserId && ownerUserId === currentUserId);
+  const claimedByOther = Boolean(ownerUserId && !claimedByMe);
+  const ownerLabel = role === "requester" ? "" : ownerDisplay(request, role, currentUserId);
   const accent = role === "facility" ? "#416f96" : role === "partner" ? "#87713a" : "#2f7b65";
   const soft = role === "facility" ? "#eaf2f8" : role === "partner" ? "#f4edda" : "#e7f1eb";
 
@@ -1011,6 +1017,7 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
                 : role === "requester" ? "ChurchWork coordinates the handoffs for you. You do not need to close the request."
                 : "This part of the workflow is complete."}
             </p>
+            {activeOwnershipStage ? <p className="mt-4 inline-flex rounded-full bg-white/75 px-3 py-1.5 text-[10px] font-black" style={{ color: accent }}>Waiting {ageLabel(stageStartedAt(request))}</p> : null}
           </aside>
         </div>
       </Card>
@@ -1054,6 +1061,23 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
               <h2 className="mt-1 font-serif text-xl font-semibold">Next step</h2>
             </div>
             <div className="p-6">
+              {role !== "requester" && activeOwnershipStage ? (
+                <div className="mb-5 rounded-2xl border border-[#e0dbd1] bg-[#f8f5ef] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7d8784]">Stage owner</p>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className={cx("text-sm font-black", claimedByOther ? "text-[#7a5a29]" : "text-[#294e42]")}>{ownerLabel}</p>
+                      <p className="mt-1 text-[11px] font-semibold text-[#788582]">{ownerUserId ? "This owner has responsibility for the current stage." : "Claim it so the team knows who is handling it."}</p>
+                    </div>
+                    {!ownerUserId ? (
+                      <button disabled={isBusy} onClick={() => void onOwnershipAction(request.id, role, true)} className="shrink-0 rounded-xl border border-[#cfd8d2] bg-white px-3 py-2 text-xs font-black text-[#315f49] shadow-sm disabled:opacity-50">Claim</button>
+                    ) : claimedByMe ? (
+                      <button disabled={isBusy} onClick={() => void onOwnershipAction(request.id, role, false)} className="shrink-0 rounded-xl border border-[#ddd5c9] bg-white px-3 py-2 text-xs font-black text-[#6d7472] shadow-sm disabled:opacity-50">Release</button>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
               {role === "facility" ? (
                 <>
                   <p className="text-sm font-semibold leading-6 text-[#65757a]">{canApprove ? "Review the safe request, then approve it for Hope Church." : canRelease ? "Review Hope Church's outcome and release the standardized update to the requester." : "No Grandview action is required right now."}</p>

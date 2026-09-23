@@ -24,11 +24,11 @@ type StoredPilotRequest = {
 
 type PilotWorkspaceProps = { role: RoleKey };
 
-const supportOptions: Array<{ value: SupportOption; title: string; detail: string; symbol: string }> = [
-  { value: "Prayer", title: "Prayer", detail: "Prayer from an approved local care partner.", symbol: "🙏" },
-  { value: "Friendly visit", title: "Friendly Visit", detail: "A spiritual-care visit from an approved church partner.", symbol: "♟" },
-  { value: "Encouragement", title: "Encouragement", detail: "Words of support and spiritual encouragement.", symbol: "♡" },
-  { value: "Pastoral call", title: "Pastoral Call", detail: "A phone call from a pastor or approved care partner.", symbol: "☎" }
+const supportOptions: Array<{ value: SupportOption; title: string; detail: string; icon: "prayer" | "visit" | "heart" | "phone" }> = [
+  { value: "Prayer", title: "Prayer", detail: "Prayer from an approved local care partner.", icon: "prayer" },
+  { value: "Friendly visit", title: "Friendly Visit", detail: "A spiritual-care visit from an approved church partner.", icon: "visit" },
+  { value: "Encouragement", title: "Encouragement", detail: "Words of support and spiritual encouragement.", icon: "heart" },
+  { value: "Pastoral call", title: "Pastoral Call", detail: "A phone call from a pastor or approved care partner.", icon: "phone" }
 ];
 
 const partnerOutcomes: Array<{ value: PartnerOutcome; label: string; detail: string }> = [
@@ -49,7 +49,15 @@ function cx(...values: Array<string | false | null | undefined>) {
 }
 
 function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <section className={cx("rounded-2xl border border-[#ded9cf] bg-[#fffdf9] shadow-sm shadow-[#123044]/5", className)}>{children}</section>;
+  return <section className={cx("rounded-[1.35rem] border border-[#ded9cf]/90 bg-[#fffdf9] shadow-[0_12px_38px_rgba(18,48,68,.06)]", className)}>{children}</section>;
+}
+
+function SupportIcon({ name }: { name: "prayer" | "visit" | "heart" | "phone" }) {
+  const cls = "h-6 w-6";
+  if (name === "prayer") return <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M9 4c1.2 2.6 1.5 5 .8 7.2L7 20"/><path d="M15 4c-1.2 2.6-1.5 5-.8 7.2L17 20"/><path d="M9.8 11.2c1.4.8 3 .8 4.4 0"/><path d="M7.5 16h9"/></svg>;
+  if (name === "visit") return <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M4 21V9l8-5 8 5v12"/><path d="M8 21v-7h8v7"/><path d="M9 10h6"/></svg>;
+  if (name === "phone") return <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M7.5 3.5 10 8 7.8 9.8c1.1 2.7 3.7 5.3 6.4 6.4L16 14l4.5 2.5-.7 3.5c-.2.8-.9 1.4-1.8 1.4C9.5 21.4 2.6 14.5 2.6 6c0-.9.6-1.6 1.4-1.8z"/></svg>;
+  return <svg viewBox="0 0 24 24" className={cls} fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg>;
 }
 
 function formatDate(value: string, withTime = false) {
@@ -146,24 +154,25 @@ function RequestProgress({ request, role }: { request: StoredPilotRequest; role:
 
 function PageTitle({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-      <div>
-        {eyebrow ? <p className="text-xs font-black uppercase tracking-[0.18em] text-[#6c8452]">{eyebrow}</p> : null}
-        <h1 className="mt-1 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#123044] sm:text-4xl">{title}</h1>
-        {description ? <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-[#64757b]">{description}</p> : null}
+    <div className="mb-7 flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+      <div className="max-w-4xl">
+        {eyebrow ? <span className="inline-flex rounded-full border border-[#d8d3c8] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#627858]">{eyebrow}</span> : null}
+        <h1 className={cx("font-serif text-4xl font-semibold tracking-[-0.055em] text-[#102f40] sm:text-[2.8rem] sm:leading-[1.02]", eyebrow ? "mt-3" : "")}>{title}</h1>
+        {description ? <p className="mt-3 max-w-3xl text-sm font-medium leading-6 text-[#66777b] sm:text-[15px]">{description}</p> : null}
       </div>
-      {action}
+      {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
 }
 
 function EmptyState({ title, detail, action }: { title: string; detail: string; action?: ReactNode }) {
   return (
-    <Card className="p-8 text-center">
-      <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#e4efe8] text-xl text-[#2f7b65]">♡</span>
-      <h2 className="mt-4 text-lg font-black text-[#183f35]">{title}</h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm font-medium leading-6 text-[#6b7a7e]">{detail}</p>
-      {action ? <div className="mt-5">{action}</div> : null}
+    <Card className="relative overflow-hidden p-10 text-center">
+      <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-[#edf5f1] to-transparent" />
+      <span className="relative mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e4efe8] text-[#2f7b65] shadow-sm"><SupportIcon name="heart" /></span>
+      <h2 className="relative mt-5 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#183f35]">{title}</h2>
+      <p className="relative mx-auto mt-2 max-w-lg text-sm font-medium leading-6 text-[#6b7a7e]">{detail}</p>
+      {action ? <div className="relative mt-6">{action}</div> : null}
     </Card>
   );
 }
@@ -326,10 +335,8 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
       activeKey={activeNav}
       onNavigate={navigate}
       primaryAction={role === "requester" ? { label: "New Request", onClick: () => navigate("new") } : undefined}
+      onSignOut={() => void signOut()}
     >
-      <div className="mb-5 flex justify-end">
-        <button type="button" onClick={signOut} className="text-xs font-extrabold text-[#69787c] underline-offset-4 hover:text-[#164f3e] hover:underline">Sign out</button>
-      </div>
 
       {selectedRequest ? (
         <RequestDetail

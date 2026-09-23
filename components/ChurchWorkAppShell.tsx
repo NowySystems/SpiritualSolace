@@ -1,9 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { OperatorPortalSwitcher } from "@/components/OperatorPortalSwitcher";
 
-export type ChurchWorkNavKey = "home" | "requests" | "new" | "assignments" | "completed" | "overview" | "organizations" | "users" | "activity" | "settings";
+export type ChurchWorkNavKey = "home" | "requests" | "new" | "assignments" | "completed" | "overview" | "organizations" | "users" | "activity" | "impact" | "settings";
 
 type NavItem = {
   key: ChurchWorkNavKey;
@@ -13,6 +13,13 @@ type NavItem = {
 
 type PortalKey = "requester" | "facility" | "partner" | "admin";
 
+export type ChurchWorkNotification = {
+  id: string;
+  title: string;
+  detail: string;
+  tone?: "attention" | "urgent" | "info";
+};
+
 type ChurchWorkAppShellProps = {
   organization: string;
   currentPortal?: PortalKey;
@@ -21,6 +28,7 @@ type ChurchWorkAppShellProps = {
   activeKey: ChurchWorkNavKey;
   onNavigate: (key: ChurchWorkNavKey) => void;
   onSignOut?: () => void;
+  notifications?: ChurchWorkNotification[];
   primaryAction?: { label: string; onClick: () => void };
   children: ReactNode;
 };
@@ -87,10 +95,12 @@ export function ChurchWorkAppShell({
   activeKey,
   onNavigate,
   onSignOut,
+  notifications = [],
   primaryAction,
   children
 }: ChurchWorkAppShellProps) {
   const theme = portalTheme[currentPortal];
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   return (
     <main className="min-h-screen bg-[#f5f1e8] text-[#123044]">
@@ -187,7 +197,42 @@ export function ChurchWorkAppShell({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="relative flex items-center gap-2 sm:gap-3">
+                {notifications.length ? (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      aria-label="Open ChurchWork notifications"
+                      aria-expanded={notificationsOpen}
+                      onClick={() => setNotificationsOpen((value) => !value)}
+                      className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[#e0dbd1] bg-white/80 text-[#4f6268] shadow-sm transition hover:bg-white"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="1.8"><path d="M6.5 9a5.5 5.5 0 0 1 11 0c0 6 2.5 6.2 2.5 7.5H4c0-1.3 2.5-1.5 2.5-7.5Z"/><path d="M10 19h4"/></svg>
+                      <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#a85d51] px-1 text-[9px] font-black text-white">{notifications.length}</span>
+                    </button>
+                    {notificationsOpen ? (
+                      <div className="absolute right-0 top-12 z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-[#ddd8cf] bg-[#fffdf9] shadow-[0_24px_70px_rgba(20,44,54,.18)]">
+                        <div className="border-b border-[#ebe6dc] px-5 py-4">
+                          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7d8784]">Attention center</p>
+                          <p className="mt-1 text-sm font-black text-[#183f35]">{notifications.length} item{notifications.length === 1 ? "" : "s"} to watch</p>
+                        </div>
+                        <div className="max-h-[24rem] overflow-y-auto p-2">
+                          {notifications.map((item) => (
+                            <div key={item.id} className="rounded-xl p-3 hover:bg-[#f7f4ee]">
+                              <div className="flex gap-3">
+                                <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${item.tone === "urgent" ? "bg-[#b85e52]" : item.tone === "attention" ? "bg-[#c38a3f]" : "bg-[#5b839f]"}`} />
+                                <div>
+                                  <p className="text-xs font-black text-[#294b42]">{item.title}</p>
+                                  <p className="mt-1 text-[11px] font-semibold leading-5 text-[#73817f]">{item.detail}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
                 <OperatorPortalSwitcher currentPortal={currentPortal} />
                 <div className="hidden h-8 w-px bg-[#e1ddd4] sm:block" />
                 <div className="flex items-center gap-2 rounded-xl border border-[#e0dbd1] bg-white/80 p-1.5 pl-2.5">

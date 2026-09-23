@@ -20,6 +20,21 @@ type PilotStaffing = {
   pending_facility_invites: number;
 };
 
+type PilotImpact = {
+  requests_total: number;
+  requests_last_30_days: number;
+  completed_requests: number;
+  care_outcomes_logged: number;
+  prayers_logged: number;
+  visits_planned: number;
+  visits_completed: number;
+  follow_up_requested: number;
+  avg_review_minutes: number | null;
+  avg_partner_response_minutes: number | null;
+  avg_release_minutes: number | null;
+  avg_end_to_end_minutes: number | null;
+};
+
 type OperatorRole = { role: string; status: string; organization_name: string; organization_slug: string };
 type OperatorUser = { id: string; email: string | null; full_name: string | null; status: string; created_at: string; roles: OperatorRole[] };
 type OperatorRequest = {
@@ -31,6 +46,17 @@ type OperatorRequest = {
   requester_update: string | null;
   created_at: string;
   updated_at: string;
+  facility_approved_at?: string | null;
+  partner_assigned_at?: string | null;
+  requester_update_released_at?: string | null;
+  facility_owner_user_id?: string | null;
+  facility_owner_name?: string | null;
+  facility_owner_email?: string | null;
+  facility_claimed_at?: string | null;
+  partner_owner_user_id?: string | null;
+  partner_owner_name?: string | null;
+  partner_owner_email?: string | null;
+  partner_claimed_at?: string | null;
 };
 
 type OperatorSnapshot = {
@@ -38,6 +64,7 @@ type OperatorSnapshot = {
   current_user_id: string;
   summary: PilotSummary;
   staffing: PilotStaffing;
+  impact: PilotImpact;
   users: OperatorUser[];
   recent_requests: OperatorRequest[];
 };
@@ -70,6 +97,35 @@ function statusClass(status: string) {
   if (status === "approved_for_partner") return "bg-[#e2edf8] text-[#285e8b]";
   if (status === "partner_outcome_logged") return "bg-[#e5f1e8] text-[#2d6b50]";
   return "bg-[#e7efe8] text-[#315f49]";
+}
+
+function minutesSince(value?: string | null) {
+  if (!value) return null;
+  const start = new Date(value).getTime();
+  if (!Number.isFinite(start)) return null;
+  return Math.max(0, (Date.now() - start) / 60000);
+}
+
+function ageLabel(value?: string | null) {
+  const minutes = minutesSince(value);
+  if (minutes === null) return "waiting";
+  if (minutes < 60) return `${Math.max(1, Math.round(minutes))}m`;
+  if (minutes < 1440) return `${Math.round(minutes / 60)}h`;
+  return `${Math.round(minutes / 1440)}d`;
+}
+
+function durationLabel(minutes: number | null | undefined) {
+  if (minutes === null || minutes === undefined || !Number.isFinite(minutes)) return "—";
+  if (minutes < 60) return `${Math.round(minutes)}m`;
+  if (minutes < 1440) return `${(minutes / 60).toFixed(minutes >= 600 ? 0 : 1)}h`;
+  return `${(minutes / 1440).toFixed(1)}d`;
+}
+
+function stageStartedAt(request: OperatorRequest) {
+  if (request.status === "facility_review") return request.created_at;
+  if (request.status === "approved_for_partner") return request.partner_assigned_at ?? request.updated_at;
+  if (request.status === "partner_outcome_logged") return request.updated_at;
+  return request.requester_update_released_at ?? request.updated_at;
 }
 
 function messageFromBody(body: unknown, fallback: string) {
@@ -185,17 +241,47 @@ export function AdminPortalAccessHub() {
     );
   }
 
-  const { summary, staffing, users, recent_requests: requests } = snapshot;
+  const { summary, staffing, impact, users, recent_requests: requests } = snapshot;
+
+  const notifications = requests.flatMap((request) => {
+    const age = minutesSince(stageStartedAt(request)) ?? 0;
+    if (request.status === "facility_review" && (!request.facility_owner_user_id || age >= 240)) {
+      return [{
+        id: `admin-review-${request.id}`,
+        title: request.facility_owner_user_id ? "Grandview review is aging" : "Grandview review is unassigned",
+        detail: `${request.id.slice(0, 6).toUpperCase()} · waiting ${ageLabel(stageStartedAt(request))}`,
+        tone: age >= 1440 ? "urgent" as const : "attention" as const
+      }];
+    }
+    if (request.status === "approved_for_partner" && (!request.partner_owner_user_id || age >= 1440)) {
+      return [{
+        id: `admin-partner-${request.id}`,
+        title: request.partner_owner_user_id ? "Hope Church assignment is aging" : "Hope Church assignment is unassigned",
+        detail: `${request.id.slice(0, 6).toUpperCase()} · waiting ${ageLabel(stageStartedAt(request))}`,
+        tone: age >= 4320 ? "urgent" as const : "attention" as const
+      }];
+    }
+    if (request.status === "partner_outcome_logged" && (!request.facility_owner_user_id || age >= 120)) {
+      return [{
+        id: `admin-release-${request.id}`,
+        title: "Requester update is waiting on Grandview",
+        detail: `${request.id.slice(0, 6).toUpperCase()} · waiting ${ageLabel(stageStartedAt(request))}`,
+        tone: age >= 480 ? "urgent" as const : "attention" as const
+      }];
+    }
+    return [];
+  }).slice(0, 12);
   const navItems = [
     { key: "overview" as const, label: "Overview", icon: "home" as const },
     { key: "requests" as const, label: "Requests", icon: "request" as const },
     { key: "organizations" as const, label: "Organizations", icon: "building" as const },
     { key: "users" as const, label: "Users & Roles", icon: "people" as const },
+    { key: "impact" as const, label: "Impact", icon: "activity" as const },
     { key: "activity" as const, label: "Activity", icon: "activity" as const }
   ];
 
   return (
-    <ChurchWorkAppShell organization="ChurchWork Operations" currentPortal="admin" accountLabel={operatorEmail ?? "Operator"} navItems={navItems} activeKey={activeNav} onNavigate={setActiveNav} onSignOut={() => void handleSignOut()}>
+    <ChurchWorkAppShell organization="ChurchWork Operations" currentPortal="admin" accountLabel={operatorEmail ?? "Operator"} navItems={navItems} activeKey={activeNav} onNavigate={setActiveNav} onSignOut={() => void handleSignOut()} notifications={notifications}>
 
       {activeNav === "overview" ? (
         <>
@@ -288,6 +374,64 @@ export function AdminPortalAccessHub() {
               ))}
             </div>
           </section>
+        </>
+      ) : null}
+
+      {activeNav === "impact" ? (
+        <>
+          <div className="mb-7">
+            <span className="inline-flex rounded-full border border-[#d8cfe1] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Pilot outcomes</span>
+            <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.055em] text-[#102f40]">Impact</h1>
+            <p className="mt-2 max-w-3xl text-sm font-medium leading-6 text-[#66777c]">A closed-loop view of how quickly requests move and what spiritual care is being delivered.</p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Metric value={impact.completed_requests} label="Closed-loop Requests" tone="bg-gradient-to-br from-[#eaf5ed] to-[#fffdf9]" accent="#3f7f5a" />
+            <Metric value={impact.care_outcomes_logged} label="Care Outcomes" tone="bg-gradient-to-br from-[#f4edda] to-[#fffdf9]" accent="#87713a" />
+            <Metric value={impact.visits_completed} label="Visits Completed" tone="bg-gradient-to-br from-[#edf4fa] to-[#fffdf9]" accent="#416f96" />
+            <Metric value={impact.prayers_logged} label="Prayers Logged" tone="bg-gradient-to-br from-[#f5f2f8] to-[#fffdf9]" accent="#6f5c8c" />
+          </div>
+
+          <div className="mt-6 grid gap-5 xl:grid-cols-[1.05fr_.95fr]">
+            <section className="overflow-hidden rounded-[1.35rem] border border-[#ded9cf] bg-[#fffdf9] shadow-[0_12px_38px_rgba(18,48,68,.05)]">
+              <div className="border-b border-[#ebe6dc] px-6 py-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7d8784]">Speed to care</p>
+                <h2 className="mt-1 text-lg font-black text-[#183f35]">Average workflow time</h2>
+              </div>
+              <div className="grid gap-px bg-[#ebe6dc] sm:grid-cols-2">
+                {[
+                  ["Grandview review", durationLabel(impact.avg_review_minutes)],
+                  ["Hope response", durationLabel(impact.avg_partner_response_minutes)],
+                  ["Grandview release", durationLabel(impact.avg_release_minutes)],
+                  ["End to end", durationLabel(impact.avg_end_to_end_minutes)]
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-[#fffdf9] p-6"><p className="text-3xl font-black tracking-[-0.04em] text-[#123044]">{value}</p><p className="mt-1 text-sm font-black text-[#566a71]">{label}</p></div>
+                ))}
+              </div>
+            </section>
+
+            <section className="overflow-hidden rounded-[1.35rem] border border-[#ded9cf] bg-[#fffdf9] shadow-[0_12px_38px_rgba(18,48,68,.05)]">
+              <div className="border-b border-[#ebe6dc] px-6 py-5">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7d8784]">Outcome mix</p>
+                <h2 className="mt-1 text-lg font-black text-[#183f35]">Care provided</h2>
+              </div>
+              <div className="space-y-3 p-6">
+                {[
+                  ["Prayer logged", impact.prayers_logged, "#6f5c8c"],
+                  ["Visit planned", impact.visits_planned, "#416f96"],
+                  ["Visit completed", impact.visits_completed, "#3f7f5a"],
+                  ["Follow-up requested", impact.follow_up_requested, "#a66f47"]
+                ].map(([label, value, accent]) => (
+                  <div key={String(label)} className="flex items-center justify-between rounded-2xl bg-[#f7f4ee] p-4">
+                    <div className="flex items-center gap-3"><span className="h-3 w-3 rounded-full" style={{ background: String(accent) }} /><p className="text-sm font-black text-[#334f56]">{label}</p></div>
+                    <span className="text-xl font-black text-[#123044]">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+
+          <p className="mt-5 text-xs font-semibold text-[#7b8785]">{impact.requests_last_30_days} request{impact.requests_last_30_days === 1 ? "" : "s"} entered ChurchWork in the last 30 days.</p>
         </>
       ) : null}
 

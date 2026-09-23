@@ -77,11 +77,13 @@ function messageFromBody(body: unknown, fallback: string) {
   return fallback;
 }
 
-function Metric({ value, label, tone }: { value: number; label: string; tone: string }) {
+function Metric({ value, label, tone, accent }: { value: number; label: string; tone: string; accent: string }) {
   return (
-    <article className={`rounded-2xl border border-[#ded9cf] p-5 shadow-sm ${tone}`}>
-      <p className="text-3xl font-black tracking-[-0.04em] text-[#123044]">{value}</p>
-      <p className="mt-1 text-sm font-extrabold text-[#435b65]">{label}</p>
+    <article className={`relative overflow-hidden rounded-[1.35rem] border border-[#ded9cf] p-5 shadow-[0_12px_38px_rgba(18,48,68,.05)] ${tone}`}>
+      <span className="absolute left-0 top-0 h-full w-1.5" style={{ background: accent }} />
+      <p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{value}</p>
+      <p className="mt-1 text-sm font-black text-[#435b65]">{label}</p>
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em]" style={{ color: accent }}>{value ? "Active" : "Clear"}</p>
     </article>
   );
 }
@@ -158,20 +160,21 @@ export function AdminPortalAccessHub() {
 
   if (!snapshot) {
     return (
-      <main className="min-h-screen bg-[#f6f2e9] px-5 py-8 text-[#123044]">
-        <section className="mx-auto grid min-h-[calc(100vh-4rem)] max-w-5xl items-center gap-10 lg:grid-cols-[1fr_26rem]">
+      <main className="min-h-screen overflow-hidden bg-[#f3efe7] px-5 py-8 text-[#123044]">
+        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_10%,rgba(111,92,140,.18),transparent_30rem),radial-gradient(circle_at_85%_90%,rgba(216,193,134,.20),transparent_30rem)]" />
+        <section className="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl items-center gap-12 lg:grid-cols-[1fr_27rem]">
           <div>
-            <a href="/" className="inline-flex items-center gap-3 rounded-xl border border-[#ded9cf] bg-[#fffdf9] px-4 py-3 shadow-sm">
+            <a href="/" className="inline-flex items-center gap-3 rounded-2xl border border-[#ded9cf] bg-[#fffdf9]/85 px-4 py-3 shadow-lg shadow-[#123044]/5 backdrop-blur">
               <img src="/brand/churchwork-corner-logo.png" alt="ChurchWork logo" className="h-9 w-12 object-contain" />
-              <span className="font-serif text-2xl font-semibold tracking-[-0.04em]">Church<span className="text-[#2f7b65]">Work</span></span>
+              <span className="font-serif text-2xl font-semibold tracking-[-0.045em]">Church<span className="text-[#6f5c8c]">Work</span></span>
             </a>
-            <p className="mt-10 text-xs font-black uppercase tracking-[0.2em] text-[#6c8452]">Platform admin</p>
-            <h1 className="mt-2 max-w-2xl font-serif text-5xl font-semibold tracking-[-0.05em]">ChurchWork operations.</h1>
-            <p className="mt-4 max-w-xl text-base font-medium leading-7 text-[#62747a]">Manage the pilot, requests, organizations, user access, and activity from one place.</p>
+            <span className="mt-10 inline-flex rounded-full border border-[#d8cfe1] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Platform admin</span>
+            <h1 className="mt-4 max-w-3xl font-serif text-5xl font-semibold tracking-[-0.06em] sm:text-6xl">Operate the care network without touching the database.</h1>
+            <p className="mt-5 max-w-2xl text-base font-medium leading-8 text-[#62747a]">Monitor requests, manage access, see Grandview and Hope Church readiness, and follow the pilot audit trail from one protected workspace.</p>
           </div>
-          <form onSubmit={handleSignIn} className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-7 shadow-xl shadow-[#123044]/8">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#6c8452]">Owner / platform admin</p>
-            <h2 className="mt-2 text-2xl font-black">Sign in</h2>
+          <form onSubmit={handleSignIn} className="rounded-[1.6rem] border border-[#ded9cf] bg-[#fffdf9] p-7 shadow-[0_28px_80px_rgba(35,42,53,.13)]">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Owner / platform admin</p>
+            <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">Open operations</h2>
             <label className="mt-6 block text-sm font-black text-[#28463d]">Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
             <label className="mt-4 block text-sm font-black text-[#28463d]">Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
             <button type="submit" disabled={isBusy} className="mt-6 w-full rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white disabled:opacity-50">{isBusy ? "Checking..." : "Open admin"}</button>
@@ -192,30 +195,29 @@ export function AdminPortalAccessHub() {
   ];
 
   return (
-    <ChurchWorkAppShell organization="Platform Admin" currentPortal="admin" accountLabel={operatorEmail ?? "Operator"} navItems={navItems} activeKey={activeNav} onNavigate={setActiveNav}>
-      <div className="mb-5 flex justify-end gap-4">
-        <button onClick={() => void loadOverview()} disabled={isBusy} className="text-xs font-extrabold text-[#65767a] hover:text-[#164f3e]">Refresh</button>
-        <button onClick={() => void handleSignOut()} disabled={isBusy} className="text-xs font-extrabold text-[#65767a] hover:text-[#164f3e]">Sign out</button>
-      </div>
+    <ChurchWorkAppShell organization="ChurchWork Operations" currentPortal="admin" accountLabel={operatorEmail ?? "Operator"} navItems={navItems} activeKey={activeNav} onNavigate={setActiveNav} onSignOut={() => void handleSignOut()}>
 
       {activeNav === "overview" ? (
         <>
-          <div className="mb-6">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#6c8452]">Owner console</p>
-            <h1 className="mt-1 font-serif text-4xl font-semibold tracking-[-0.04em]">Platform overview</h1>
-            <p className="mt-2 text-sm font-medium text-[#66777c]">A live view of the ChurchWork pilot.</p>
+          <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <span className="inline-flex rounded-full border border-[#d8cfe1] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Owner console</span>
+              <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.055em] text-[#102f40] sm:text-[2.8rem]">Pilot operations</h1>
+              <p className="mt-2 text-sm font-medium text-[#66777c]">A live view of requests, partner readiness, and ChurchWork access.</p>
+            </div>
+            <button onClick={() => void loadOverview()} disabled={isBusy} className="rounded-xl border border-[#d6d0c7] bg-white/75 px-4 py-2.5 text-xs font-black text-[#5d6870] shadow-sm hover:bg-white">↻ Refresh</button>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <Metric value={summary.requests_total} label="Total Requests" tone="bg-[#f7f8f5]" />
-            <Metric value={summary.facility_review} label="Needs Review" tone="bg-[#fff0ee]" />
-            <Metric value={summary.approved_for_partner} label="With Care Partner" tone="bg-[#eef5fb]" />
-            <Metric value={summary.partner_outcome_logged} label="Ready to Release" tone="bg-[#edf6ef]" />
-            <Metric value={summary.requester_updated + summary.closed} label="Completed / Updated" tone="bg-[#f1f2ef]" />
+            <Metric value={summary.requests_total} label="Total Requests" tone="bg-gradient-to-br from-[#f5f2f8] to-[#fffdf9]" accent="#6f5c8c" />
+            <Metric value={summary.facility_review} label="Needs Review" tone="bg-gradient-to-br from-[#fff1ee] to-[#fffdf9]" accent="#a65d51" />
+            <Metric value={summary.approved_for_partner} label="With Hope Church" tone="bg-gradient-to-br from-[#edf4fa] to-[#fffdf9]" accent="#416f96" />
+            <Metric value={summary.partner_outcome_logged} label="Ready to Release" tone="bg-gradient-to-br from-[#eaf5ed] to-[#fffdf9]" accent="#3f7f5a" />
+            <Metric value={summary.requester_updated + summary.closed} label="Completed / Updated" tone="bg-gradient-to-br from-[#f2f2ef] to-[#fffdf9]" accent="#687574" />
           </div>
 
           <div className="mt-5 grid gap-5 xl:grid-cols-[1.45fr_.55fr]">
-            <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] shadow-sm">
-              <div className="flex items-center justify-between border-b border-[#ebe6dc] px-6 py-4"><h2 className="text-lg font-black text-[#183f35]">Recent requests</h2><button onClick={() => setActiveNav("requests")} className="text-xs font-extrabold text-[#28758a]">View all →</button></div>
+            <section className="overflow-hidden rounded-[1.35rem] border border-[#ded9cf] bg-[#fffdf9] shadow-[0_12px_38px_rgba(18,48,68,.05)]">
+              <div className="flex items-center justify-between border-b border-[#ebe6dc] px-6 py-5"><div><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7d8784]">Live workflow</p><h2 className="mt-1 text-lg font-black text-[#183f35]">Recent requests</h2></div><button onClick={() => setActiveNav("requests")} className="text-xs font-black text-[#6f5c8c]">View all →</button></div>
               {requests.length ? requests.slice(0, 6).map((request) => (
                 <div key={request.id} className="grid gap-2 border-b border-[#eee9df] px-6 py-4 last:border-0 md:grid-cols-[1.3fr_.8fr_auto] md:items-center">
                   <div><p className="font-black text-[#183f35]">{request.support_options?.join(" + ") || "Spiritual care request"}</p><p className="mt-1 text-xs font-semibold text-[#7a8688]">{request.requester_email ?? "Requester"} · {formatDate(request.created_at)}</p></div>
@@ -226,11 +228,11 @@ export function AdminPortalAccessHub() {
             </section>
 
             <div className="space-y-5">
-              <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
-                <h2 className="text-lg font-black text-[#183f35]">Partner readiness</h2>
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center justify-between rounded-xl bg-[#f5f6f2] p-4"><div><p className="font-black">Grandview Post Acute</p><p className="text-xs font-semibold text-[#788481]">Facility reviewers</p></div><span className="text-2xl font-black">{staffing.grandview_reviewers}</span></div>
-                  <div className="flex items-center justify-between rounded-xl bg-[#f5f6f2] p-4"><div><p className="font-black">Hope Church</p><p className="text-xs font-semibold text-[#788481]">Care partner users</p></div><span className="text-2xl font-black">{staffing.hope_partner_users}</span></div>
+              <section className="overflow-hidden rounded-[1.35rem] border border-[#ded9cf] bg-[#fffdf9] shadow-[0_12px_38px_rgba(18,48,68,.05)]">
+                <div className="border-b border-[#ebe6dc] px-6 py-5"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7d8784]">Pilot network</p><h2 className="mt-1 text-lg font-black text-[#183f35]">Organization readiness</h2></div>
+                <div className="space-y-3 p-5">
+                  <div className="relative overflow-hidden rounded-2xl border border-[#d9e3ea] bg-[#eef4f8] p-4"><span className="absolute inset-y-0 left-0 w-1.5 bg-[#416f96]" /><div className="flex items-center justify-between"><div><p className="font-black">Grandview Post Acute</p><p className="text-xs font-semibold text-[#6f7e84]">Facility reviewers</p></div><span className="text-2xl font-black text-[#294c69]">{staffing.grandview_reviewers}</span></div></div>
+                  <div className="relative overflow-hidden rounded-2xl border border-[#e4dcc3] bg-[#f6f0df] p-4"><span className="absolute inset-y-0 left-0 w-1.5 bg-[#87713a]" /><div className="flex items-center justify-between"><div><p className="font-black">Hope Church</p><p className="text-xs font-semibold text-[#746b50]">Care partner users</p></div><span className="text-2xl font-black text-[#5f512d]">{staffing.hope_partner_users}</span></div></div>
                 </div>
               </section>
               <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
@@ -263,10 +265,10 @@ export function AdminPortalAccessHub() {
 
       {activeNav === "organizations" ? (
         <>
-          <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Organizations</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Pilot organizations and staffing readiness.</p></div>
-          <div className="grid gap-4 md:grid-cols-2">
-            <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#6c8452]">Facility</p><h2 className="mt-2 text-2xl font-black">Grandview Post Acute</h2><p className="mt-4 text-sm font-semibold text-[#68787c]">{staffing.grandview_reviewers} active reviewer{staffing.grandview_reviewers === 1 ? "" : "s"} · {staffing.pending_facility_invites} pending invite{staffing.pending_facility_invites === 1 ? "" : "s"}</p></section>
-            <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6"><p className="text-xs font-black uppercase tracking-[0.14em] text-[#6c8452]">Care partner</p><h2 className="mt-2 text-2xl font-black">Hope Church</h2><p className="mt-4 text-sm font-semibold text-[#68787c]">{staffing.hope_partner_users} active partner user{staffing.hope_partner_users === 1 ? "" : "s"}</p></section>
+          <div className="mb-7"><span className="inline-flex rounded-full border border-[#d8cfe1] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Pilot network</span><h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.055em] text-[#102f40]">Organizations</h1><p className="mt-2 text-sm font-medium text-[#66777c]">The real organizations operating the ChurchWork pilot.</p></div>
+          <div className="grid gap-5 md:grid-cols-2">
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#d5e0e8] bg-gradient-to-br from-[#eaf2f8] to-[#fffdf9] p-7 shadow-[0_16px_44px_rgba(18,48,68,.06)]"><span className="absolute inset-y-0 left-0 w-2 bg-[#416f96]" /><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#416f96]">Facility partner</p><h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#183f35]">Grandview Post Acute</h2><p className="mt-3 text-sm font-semibold leading-6 text-[#68787c]">Reviews requester submissions, controls partner release, and approves requester-facing updates.</p><div className="mt-6 flex gap-3"><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.grandview_reviewers} active reviewer{staffing.grandview_reviewers === 1 ? "" : "s"}</span><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.pending_facility_invites} pending invite{staffing.pending_facility_invites === 1 ? "" : "s"}</span></div></section>
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#e2dac0] bg-gradient-to-br from-[#f4edda] to-[#fffdf9] p-7 shadow-[0_16px_44px_rgba(18,48,68,.06)]"><span className="absolute inset-y-0 left-0 w-2 bg-[#87713a]" /><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Care partner</p><h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#183f35]">Hope Church</h2><p className="mt-3 text-sm font-semibold leading-6 text-[#68787c]">Receives Grandview-approved spiritual-care context and returns structured outcomes to Grandview.</p><div className="mt-6"><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.hope_partner_users} active partner user{staffing.hope_partner_users === 1 ? "" : "s"}</span></div></section>
           </div>
         </>
       ) : null}

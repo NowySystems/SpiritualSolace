@@ -129,22 +129,30 @@ function RequestProgress({ request, role }: { request: StoredPilotRequest; role:
           : 0
     : Math.min(progressIndex(status), 4);
   const gridClass = role === "requester" ? "grid-cols-4" : "grid-cols-5";
+  const accent = role === "facility" ? "#416f96" : role === "partner" ? "#87713a" : "#2f7b65";
+  const ring = role === "facility" ? "#e3edf5" : role === "partner" ? "#f1ead7" : "#dcebe3";
 
   return (
-    <div className={cx("mt-5 grid", gridClass)}>
+    <div className={cx("grid", gridClass)}>
       {labels.map((label, step) => {
         const reached = step <= index;
         const current = step === index;
         return (
           <div key={label} className="relative text-center">
             {step < labels.length - 1 ? (
-              <span className={cx("absolute left-1/2 top-[9px] h-[2px] w-full", step < index ? "bg-[#2f7b65]" : "bg-[#d8d9d4]")} />
+              <span className="absolute left-1/2 top-[11px] h-[2px] w-full" style={{ background: step < index ? accent : "#d8d9d4" }} />
             ) : null}
-            <span className={cx("relative mx-auto flex h-5 w-5 items-center justify-center rounded-full border-2 bg-[#fffdf9]", reached ? "border-[#2f7b65]" : "border-[#cfd1cc]")}>
-              {reached && !current ? <span className="h-2 w-2 rounded-full bg-[#2f7b65]" /> : null}
-              {current ? <span className="h-2.5 w-2.5 rounded-full bg-[#2f7b65] ring-4 ring-[#dcebe3]" /> : null}
+            <span
+              className="relative mx-auto flex h-6 w-6 items-center justify-center rounded-full border-2 bg-[#fffdf9]"
+              style={{
+                borderColor: reached ? accent : "#cfd1cc",
+                boxShadow: current ? `0 0 0 5px ${ring}` : "none"
+              }}
+            >
+              {reached && !current ? <span className="h-2.5 w-2.5 rounded-full" style={{ background: accent }} /> : null}
+              {current ? <span className="h-3 w-3 rounded-full" style={{ background: accent }} /> : null}
             </span>
-            <p className={cx("mt-2 px-1 text-[10px] font-bold sm:text-xs", reached ? "text-[#183f35]" : "text-[#8a9492]")}>{label}</p>
+            <p className={cx("mt-2.5 px-1 text-[10px] font-black sm:text-[11px]", reached ? "text-[#314d49]" : "text-[#929b99]")}>{label}</p>
           </div>
         );
       })}
@@ -481,19 +489,33 @@ function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: Store
 function RequesterRequests({ requests, isLoading, onOpen, onNew }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; onNew: () => void }) {
   return (
     <>
-      <PageTitle title="My Requests" description="Track every spiritual-care request and its latest status." action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white">+ New Request</button>} />
+      <PageTitle
+        eyebrow="Requester"
+        title="My requests"
+        description="Every spiritual-care request, its current stage, and the final update in one place."
+        action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15">+ New Request</button>}
+      />
       {isLoading ? <Card className="p-7 text-sm font-bold text-[#68787c]">Loading your requests…</Card> : requests.length ? (
-        <div className="space-y-3">
+        <div className="grid gap-4 xl:grid-cols-2">
           {requests.map((request) => (
-            <button key={request.id} onClick={() => onOpen(request.id)} className="w-full rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div><p className="text-base font-black text-[#183f35]">Spiritual care request</p><p className="mt-1 text-sm font-semibold text-[#6f7e82]">{request.support.join(", ")} · Submitted {formatDate(request.created_at)}</p></div>
-                <div className="flex items-center gap-4"><span className={cx("rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request), "requester")}</span><span className="text-xl text-[#557079]">›</span></div>
+            <button key={request.id} onClick={() => onOpen(request.id)} className="group rounded-[1.35rem] border border-[#ded9cf] bg-[#fffdf9] p-5 text-left shadow-[0_12px_38px_rgba(18,48,68,.05)] transition hover:-translate-y-0.5 hover:border-[#bed0c5] hover:shadow-[0_16px_42px_rgba(18,48,68,.09)]">
+              <div className="flex items-start justify-between gap-4">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e7f1eb] text-[#2f7b65]"><SupportIcon name={request.support.includes("Friendly visit") ? "visit" : request.support.includes("Pastoral call") ? "phone" : request.support.includes("Encouragement") ? "heart" : "prayer"} /></span>
+                <span className={cx("rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em]", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request), "requester")}</span>
+              </div>
+              <h2 className="mt-5 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</h2>
+              <p className="mt-2 text-xs font-semibold text-[#748185]">{shortId(request.id)} · Submitted {formatDate(request.created_at)}</p>
+              <div className="mt-5 rounded-xl bg-[#f7f4ed] px-4 py-4">
+                <RequestProgress request={request} role="requester" />
+              </div>
+              <div className="mt-5 flex items-center justify-between border-t border-[#eee9df] pt-4">
+                <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#7a8784]">{request.requester_update ? "Update available" : "ChurchWork is coordinating care"}</span>
+                <span className="text-xs font-black text-[#2b6d58]">View request →</span>
               </div>
             </button>
           ))}
         </div>
-      ) : <EmptyState title="No requests yet" detail="Your submitted spiritual-care requests will appear here." action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white">Start a request</button>} />}
+      ) : <EmptyState title="No requests yet" detail="Your submitted spiritual-care requests will appear here." action={<button onClick={onNew} className="rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-black text-white">Start a request</button>} />}
     </>
   );
 }
@@ -663,20 +685,30 @@ function FacilityHome({ requests, counts, isLoading, onOpen }: { requests: Store
 function FacilityRequests({ requests, isLoading, onOpen }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void }) {
   return (
     <>
-      <PageTitle title="Requests" description="Review the full Grandview spiritual-care queue." />
-      {isLoading ? <Card className="p-6 text-sm font-bold text-[#6d7b7e]">Loading requests…</Card> : requests.length ? (
+      <PageTitle eyebrow="Grandview Post Acute" title="Request queue" description="One view of every spiritual-care request moving through Grandview's review and release process." />
+      {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading requests…</Card> : requests.length ? (
         <Card className="overflow-hidden">
-          <div className="hidden grid-cols-[1.4fr_.8fr_.8fr_auto] gap-4 border-b border-[#ebe6dc] px-6 py-3 text-xs font-black uppercase tracking-[0.08em] text-[#84908e] md:grid"><span>Request</span><span>Submitted</span><span>Status</span><span>Action</span></div>
-          {requests.map((request) => (
-            <div key={request.id} className="grid gap-3 border-b border-[#eee9df] px-6 py-4 last:border-0 md:grid-cols-[1.4fr_.8fr_.8fr_auto] md:items-center">
-              <div><p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p><p className="mt-1 text-xs font-semibold text-[#7a8688]">{shortId(request.id)}</p></div>
-              <p className="text-sm font-semibold text-[#64767b]">{formatDate(request.created_at)}</p>
-              <span className={cx("w-fit rounded-full px-3 py-1 text-xs font-black", statusPill(rawStatus(request)))}>{statusLabel(rawStatus(request))}</span>
-              <button onClick={() => onOpen(request.id)} className="rounded-lg border border-[#cad4ce] px-4 py-2 text-sm font-extrabold text-[#164f3e]">View</button>
-            </div>
-          ))}
+          <div className="hidden grid-cols-[1.4fr_.8fr_.85fr_auto] gap-4 border-b border-[#e7e2d9] bg-[#f7f5ef] px-6 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#84908e] md:grid"><span>Request</span><span>Submitted</span><span>Status</span><span></span></div>
+          {requests.map((request) => {
+            const status = rawStatus(request);
+            const needsAction = status === "facility_review" || status === "partner_outcome_logged";
+            return (
+              <button key={request.id} onClick={() => onOpen(request.id)} className={cx("grid w-full gap-3 border-b border-[#eee9df] px-6 py-5 text-left last:border-0 md:grid-cols-[1.4fr_.8fr_.85fr_auto] md:items-center", needsAction ? "bg-[#fffdf9] hover:bg-[#fbfaf6]" : "bg-white/50 hover:bg-white")}>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-black text-[#183f35]">{request.support.join(" + ") || "Spiritual care request"}</p>
+                    {needsAction ? <span className="rounded-full bg-[#fff0dc] px-2 py-1 text-[9px] font-black text-[#8a5b20]">ACTION</span> : null}
+                  </div>
+                  <p className="mt-1 text-xs font-semibold text-[#7a8688]">{shortId(request.id)}</p>
+                </div>
+                <p className="text-sm font-semibold text-[#64767b]">{formatDate(request.created_at)}</p>
+                <span className={cx("w-fit rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.06em]", statusPill(status))}>{statusLabel(status)}</span>
+                <span className={cx("w-fit rounded-lg px-4 py-2 text-xs font-black", needsAction ? "bg-[#315f83] text-white" : "border border-[#cfd7d8] bg-white text-[#48616b]")}>{status === "facility_review" ? "Review →" : status === "partner_outcome_logged" ? "Release →" : "View →"}</span>
+              </button>
+            );
+          })}
         </Card>
-      ) : <EmptyState title="Queue clear" detail="No Grandview pilot requests are in the queue right now." />}
+      ) : <EmptyState title="Queue clear" detail="No Grandview spiritual-care requests are in the queue right now." />}
     </>
   );
 }
@@ -704,10 +736,11 @@ function PartnerHome({ requests, isLoading, onOpen }: { requests: StoredPilotReq
 }
 
 function PartnerAssignments({ requests, isLoading, onOpen }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void }) {
+  const open = requests.filter((request) => rawStatus(request) === "approved_for_partner");
   return (
     <>
-      <PageTitle title="Assignments" description="Spiritual-care requests Grandview has approved for Hope Church." />
-      {isLoading ? <Card className="p-6 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : requests.length ? <div className="space-y-3">{requests.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div> : <EmptyState title="No assignments yet" detail="Approved assignments will appear here." />}
+      <PageTitle eyebrow="Hope Church" title="Assignments" description="Grandview-approved spiritual-care requests available to Hope Church." />
+      {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : open.length ? <div className="grid gap-4 xl:grid-cols-2">{open.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div> : <EmptyState title="No open assignments" detail="Grandview-approved requests will appear here when they are ready for Hope Church." />}
     </>
   );
 }
@@ -716,8 +749,8 @@ function PartnerCompleted({ requests, onOpen }: { requests: StoredPilotRequest[]
   const completed = requests.filter((r) => rawStatus(r) !== "approved_for_partner");
   return (
     <>
-      <PageTitle title="Completed" description="Assignments where Hope Church has already logged an outcome." />
-      {completed.length ? <div className="space-y-3">{completed.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div> : <EmptyState title="Nothing completed yet" detail="Completed care responses will appear here after an outcome is logged." />}
+      <PageTitle eyebrow="Hope Church" title="Completed care" description="Assignments where Hope Church has already logged an outcome and returned it to Grandview." />
+      {completed.length ? <div className="grid gap-4 xl:grid-cols-2">{completed.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div> : <EmptyState title="Nothing completed yet" detail="Completed care responses will appear here after Hope Church logs an outcome." />}
     </>
   );
 }
@@ -749,72 +782,121 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
   const canApprove = role === "facility" && status === "facility_review";
   const canRelease = role === "facility" && status === "partner_outcome_logged" && request.requester_update_status !== "released";
   const canPartnerReport = role === "partner" && status === "approved_for_partner";
+  const accent = role === "facility" ? "#416f96" : role === "partner" ? "#87713a" : "#2f7b65";
+  const soft = role === "facility" ? "#eaf2f8" : role === "partner" ? "#f4edda" : "#e7f1eb";
 
   return (
     <>
-      <button onClick={onBack} className="mb-4 text-sm font-extrabold text-[#5e737b]">← Back</button>
-      <PageTitle
-        eyebrow={role === "partner" ? "Hope Church" : role === "facility" ? "Grandview Post Acute" : "My request"}
-        title={`Request #${shortId(request.id).replace("CW-", "")}`}
-        description={`Submitted ${formatDate(request.created_at)}`}
-        action={<span className={cx("rounded-full px-4 py-2 text-xs font-black", statusPill(status))}>{statusLabel(status, role)}</span>}
-      />
+      <button onClick={onBack} className="mb-5 inline-flex items-center gap-2 rounded-lg px-1 py-1 text-xs font-black text-[#5e737b] hover:text-[#234750]">← Back to {role === "facility" ? "requests" : role === "partner" ? "assignments" : "my requests"}</button>
 
-      <Card className="p-6">
-        <RequestProgress request={request} role={role} />
+      <Card className="relative overflow-hidden">
+        <span className="absolute inset-y-0 left-0 w-1.5" style={{ background: accent }} />
+        <div className="grid gap-0 xl:grid-cols-[1.25fr_.75fr]">
+          <div className="p-6 pl-7 sm:p-8 sm:pl-9">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent }}>{role === "partner" ? "Hope Church assignment" : role === "facility" ? "Grandview request" : "My spiritual-care request"}</p>
+                <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#123044] sm:text-4xl">{request.support.join(" + ") || "Spiritual care"}</h1>
+                <p className="mt-2 text-sm font-semibold text-[#738185]">{shortId(request.id)} · Submitted {formatDate(request.created_at)}</p>
+              </div>
+              <span className={cx("rounded-full px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em]", statusPill(status))}>{statusLabel(status, role)}</span>
+            </div>
+
+            <div className="mt-7 rounded-2xl border border-[#e1ddd3] bg-[#faf8f3] px-4 py-5 sm:px-6">
+              <RequestProgress request={request} role={role} />
+            </div>
+          </div>
+
+          <aside className="border-t border-[#e5e0d7] p-6 sm:p-8 xl:border-l xl:border-t-0" style={{ background: soft }}>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent }}>Current step</p>
+            <p className="mt-2 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#183f35]">
+              {role === "facility" && canApprove ? "Grandview review"
+                : role === "facility" && canRelease ? "Release requester update"
+                : role === "partner" && canPartnerReport ? "Provide care & report outcome"
+                : role === "requester" && status === "facility_review" ? "Grandview review"
+                : role === "requester" && status === "approved_for_partner" ? "Care in progress"
+                : role === "requester" && status === "partner_outcome_logged" ? "Update in review"
+                : "No action needed"}
+            </p>
+            <p className="mt-2 text-xs font-semibold leading-5 text-[#667773]">
+              {role === "facility" && canApprove ? "Review the safe spiritual-care summary, then approve it for Hope Church."
+                : role === "facility" && canRelease ? "Hope Church has returned an outcome. Grandview controls the final requester update."
+                : role === "partner" && canPartnerReport ? "Choose the outcome that best reflects the spiritual care provided."
+                : role === "requester" ? "ChurchWork coordinates the handoffs for you. You do not need to close the request."
+                : "This part of the workflow is complete."}
+            </p>
+          </aside>
+        </div>
       </Card>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1fr_22rem]">
+      <div className="mt-6 grid gap-5 xl:grid-cols-[1fr_23rem]">
         <div className="space-y-5">
-          <Card className="p-6">
-            <h2 className="text-xl font-black text-[#183f35]">{role === "partner" ? "Request summary" : "Request details"}</h2>
-            <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div><dt className="text-xs font-black uppercase tracking-[0.1em] text-[#808b88]">Support requested</dt><dd className="mt-1 text-sm font-black text-[#183f35]">{request.support.join(", ") || "Spiritual care"}</dd></div>
-              <div><dt className="text-xs font-black uppercase tracking-[0.1em] text-[#808b88]">Request ID</dt><dd className="mt-1 text-sm font-black text-[#183f35]">{shortId(request.id)}</dd></div>
-            </dl>
+          <Card className="overflow-hidden">
+            <div className="border-b border-[#ebe6dc] bg-[#fffdf9] px-6 py-5">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7c8884]">Request</p>
+              <h2 className="mt-1 text-lg font-black text-[#183f35]">{role === "partner" ? "Approved spiritual-care context" : "Safe request summary"}</h2>
+            </div>
+            <div className="p-6">
+              <p className="text-base font-semibold leading-7 text-[#4f646c]">{request.safe_note || "Structured spiritual-care request."}</p>
+              <div className="mt-5 flex flex-wrap gap-2">{request.support.map((item) => <span key={item} className="rounded-full px-3 py-2 text-xs font-black" style={{ background: soft, color: accent }}>{item}</span>)}</div>
+              <div className="mt-5 flex gap-3 rounded-2xl bg-[#f5f2eb] p-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#527064] shadow-sm"><SupportIcon name="heart" /></span>
+                <div><p className="text-xs font-black text-[#34564c]">Spiritual-care scope</p><p className="mt-1 text-xs font-semibold leading-5 text-[#6d7978]">Medical or clinical information is not part of the requester submission or partner assignment.</p></div>
+              </div>
+            </div>
           </Card>
 
-          <Card className="p-6">
-            <h2 className="text-xl font-black text-[#183f35]">{role === "partner" ? "Safe context" : "Safe request summary"}</h2>
-            <p className="mt-3 text-sm font-medium leading-7 text-[#617278]">{request.safe_note || "Structured spiritual-care request."}</p>
-            <div className="mt-4 rounded-xl bg-[#eef5f1] p-4 text-xs font-semibold leading-5 text-[#4d6b60]">This is a spiritual-care workflow. Medical or clinical information is not part of the requester submission.</div>
-          </Card>
+          {request.partner_outcome && role !== "requester" ? (
+            <Card className="overflow-hidden">
+              <div className="border-b border-[#dce8df] bg-[#eff6f0] px-6 py-5"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#4f8160]">Hope Church outcome</p><h2 className="mt-1 text-lg font-black text-[#183f35]">{outcomeLabel(request.partner_outcome)}</h2></div>
+              <div className="p-6 text-sm font-semibold leading-6 text-[#60726b]">This outcome returns to Grandview before any requester-facing update is released.</div>
+            </Card>
+          ) : null}
 
-          {request.partner_outcome && role !== "requester" ? <Card className="p-6"><h2 className="text-xl font-black text-[#183f35]">Care partner update</h2><p className="mt-3 text-sm font-bold text-[#49635b]">{outcomeLabel(request.partner_outcome)}</p></Card> : null}
-          {role === "requester" && request.requester_update ? <Card className="border-[#bcd7c6] bg-[#f0f7f3] p-6"><h2 className="text-xl font-black text-[#183f35]">Your update</h2><p className="mt-3 text-sm font-bold leading-7 text-[#355d4e]">{request.requester_update}</p></Card> : null}
+          {role === "requester" && request.requester_update ? (
+            <Card className="overflow-hidden border-[#bcd7c6]">
+              <div className="bg-[#173f34] px-6 py-5 text-white"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/55">Released update</p><h2 className="mt-1 font-serif text-2xl font-semibold">Your care update</h2></div>
+              <div className="bg-[#f0f7f3] p-6"><p className="text-sm font-bold leading-7 text-[#355d4e]">{request.requester_update}</p><p className="mt-4 text-xs font-semibold text-[#637870]">This request is complete. No further action is needed.</p></div>
+            </Card>
+          ) : null}
         </div>
 
-        <div className="space-y-5">
-          <Card className="p-6">
-            <h2 className="text-lg font-black text-[#183f35]">Next step</h2>
-            {role === "facility" ? (
-              <>
-                <p className="mt-2 text-sm font-medium leading-6 text-[#68787c]">{canApprove ? "Review this request and approve it for Hope Church." : canRelease ? "Hope Church has logged an outcome. Review and release the safe update to the requester." : "No Grandview action is required right now."}</p>
-                {canApprove ? <button disabled={isBusy} onClick={() => void onFacilityAction(request.id, "approve")} className="mt-5 w-full rounded-xl bg-[#164f3e] px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50">{isBusy ? "Working…" : "Approve for Hope Church"}</button> : null}
-                {canRelease ? <button disabled={isBusy} onClick={() => void onFacilityAction(request.id, "release_update")} className="mt-5 w-full rounded-xl bg-[#164f3e] px-4 py-3 text-sm font-extrabold text-white disabled:opacity-50">{isBusy ? "Working…" : "Release update"}</button> : null}
-              </>
-            ) : role === "partner" ? (
-              <>
-                <p className="mt-2 text-sm font-medium leading-6 text-[#68787c]">{canPartnerReport ? "Log the spiritual-care outcome. Grandview will review it before anything is released to the requester." : "Your outcome has been sent to Grandview."}</p>
-                {canPartnerReport ? <div className="mt-4 space-y-2">{partnerOutcomes.map((outcome) => <button key={outcome.value} disabled={isBusy} onClick={() => void onPartnerAction(request.id, outcome.value)} className="w-full rounded-xl border border-[#d7d5ce] bg-white p-3 text-left disabled:opacity-50"><span className="block text-sm font-black text-[#183f35]">{outcome.label}</span><span className="mt-1 block text-xs font-medium text-[#718083]">{outcome.detail}</span></button>)}</div> : null}
-              </>
-            ) : (
-              <p className="mt-2 text-sm font-medium leading-6 text-[#68787c]">
-                {status === "facility_review" ? "Grandview is reviewing your request."
-                  : status === "approved_for_partner" ? "A care partner is working on your request."
-                  : status === "partner_outcome_logged" ? "Grandview is reviewing the care partner update."
-                  : status === "requester_updated" || status === "closed" ? "Your update has been released. This request is complete—no further action is needed."
-                  : "This request is complete."}
-              </p>
-            )}
+        <div className="space-y-5 xl:sticky xl:top-28 xl:self-start">
+          <Card className="overflow-hidden">
+            <div className="px-6 py-5 text-white" style={{ background: accent }}>
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/60">{role === "requester" ? "What happens next" : "Your next action"}</p>
+              <h2 className="mt-1 font-serif text-xl font-semibold">Next step</h2>
+            </div>
+            <div className="p-6">
+              {role === "facility" ? (
+                <>
+                  <p className="text-sm font-semibold leading-6 text-[#65757a]">{canApprove ? "Review the safe request, then approve it for Hope Church." : canRelease ? "Review Hope Church's outcome and release the standardized update to the requester." : "No Grandview action is required right now."}</p>
+                  {canApprove ? <button disabled={isBusy} onClick={() => void onFacilityAction(request.id, "approve")} className="mt-5 w-full rounded-xl bg-[#315f83] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[#315f83]/15 disabled:opacity-50">{isBusy ? "Working…" : "Approve for Hope Church"}</button> : null}
+                  {canRelease ? <button disabled={isBusy} onClick={() => void onFacilityAction(request.id, "release_update")} className="mt-5 w-full rounded-xl bg-[#3f7653] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[#3f7653]/15 disabled:opacity-50">{isBusy ? "Working…" : "Release safe update"}</button> : null}
+                </>
+              ) : role === "partner" ? (
+                <>
+                  <p className="text-sm font-semibold leading-6 text-[#65757a]">{canPartnerReport ? "Log the spiritual-care outcome. Grandview will review it before the requester sees an update." : "Your outcome has been returned to Grandview. No additional action is required."}</p>
+                  {canPartnerReport ? <div className="mt-4 space-y-2">{partnerOutcomes.map((outcome) => <button key={outcome.value} disabled={isBusy} onClick={() => void onPartnerAction(request.id, outcome.value)} className="group w-full rounded-xl border border-[#ddd8ca] bg-white p-3.5 text-left transition hover:border-[#b9aa7d] hover:bg-[#faf7ed] disabled:opacity-50"><span className="block text-sm font-black text-[#183f35]">{outcome.label}</span><span className="mt-1 block text-xs font-medium leading-5 text-[#718083]">{outcome.detail}</span></button>)}</div> : null}
+                </>
+              ) : (
+                <p className="text-sm font-semibold leading-6 text-[#65757a]">
+                  {status === "facility_review" ? "Grandview is reviewing your request."
+                    : status === "approved_for_partner" ? "Hope Church is caring for your request."
+                    : status === "partner_outcome_logged" ? "Grandview is reviewing the care update before anything is released."
+                    : status === "requester_updated" || status === "closed" ? "Your update has been released. This request is complete."
+                    : "ChurchWork is keeping your request moving."}
+                </p>
+              )}
+            </div>
           </Card>
 
           <Card className="p-6">
-            <h2 className="text-lg font-black text-[#183f35]">Activity</h2>
-            <div className="mt-4 space-y-4 text-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7c8884]">Activity</p>
+            <div className="mt-5 space-y-5 text-sm">
               <ActivityItem done label="Request submitted" detail={formatDate(request.created_at, true)} />
-              <ActivityItem done={progressIndex(status) >= 2} label="Facility review" detail={progressIndex(status) >= 2 ? "Approved" : "In review"} />
-              <ActivityItem done={progressIndex(status) >= 3} label="Care partner" detail={request.partner_outcome ? outcomeLabel(request.partner_outcome) : progressIndex(status) >= 2 ? "Engaged" : "Pending"} />
+              <ActivityItem done={progressIndex(status) >= 2} label="Grandview review" detail={progressIndex(status) >= 2 ? "Approved" : "In review"} />
+              <ActivityItem done={progressIndex(status) >= 3} label="Hope Church care" detail={request.partner_outcome ? outcomeLabel(request.partner_outcome) : progressIndex(status) >= 2 ? "Engaged" : "Pending"} />
               <ActivityItem done={progressIndex(status) >= 4} label={role === "requester" ? "Update released" : "Requester update"} detail={request.requester_update_status === "released" ? "Released · complete" : "Pending"} />
             </div>
           </Card>
@@ -825,5 +907,6 @@ function RequestDetail({ role, request, isBusy, onBack, onFacilityAction, onPart
 }
 
 function ActivityItem({ done, label, detail }: { done: boolean; label: string; detail: string }) {
-  return <div className="flex gap-3"><span className={cx("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-black", done ? "border-[#2f7b65] bg-[#2f7b65] text-white" : "border-[#cfd2cd] bg-white text-transparent")}>✓</span><div><p className="font-black text-[#294b42]">{label}</p><p className="mt-0.5 text-xs font-semibold text-[#7b8886]">{detail}</p></div></div>;
+  return <div className="flex gap-3"><span className={cx("mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[10px] font-black", done ? "border-[#2f7b65] bg-[#2f7b65] text-white shadow-sm" : "border-[#cfd2cd] bg-white text-transparent")}>✓</span><div><p className="font-black text-[#294b42]">{label}</p><p className="mt-0.5 text-xs font-semibold leading-5 text-[#7b8886]">{detail}</p></div></div>;
 }
+

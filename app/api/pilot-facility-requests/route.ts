@@ -149,10 +149,14 @@ export async function GET() {
 
   const rows = (data ?? []) as PilotRequestRow[];
   const owners = await ownershipMap(session.supabase, rows.map((row) => row.id));
+  const { data: portalContext } = await session.supabase.rpc("get_my_churchwork_portal_context", {
+    p_portal: "facility"
+  });
 
   return json(200, {
     ok: true,
     current_user_id: session.user.id,
+    portal_context: portalContext && typeof portalContext === "object" ? portalContext : {},
     requests: rows.map((row) => toWorkspaceRequest(row, owners.get(row.id)))
   });
 }

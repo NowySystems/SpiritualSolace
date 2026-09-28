@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { PilotAccessApplicationForm } from "@/components/PilotAccessApplicationForm";
 import { PasswordField } from "@/components/PasswordField";
+import { TurnstileChallenge } from "@/components/TurnstileChallenge";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up";
@@ -83,6 +84,9 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
   const [invite, setInvite] = useState<InviteDetails | null>(null);
   const [inviteChecked, setInviteChecked] = useState(false);
   const [accessPending, setAccessPending] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const captchaEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   useEffect(() => {
     const token = new URLSearchParams(window.location.search).get("invite")?.trim() ?? "";
@@ -125,6 +129,12 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (captchaEnabled && !captchaToken) {
+      setStatus("Complete the security check before continuing.");
+      return;
+    }
+
     setIsBusy(true);
     setStatus(isSignup ? "Creating your ChurchWork account..." : inviteToken ? "Signing in and accepting your invitation..." : "Signing in...");
 
@@ -137,7 +147,8 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
           mode,
           email,
           password,
-          inviteToken: inviteToken || undefined
+          inviteToken: inviteToken || undefined,
+          captchaToken: captchaToken || undefined
         })
       });
 
@@ -145,6 +156,8 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
 
       if (!response.ok || !body?.ok) {
         setStatus(messageFromResponse(body, "ChurchWork sign-in could not complete. Please try again."));
+        setCaptchaToken(null);
+        setCaptchaResetKey((value) => value + 1);
         setIsBusy(false);
         return;
       }
@@ -190,11 +203,21 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       return;
     }
 
+    if (captchaEnabled && !captchaToken) {
+      setStatus("Complete the security check before requesting a password reset.");
+      return;
+    }
+
     setIsBusy(true);
     setStatus("Sending a secure password reset link...");
 
     const redirectTo = `${window.location.origin}/pilot/reset-password`;
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo,
+      ...(captchaToken ? { captchaToken } : {})
+    });
+    setCaptchaToken(null);
+    setCaptchaResetKey((value) => value + 1);
 
     if (error) {
       setStatus("ChurchWork could not start password recovery right now. Try again shortly or contact the pilot admin.");
@@ -294,6 +317,8 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                 inputClassName="rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
                 helper={isSignup ? "Use at least 12 characters. A longer passphrase is better." : undefined}
               />
+
+              <TurnstileChallenge onToken={setCaptchaToken} resetKey={captchaResetKey} />
 
               <button type="submit" disabled={isBusy} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">{submitLabel()}</button>
 

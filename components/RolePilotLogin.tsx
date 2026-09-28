@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { PilotAccessApplicationForm } from "@/components/PilotAccessApplicationForm";
+import { PasswordField } from "@/components/PasswordField";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up";
@@ -283,11 +284,16 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                 <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required readOnly={Boolean(invite?.valid)} autoComplete="email" className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363] read-only:bg-[#f3f1eb]" />
               </label>
 
-              <label className="block text-sm font-black text-[#173b2d]">
-                Password
-                <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} autoComplete={isSignup ? "new-password" : "current-password"} className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]" />
-                {isSignup ? <span className="mt-2 block text-xs font-semibold leading-5 text-[#4d5d55]">Use at least 8 characters. A longer passphrase is better.</span> : null}
-              </label>
+              <PasswordField
+                label="Password"
+                value={password}
+                onChange={setPassword}
+                minLength={isSignup ? 12 : 1}
+                autoComplete={isSignup ? "new-password" : "current-password"}
+                className="block text-sm font-black text-[#173b2d]"
+                inputClassName="rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
+                helper={isSignup ? "Use at least 12 characters. A longer passphrase is better." : undefined}
+              />
 
               <button type="submit" disabled={isBusy} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">{submitLabel()}</button>
 

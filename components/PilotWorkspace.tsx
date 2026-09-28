@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChurchWorkAppShell, type ChurchWorkNavKey, type ChurchWorkNotification } from "@/components/ChurchWorkAppShell";
+import { OrganizationTeam } from "@/components/OrganizationTeam";
 
 type RoleKey = "requester" | "facility" | "partner";
 type SupportOption = "Prayer" | "Friendly visit" | "Encouragement" | "Pastoral call";
@@ -9,6 +10,10 @@ type PartnerOutcome = "prayer_logged" | "visit_planned" | "visit_completed" | "f
 
 type StoredPilotRequest = {
   id: string;
+  facility_id?: string | null;
+  partner_id?: string | null;
+  facility_name?: string | null;
+  partner_name?: string | null;
   support: SupportOption[];
   safe_note: string;
   status: string;
@@ -35,6 +40,24 @@ type StoredPilotRequest = {
 };
 
 type PilotWorkspaceProps = { role: RoleKey };
+
+type PortalContext = {
+  organization_id?: string;
+  organization_name?: string;
+  organization_slug?: string;
+  portal?: "facility" | "partner";
+  user_role?: string;
+  can_manage_team?: boolean;
+};
+
+type RequesterFacility = {
+  facility_id: string;
+  organization_id: string;
+  facility_name: string;
+  organization_name: string;
+  route_ready: boolean;
+  partner_name?: string | null;
+};
 
 const supportOptions: Array<{ value: SupportOption; title: string; detail: string; icon: "prayer" | "visit" | "heart" | "phone" }> = [
   { value: "Prayer", title: "Prayer", detail: "Prayer from an approved local care partner.", icon: "prayer" },
@@ -265,6 +288,9 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [portalContext, setPortalContext] = useState<PortalContext>({});
+  const [requesterFacilities, setRequesterFacilities] = useState<RequesterFacility[]>([]);
+  const [selectedFacilityId, setSelectedFacilityId] = useState("");
   const [message, setMessage] = useState("Loading ChurchWork...");
 
   const selectedRequest = requests.find((item) => item.id === selectedRequestId) ?? null;
@@ -354,6 +380,17 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     const nextRequests = Array.isArray(body.requests) ? body.requests as StoredPilotRequest[] : [];
     setRequests(nextRequests);
     setCurrentUserId(typeof body.current_user_id === "string" ? body.current_user_id : null);
+
+    if (role === "requester") {
+      const facilities = Array.isArray(body.requester_facilities) ? body.requester_facilities as RequesterFacility[] : [];
+      setRequesterFacilities(facilities);
+      setSelectedFacilityId((current) => current || (facilities.length === 1 ? facilities[0].facility_id : ""));
+      setPortalContext({});
+    } else {
+      setPortalContext(body.portal_context && typeof body.portal_context === "object" ? body.portal_context as PortalContext : {});
+      setRequesterFacilities([]);
+    }
+
     setMessage(nextRequests.length ? "Current" : "No requests yet");
     setIsLoading(false);
   }
@@ -388,7 +425,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     const response = await fetch("/api/pilot-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ support, noMedicalAck })
+      body: JSON.stringify({ support, noMedicalAck, facilityId: selectedFacilityId || undefined })
     }).catch(() => null);
     const body = await response?.json().catch(() => null);
     if (!response || !response.ok || !body?.ok) {
@@ -400,7 +437,8 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     setSupport([]);
     setNoMedicalAck(false);
     setRequestStep(1);
-    setMessage("Request submitted for Grandview review.");
+    const selectedFacility = requesterFacilities.find((item) => item.facility_id === selectedFacilityId) ?? requesterFacilities[0];
+    setMessage(selectedFacility?.facility_name ? `Request submitted to ${selectedFacility.facility_name} for review.` : "Request submitted for facility review.");
     setIsSaving(false);
     setActiveNav("home");
   }
@@ -471,15 +509,19 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     : role === "facility"
       ? [
           { key: "home" as const, label: "Home", icon: "home" as const },
-          { key: "requests" as const, label: "Requests", icon: "request" as const }
+          { key: "requests" as const, label: "Requests", icon: "request" as const },
+          ...(portalContext.can_manage_team ? [{ key: "team" as const, label: "Team", icon: "people" as const }] : [])
         ]
       : [
           { key: "home" as const, label: "Home", icon: "home" as const },
           { key: "assignments" as const, label: "Assignments", icon: "request" as const },
-          { key: "completed" as const, label: "Completed", icon: "check" as const }
+          { key: "completed" as const, label: "Completed", icon: "check" as const },
+          ...(portalContext.can_manage_team ? [{ key: "team" as const, label: "Team", icon: "people" as const }] : [])
         ];
 
-  const organization = role === "facility" ? "Grandview Post Acute" : role === "partner" ? "Hope Church" : "Requester Portal";
+  const organization = role === "requester"
+    ? "Requester Portal"
+    : portalContext.organization_name || (role === "facility" ? "Facility Portal" : "Care Partner Portal");
 
   return (
     <ChurchWorkAppShell
@@ -511,6 +553,9 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
               noMedicalAck={noMedicalAck}
               step={requestStep}
               isSaving={isSaving}
+              facilities={requesterFacilities}
+              selectedFacilityId={selectedFacilityId}
+              onFacilityChange={setSelectedFacilityId}
               onToggle={toggleSupport}
               onAck={setNoMedicalAck}
               onStep={setRequestStep}
@@ -520,15 +565,19 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
             ? <RequesterRequests requests={requests} isLoading={isLoading} onOpen={openRequest} onNew={() => navigate("new")} />
             : <RequesterHome requests={requests} isLoading={isLoading} onOpen={openRequest} onNew={() => navigate("new")} />
       ) : role === "facility" ? (
-        activeNav === "requests"
-          ? <FacilityRequests requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
-          : <FacilityHome requests={requests} counts={counts} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+        activeNav === "team" && portalContext.can_manage_team
+          ? <OrganizationTeam portal="facility" />
+          : activeNav === "requests"
+            ? <FacilityRequests requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+            : <FacilityHome requests={requests} counts={counts} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
       ) : (
-        activeNav === "completed"
-          ? <PartnerCompleted requests={requests} onOpen={openRequest} />
-          : activeNav === "assignments"
-            ? <PartnerAssignments requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
-            : <PartnerHome requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+        activeNav === "team" && portalContext.can_manage_team
+          ? <OrganizationTeam portal="partner" />
+          : activeNav === "completed"
+            ? <PartnerCompleted requests={requests} onOpen={openRequest} />
+            : activeNav === "assignments"
+              ? <PartnerAssignments requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+              : <PartnerHome requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
       )}
 
       {message !== "Current" && message !== "No requests yet" ? (

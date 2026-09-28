@@ -5,6 +5,7 @@ import { ChurchWorkAppShell, type ChurchWorkNavKey } from "@/components/ChurchWo
 import { OperatorAccessManager } from "@/components/OperatorAccessManager";
 import { OperatorAuditFeed } from "@/components/OperatorAuditFeed";
 import { PilotInviteManager } from "@/components/PilotInviteManager";
+import { PilotAccessApplications } from "@/components/PilotAccessApplications";
 
 type PilotSummary = {
   requests_total: number;
@@ -371,7 +372,8 @@ export function AdminPortalAccessHub() {
       {canManageAccess && activeNav === "users" ? (
         <>
           <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Users & Roles</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Invite new pilot users and manage access for existing ChurchWork accounts.</p></div>
-          <PilotInviteManager />
+          <PilotAccessApplications />
+          <div className="mt-5"><PilotInviteManager /></div>
           <div className="mt-5"><OperatorAccessManager /></div>
           <section className="mt-5 rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
             <h2 className="text-lg font-black text-[#183f35]">Current users</h2>

@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         code: "facility-claim-rejected",
         message: action === "claim"
           ? "This request is already claimed or is not waiting on Grandview."
-          : "This Grandview claim could not be released."
+          : "This facility claim could not be released."
       });
     }
   } else {
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       message: action === "claim" ? "Request claimed."
         : action === "release_claim" ? "Claim released."
-        : action === "approve" ? "Request approved for Hope Church."
+        : action === "approve" ? "Request approved for the care partner."
         : "Requester update released."
     });
   }
@@ -234,7 +234,7 @@ export async function POST(request: NextRequest) {
     request: toWorkspaceRequest(data as PilotRequestRow, owners.get(requestId)),
     message: action === "claim" ? "Request claimed."
       : action === "release_claim" ? "Claim released."
-      : action === "approve" ? "Request approved for Hope Church."
+      : action === "approve" ? "Request approved for the care partner."
       : "Requester update released."
   });
 }

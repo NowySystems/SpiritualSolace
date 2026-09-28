@@ -8,6 +8,7 @@ type OperatorContext = {
   ok?: boolean;
   isOperator?: boolean;
   email?: string | null;
+  allowedTargets?: PortalTarget[];
 };
 
 const labels: Record<PortalTarget, string> = {
@@ -20,6 +21,7 @@ const labels: Record<PortalTarget, string> = {
 export function OperatorPortalSwitcher({ currentPortal }: { currentPortal: PortalTarget }) {
   const [isOperator, setIsOperator] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
+  const [allowedTargets, setAllowedTargets] = useState<PortalTarget[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -28,7 +30,9 @@ export function OperatorPortalSwitcher({ currentPortal }: { currentPortal: Porta
       const response = await fetch("/api/operator-portal", { cache: "no-store" }).catch(() => null);
       if (!mounted || !response) return;
       const body = await response.json().catch(() => null) as OperatorContext | null;
+      const allowed = Array.isArray(body?.allowedTargets) ? body.allowedTargets.filter((value): value is PortalTarget => value === "requester" || value === "facility" || value === "partner" || value === "admin") : [];
       setIsOperator(Boolean(response.ok && body?.ok && body?.isOperator));
+      setAllowedTargets(allowed);
     }
 
     void load();
@@ -68,7 +72,7 @@ export function OperatorPortalSwitcher({ currentPortal }: { currentPortal: Porta
         aria-label="Switch ChurchWork portal"
         className="min-w-[7.5rem] bg-transparent py-1 text-xs font-extrabold text-[#164f3e] outline-none disabled:opacity-60"
       >
-        {(Object.keys(labels) as PortalTarget[]).map((target) => (
+        {(Object.keys(labels) as PortalTarget[]).filter((target) => allowedTargets.includes(target)).map((target) => (
           <option key={target} value={target}>{labels[target]}</option>
         ))}
       </select>

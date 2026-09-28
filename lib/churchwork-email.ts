@@ -19,6 +19,7 @@ export function churchWorkEmailConfigured() {
 export async function sendChurchWorkEmail(input: ChurchWorkEmailInput): Promise<ChurchWorkEmailResult> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.CHURCHWORK_FROM_EMAIL;
+  const replyTo = process.env.CHURCHWORK_REPLY_TO_EMAIL;
 
   if (!apiKey || !from) {
     return { sent: false, reason: "email-not-configured" };
@@ -35,7 +36,8 @@ export async function sendChurchWorkEmail(input: ChurchWorkEmailInput): Promise<
         from,
         to: [input.to],
         subject: input.subject,
-        text: input.text
+        text: input.text,
+        ...(replyTo ? { reply_to: replyTo } : {})
       })
     });
 

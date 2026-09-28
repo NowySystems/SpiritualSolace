@@ -12,6 +12,8 @@ type PilotRequestStatus =
 
 type PilotRequestRow = {
   id: string;
+  facility_id: string;
+  partner_id: string;
   support_options: SupportOption[] | null;
   safe_context_note: string | null;
   status: PilotRequestStatus;
@@ -25,7 +27,7 @@ type PilotRequestRow = {
 };
 
 const allowedSupport = new Set<SupportOption>(["Prayer", "Friendly visit", "Encouragement", "Pastoral call"]);
-const requestSelect = "id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update,requester_update_released_at,created_at,updated_at" as const;
+const requestSelect = "id,facility_id,partner_id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update,requester_update_released_at,created_at,updated_at" as const;
 
 function json(status: number, body: Record<string, unknown>) {
   return NextResponse.json(body, {
@@ -77,6 +79,8 @@ function toWorkspaceRequest(row: PilotRequestRow) {
 
   return {
     id: row.id,
+    facility_id: row.facility_id,
+    partner_id: row.partner_id,
     support: cleanSupport(row.support_options),
     safe_note: row.safe_context_note ?? "",
     status: workspaceStage(row.status),
@@ -111,7 +115,22 @@ export async function GET() {
     }
 
     const requests = ((data ?? []) as PilotRequestRow[]).map(toWorkspaceRequest);
-    return json(200, { ok: true, requests });
+    const { data: requesterFacilities, error: facilityError } = await session.supabase.rpc("get_my_requester_facilities");
+
+    if (facilityError) {
+      return json(503, {
+        ok: false,
+        code: "requester-facilities-unavailable",
+        message: "ChurchWork could not verify your facility access right now."
+      });
+    }
+
+    return json(200, {
+      ok: true,
+      current_user_id: session.user.id,
+      requests,
+      requester_facilities: Array.isArray(requesterFacilities) ? requesterFacilities : []
+    });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-list-failed", message: errorMessage(error) });
   }
@@ -122,6 +141,7 @@ export async function POST(request: NextRequest) {
     const payload = await request.json().catch(() => null);
     const support = cleanSupport(payload?.support);
     const noMedicalAck = payload?.noMedicalAck === true;
+    const facilityId = typeof payload?.facilityId === "string" && payload.facilityId ? payload.facilityId : null;
 
     if (support.length === 0) {
       return json(400, { ok: false, code: "support-required", message: "Choose at least one spiritual-care support option." });
@@ -145,6 +165,7 @@ export async function POST(request: NextRequest) {
       .insert({
         requester_user_id: session.user.id,
         requester_email: session.user.email ?? null,
+        facility_id: facilityId,
         support_options: support,
         safe_context_note: safeNote,
         status: "facility_review",
@@ -161,6 +182,19 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
+      const detail = insertError.message ?? "";
+      if (/not linked to a facility|Choose a facility|does not have an active ChurchWork care partner/i.test(detail)) {
+        return json(409, {
+          ok: false,
+          code: "request-routing-not-ready",
+          message: detail.includes("active ChurchWork care partner")
+            ? "Your facility does not have an active ChurchWork care-partner route yet."
+            : detail.includes("Choose a facility")
+              ? "Choose which approved facility this request belongs to."
+              : "Your requester account is not linked to an approved facility yet."
+        });
+      }
+
       return json(503, {
         ok: false,
         code: "pilot-request-save-unavailable",
@@ -171,7 +205,7 @@ export async function POST(request: NextRequest) {
     return json(201, {
       ok: true,
       request: toWorkspaceRequest(data as PilotRequestRow),
-      message: "Request saved and sent to Grandview review."
+      message: "Request saved and sent to facility review."
     });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-save-failed", message: errorMessage(error) });

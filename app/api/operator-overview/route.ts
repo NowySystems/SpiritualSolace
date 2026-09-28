@@ -64,7 +64,7 @@ export async function GET() {
     return json(403, {
       ok: false,
       code: "operator-role-required",
-      message: "This account does not have active ChurchWork owner/admin access."
+      message: "This account does not have active ChurchWork admin or Pilot Admin access."
     });
   }
 

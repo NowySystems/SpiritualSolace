@@ -296,8 +296,12 @@ export async function POST(request: NextRequest) {
     return json(400, { ok: false, code: "bad-role", message: "Invalid ChurchWork role." });
   }
 
-  if (!email || !password || password.length < 8) {
-    return json(400, { ok: false, code: "bad-credentials", message: "Email and an 8+ character password are required." });
+  if (!email || !password) {
+    return json(400, { ok: false, code: "bad-credentials", message: "Email and password are required." });
+  }
+
+  if (mode === "sign-up" && password.length < 12) {
+    return json(400, { ok: false, code: "weak-password", message: "New ChurchWork passwords must be at least 12 characters." });
   }
 
   let env: ReturnType<typeof getSupabaseServerEnv>;

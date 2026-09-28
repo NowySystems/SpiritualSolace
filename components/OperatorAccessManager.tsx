@@ -39,6 +39,7 @@ const orgOptions: Array<{ value: OrgSlug; label: string }> = [
 const baseRoleOptions: Record<OrgSlug, RoleOption[]> = {
   churchwork: [
     { value: "requester", label: "Requester" },
+    { value: "pilot_admin", label: "Pilot Admin" },
     { value: "platform_admin", label: "Platform admin" }
   ],
   "grandview-post-acute": [
@@ -156,10 +157,10 @@ export function OperatorAccessManager() {
             <p className="text-xs font-black uppercase tracking-[0.18em] text-[#506a49]">Access management</p>
             <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">Manage existing accounts.</h2>
             <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-[#66766e]">
-              This does not create accounts or send invitations. It only assigns, changes, or disables a role after the person already has a ChurchWork account.
+              Use the invitation tool above for new pilot users. This section assigns, changes, or disables roles for people who already have a ChurchWork account.
             </p>
             <div className="mt-5 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">
-              Facility and Hope Church account creation stays deferred until rollout. This tool is ready for that handoff when those accounts exist.
+              Pilot Admin is intentionally limited to operations, requests, organizations, and impact. Owner and platform-admin access remain separate.
             </div>
             <div className="mt-3 rounded-2xl border border-[#cfe4d5] bg-[#f1f8f3] p-4 text-sm font-semibold leading-6 text-[#173b2d]">
               {isOwner

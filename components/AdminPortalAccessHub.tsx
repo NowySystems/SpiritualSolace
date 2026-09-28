@@ -172,7 +172,7 @@ export function AdminPortalAccessHub() {
     if (!response.ok || !body?.ok || !body.snapshot) {
       setSnapshot(null);
       setOperatorEmail(null);
-      setMessage(response.status === 401 ? "Sign in with a ChurchWork owner/admin account." : messageFromBody(body, "Operator data is unavailable."));
+      setMessage(response.status === 401 ? "Sign in with a ChurchWork admin or Pilot Admin account." : messageFromBody(body, "Operator data is unavailable."));
       setIsBusy(false);
       return;
     }
@@ -188,7 +188,7 @@ export function AdminPortalAccessHub() {
   async function handleSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsBusy(true);
-    setMessage("Verifying ChurchWork owner/admin access...");
+    setMessage("Verifying ChurchWork admin access...");
     const response = await fetch("/api/operator-auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -234,7 +234,7 @@ export function AdminPortalAccessHub() {
             <p className="mt-5 max-w-2xl text-base font-medium leading-8 text-[#62747a]">Monitor requests, manage access, see Grandview and Hope Church readiness, and follow the pilot audit trail from one protected workspace.</p>
           </div>
           <form onSubmit={handleSignIn} className="rounded-[1.6rem] border border-[#ded9cf] bg-[#fffdf9] p-7 shadow-[0_28px_80px_rgba(35,42,53,.13)]">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Owner / platform admin</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Admin / Pilot Admin</p>
             <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">Open operations</h2>
             <label className="mt-6 block text-sm font-black text-[#28463d]">Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
             <label className="mt-4 block text-sm font-black text-[#28463d]">Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
@@ -363,7 +363,7 @@ export function AdminPortalAccessHub() {
           <div className="mb-7"><span className="inline-flex rounded-full border border-[#d8cfe1] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Pilot network</span><h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.055em] text-[#102f40]">Organizations</h1><p className="mt-2 text-sm font-medium text-[#66777c]">The real organizations operating the ChurchWork pilot.</p></div>
           <div className="grid gap-5 md:grid-cols-2">
             <section className="relative overflow-hidden rounded-[1.5rem] border border-[#d5e0e8] bg-gradient-to-br from-[#eaf2f8] to-[#fffdf9] p-7 shadow-[0_16px_44px_rgba(18,48,68,.06)]"><span className="absolute inset-y-0 left-0 w-2 bg-[#416f96]" /><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#416f96]">Facility partner</p><h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#183f35]">Grandview Post Acute</h2><p className="mt-3 text-sm font-semibold leading-6 text-[#68787c]">Reviews requester submissions, controls partner release, and approves requester-facing updates.</p><div className="mt-6 flex gap-3"><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.grandview_reviewers} active reviewer{staffing.grandview_reviewers === 1 ? "" : "s"}</span><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.pending_facility_invites} pending invite{staffing.pending_facility_invites === 1 ? "" : "s"}</span></div></section>
-            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#e2dac0] bg-gradient-to-br from-[#f4edda] to-[#fffdf9] p-7 shadow-[0_16px_44px_rgba(18,48,68,.06)]"><span className="absolute inset-y-0 left-0 w-2 bg-[#87713a]" /><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Care partner</p><h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#183f35]">Hope Church</h2><p className="mt-3 text-sm font-semibold leading-6 text-[#68787c]">Receives Grandview-approved spiritual-care context and returns structured outcomes to Grandview.</p><div className="mt-6"><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.hope_partner_users} active partner user{staffing.hope_partner_users === 1 ? "" : "s"}</span></div></section>
+            <section className="relative overflow-hidden rounded-[1.5rem] border border-[#e2dac0] bg-gradient-to-br from-[#f4edda] to-[#fffdf9] p-7 shadow-[0_16px_44px_rgba(18,48,68,.06)]"><span className="absolute inset-y-0 left-0 w-2 bg-[#87713a]" /><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Care partner</p><h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#183f35]">Hope Church</h2><p className="mt-3 text-sm font-semibold leading-6 text-[#68787c]">Receives Grandview-approved spiritual-care context and returns structured outcomes to Grandview.</p><div className="mt-6"><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.hope_partner_users} active partner user{staffing.hope_partner_users === 1 ? "" : "s"}</span><span className="rounded-xl bg-white px-4 py-3 text-sm font-black shadow-sm">{staffing.pending_partner_invites ?? 0} pending invite{(staffing.pending_partner_invites ?? 0) === 1 ? "" : "s"}</span></div></section>
           </div>
         </>
       ) : null}

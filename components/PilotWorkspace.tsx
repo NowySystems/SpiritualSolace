@@ -295,6 +295,9 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
 
   const selectedRequest = requests.find((item) => item.id === selectedRequestId) ?? null;
   const latestRequest = requests[0] ?? null;
+  const portalOrganizationName = role === "requester"
+    ? "Requester Portal"
+    : portalContext.organization_name || (role === "facility" ? "Facility" : "Care Partner");
 
   const counts = useMemo(() => ({
     review: requests.filter((r) => rawStatus(r) === "facility_review").length,
@@ -316,14 +319,14 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
         if (!request.facility_owner_user_id) {
           items.push({
             id: `unassigned-review-${request.id}`,
-            title: "Grandview review is unassigned",
+            title: `${portalOrganizationName} review is unassigned`,
             detail: `${shortId(request.id)} · waiting ${ageLabel(stageStartedAt(request))}`,
             tone: age >= 1440 ? "urgent" : "attention"
           });
         } else if (age >= 240) {
           items.push({
             id: `aging-review-${request.id}`,
-            title: "Grandview review is aging",
+            title: `${portalOrganizationName} review is aging`,
             detail: `${shortId(request.id)} · ${ownerDisplay(request, "facility", currentUserId)} · waiting ${ageLabel(stageStartedAt(request))}`,
             tone: age >= 1440 ? "urgent" : "attention"
           });
@@ -335,7 +338,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
           items.push({
             id: `release-${request.id}`,
             title: "Requester update needs release",
-            detail: `${shortId(request.id)} · Hope Church responded ${ageLabel(stageStartedAt(request))} ago`,
+            detail: `${shortId(request.id)} · Care partner responded ${ageLabel(stageStartedAt(request))} ago`,
             tone: age >= 480 ? "urgent" : "attention"
           });
         }
@@ -345,14 +348,14 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
         if (!request.partner_owner_user_id) {
           items.push({
             id: `unassigned-partner-${request.id}`,
-            title: "Hope Church assignment is unassigned",
+            title: `${portalOrganizationName} assignment is unassigned`,
             detail: `${shortId(request.id)} · waiting ${ageLabel(stageStartedAt(request))}`,
             tone: age >= 1440 ? "urgent" : "attention"
           });
         } else if (age >= 1440) {
           items.push({
             id: `aging-partner-${request.id}`,
-            title: "Care assignment is aging",
+            title: `${portalOrganizationName} assignment is aging`,
             detail: `${shortId(request.id)} · ${ownerDisplay(request, "partner", currentUserId)} · waiting ${ageLabel(stageStartedAt(request))}`,
             tone: age >= 4320 ? "urgent" : "attention"
           });
@@ -361,7 +364,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     }
 
     return items.slice(0, 12);
-  }, [currentUserId, requests, role]);
+  }, [currentUserId, portalOrganizationName, requests, role]);
 
   async function loadRequests() {
     setIsLoading(true);
@@ -519,9 +522,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
           ...(portalContext.can_manage_team ? [{ key: "team" as const, label: "Team", icon: "people" as const }] : [])
         ];
 
-  const organization = role === "requester"
-    ? "Requester Portal"
-    : portalContext.organization_name || (role === "facility" ? "Facility Portal" : "Care Partner Portal");
+  const organization = portalOrganizationName;
 
   return (
     <ChurchWorkAppShell
@@ -539,6 +540,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
         <RequestDetail
           role={role}
           request={selectedRequest}
+          organizationName={organization}
           isBusy={activeRequestId === selectedRequest.id}
           onBack={() => setSelectedRequestId(null)}
           currentUserId={currentUserId}
@@ -568,16 +570,16 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
         activeNav === "team" && portalContext.can_manage_team
           ? <OrganizationTeam portal="facility" />
           : activeNav === "requests"
-            ? <FacilityRequests requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
-            : <FacilityHome requests={requests} counts={counts} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+            ? <FacilityRequests requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} organizationName={organization} />
+            : <FacilityHome requests={requests} counts={counts} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} organizationName={organization} />
       ) : (
         activeNav === "team" && portalContext.can_manage_team
           ? <OrganizationTeam portal="partner" />
           : activeNav === "completed"
-            ? <PartnerCompleted requests={requests} onOpen={openRequest} />
+            ? <PartnerCompleted requests={requests} onOpen={openRequest} organizationName={organization} />
             : activeNav === "assignments"
-              ? <PartnerAssignments requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
-              : <PartnerHome requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} />
+              ? <PartnerAssignments requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} organizationName={organization} />
+              : <PartnerHome requests={requests} isLoading={isLoading} onOpen={openRequest} currentUserId={currentUserId} organizationName={organization} />
       )}
 
       {message !== "Current" && message !== "No requests yet" ? (

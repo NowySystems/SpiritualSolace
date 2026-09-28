@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { PasswordField } from "@/components/PasswordField";
 
 export default function PilotResetPasswordPage() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
@@ -10,12 +11,43 @@ export default function PilotResetPasswordPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState("Enter a new password for your ChurchWork account.");
   const [isBusy, setIsBusy] = useState(false);
+  const [recoveryReady, setRecoveryReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    void supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      if (data.session) {
+        setRecoveryReady(true);
+        setStatus("Secure reset link verified. Choose your new ChurchWork password.");
+      }
+    });
+
+    const { data: subscription } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
+      if (event === "PASSWORD_RECOVERY" || session) {
+        setRecoveryReady(true);
+        setStatus("Secure reset link verified. Choose your new ChurchWork password.");
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (password.length < 8) {
-      setStatus("Password must be at least 8 characters.");
+    if (!recoveryReady) {
+      setStatus("Open the password-reset link from your email before choosing a new password.");
+      return;
+    }
+
+    if (password.length < 12) {
+      setStatus("Password must be at least 12 characters.");
       return;
     }
 
@@ -51,34 +83,26 @@ export default function PilotResetPasswordPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <label className="block text-sm font-bold text-[#173b2d]">
-            New password
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
-            />
-            <span className="mt-2 block text-xs leading-5 text-[#4d5d55]">
-              Use at least 8 characters. A longer passphrase with a mix of letters, numbers, and symbols is better.
-            </span>
-          </label>
+          <PasswordField
+            label="New password"
+            value={password}
+            onChange={setPassword}
+            minLength={12}
+            autoComplete="new-password"
+            className="block text-sm font-bold text-[#173b2d]"
+            inputClassName="rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
+            helper="Use at least 12 characters. A longer passphrase with letters, numbers, and symbols is better."
+          />
 
-          <label className="block text-sm font-bold text-[#173b2d]">
-            Confirm new password
-            <input
-              type="password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-              className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
-            />
-          </label>
+          <PasswordField
+            label="Confirm new password"
+            value={confirmPassword}
+            onChange={setConfirmPassword}
+            minLength={12}
+            autoComplete="new-password"
+            className="block text-sm font-bold text-[#173b2d]"
+            inputClassName="rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
+          />
 
           <div className="rounded-xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm leading-6 text-[#5f4b1f]">
             ChurchWork never asks for your password by phone, text, or email. Use this page only after opening the secure reset link.
@@ -86,10 +110,10 @@ export default function PilotResetPasswordPage() {
 
           <button
             type="submit"
-            disabled={isBusy}
+            disabled={isBusy || !recoveryReady}
             className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-bold text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60"
           >
-            {isBusy ? "Updating..." : "Update password"}
+            {isBusy ? "Updating..." : recoveryReady ? "Update password" : "Waiting for secure reset link"}
           </button>
         </form>
 

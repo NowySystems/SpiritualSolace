@@ -9,6 +9,7 @@ import { PilotAccessApplications } from "@/components/PilotAccessApplications";
 import { PilotOrganizations } from "@/components/PilotOrganizations";
 import { PasswordField } from "@/components/PasswordField";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { TurnstileChallenge } from "@/components/TurnstileChallenge";
 
 type PilotSummary = {
   requests_total: number;
@@ -163,6 +164,9 @@ export function AdminPortalAccessHub() {
   const [password, setPassword] = useState("");
   const [isBusy, setIsBusy] = useState(true);
   const [message, setMessage] = useState("Checking operator session...");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
+  const captchaEnabled = Boolean(process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
 
   async function loadOverview() {
     setIsBusy(true);
@@ -192,12 +196,18 @@ export function AdminPortalAccessHub() {
 
   async function handleSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (captchaEnabled && !captchaToken) {
+      setMessage("Complete the security check before signing in.");
+      return;
+    }
+
     setIsBusy(true);
     setMessage("Verifying ChurchWork admin access...");
     const response = await fetch("/api/operator-auth", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, captchaToken: captchaToken || undefined })
     }).catch(() => null);
     if (!response) {
       setMessage("ChurchWork operator authentication is unreachable.");
@@ -207,6 +217,8 @@ export function AdminPortalAccessHub() {
     const body = await response.json().catch(() => null);
     if (!response.ok || !body?.ok) {
       setMessage(messageFromBody(body, "Operator sign-in failed."));
+      setCaptchaToken(null);
+      setCaptchaResetKey((value) => value + 1);
       setIsBusy(false);
       return;
     }
@@ -221,11 +233,21 @@ export function AdminPortalAccessHub() {
       return;
     }
 
+    if (captchaEnabled && !captchaToken) {
+      setMessage("Complete the security check before requesting a password reset.");
+      return;
+    }
+
     setIsBusy(true);
     setMessage("Sending a secure password reset link...");
 
     const redirectTo = `${window.location.origin}/pilot/reset-password`;
-    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+      redirectTo,
+      ...(captchaToken ? { captchaToken } : {})
+    });
+    setCaptchaToken(null);
+    setCaptchaResetKey((value) => value + 1);
 
     setMessage(error
       ? "ChurchWork could not start password recovery right now. Try again shortly."
@@ -270,6 +292,7 @@ export function AdminPortalAccessHub() {
               className="mt-4 block text-sm font-black text-[#28463d]"
               inputClassName="rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]"
             />
+            <div className="mt-5"><TurnstileChallenge onToken={setCaptchaToken} resetKey={captchaResetKey} /></div>
             <button type="submit" disabled={isBusy} className="mt-6 w-full rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white disabled:opacity-50">{isBusy ? "Checking..." : "Open admin"}</button>
             <button type="button" onClick={() => void handlePasswordReset()} disabled={isBusy} className="mt-3 w-full rounded-xl border border-[#d8d3c9] bg-white px-5 py-3 text-sm font-black text-[#4d3f68] hover:bg-[#f8f5fb] disabled:opacity-50">Forgot password?</button>
             <p className="mt-4 text-xs font-semibold leading-5 text-[#6a797d]">{message}</p>

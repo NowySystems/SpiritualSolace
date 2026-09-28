@@ -718,20 +718,43 @@ function RequesterRequests({ requests, isLoading, onOpen, onNew }: { requests: S
   );
 }
 
-function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, onAck, onStep, onSubmit }: {
-  support: SupportOption[]; noMedicalAck: boolean; step: number; isSaving: boolean;
-  onToggle: (option: SupportOption) => void; onAck: (value: boolean) => void; onStep: (step: number) => void; onSubmit: () => void;
+function RequesterNewRequest({ support, noMedicalAck, step, isSaving, facilities, selectedFacilityId, onFacilityChange, onToggle, onAck, onStep, onSubmit }: {
+  support: SupportOption[];
+  noMedicalAck: boolean;
+  step: number;
+  isSaving: boolean;
+  facilities: RequesterFacility[];
+  selectedFacilityId: string;
+  onFacilityChange: (facilityId: string) => void;
+  onToggle: (option: SupportOption) => void;
+  onAck: (value: boolean) => void;
+  onStep: (step: number) => void;
+  onSubmit: () => void;
 }) {
-  const canContinue = step === 1 ? support.length > 0 : step === 2 ? noMedicalAck : true;
+  const selectedFacility = facilities.find((item) => item.facility_id === selectedFacilityId) ?? (facilities.length === 1 ? facilities[0] : null);
+  const routeReady = Boolean(selectedFacility?.route_ready);
+  const canContinue = step === 1
+    ? support.length > 0 && Boolean(selectedFacility) && routeReady
+    : step === 2
+      ? noMedicalAck
+      : Boolean(selectedFacility) && routeReady;
   const stepCopy = [
-    ["Choose support", "What would feel helpful right now?"],
+    ["Choose support", "Choose the approved facility and the spiritual care that would help."],
     ["Keep it safe", "Confirm this stays within spiritual care."],
     ["Review & send", "Make sure the request looks right."]
   ][step - 1];
 
   return (
     <>
-      <PageTitle eyebrow="New request" title="Request spiritual care" description="A few simple choices are all Grandview needs to begin the care process." />
+      <PageTitle eyebrow="New request" title="Request spiritual care" description="Choose what would help. ChurchWork will route the request through your approved facility and its care partner." />
+
+      {!facilities.length ? (
+        <Card className="mb-7 overflow-hidden border-[#dfc8a8] bg-[#fff9ec] p-7">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#956b2d]">Facility access required</p>
+          <h2 className="mt-2 font-serif text-2xl font-semibold tracking-[-0.04em] text-[#183f35]">Your account is not linked to a facility yet.</h2>
+          <p className="mt-3 max-w-2xl text-sm font-semibold leading-6 text-[#6f6855]">Ask your facility's ChurchWork Admin to add you as a Requester. Once assigned, this page will route your requests only through that facility's approved workflow.</p>
+        </Card>
+      ) : null}
 
       <div className="mb-7 rounded-2xl border border-[#ddd8ce] bg-white/70 p-3 shadow-sm backdrop-blur">
         <div className="grid grid-cols-3 gap-2">
@@ -761,19 +784,44 @@ function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, 
 
           <div className="p-6 sm:p-8">
             {step === 1 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {supportOptions.map((option) => {
-                  const active = support.includes(option.value);
-                  return (
-                    <button key={option.value} type="button" onClick={() => onToggle(option.value)} className={cx("group relative min-h-[9.5rem] rounded-2xl border p-5 text-left transition", active ? "border-[#2f7b65] bg-[#edf6f1] shadow-[0_10px_28px_rgba(47,123,101,.10)] ring-1 ring-[#2f7b65]" : "border-[#ded9cf] bg-white hover:-translate-y-0.5 hover:border-[#9bb5a9] hover:shadow-md")}>
-                      <span className={cx("flex h-11 w-11 items-center justify-center rounded-xl transition", active ? "bg-[#2f7b65] text-white" : "bg-[#f1eee7] text-[#526a62] group-hover:bg-[#e8f0eb]")}><SupportIcon name={option.icon} /></span>
-                      <span className="mt-4 block text-base font-black text-[#183f35]">{option.title}</span>
-                      <span className="mt-1 block text-xs font-medium leading-5 text-[#6c7b7e]">{option.detail}</span>
-                      <span className={cx("absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-black", active ? "border-[#2f7b65] bg-[#2f7b65] text-white" : "border-[#c9cbc6] bg-white text-transparent")}>✓</span>
-                    </button>
-                  );
-                })}
-              </div>
+              <>
+                <div className="mb-5 rounded-2xl border border-[#dcd8cf] bg-[#f8f6f1] p-5">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#75827f]">Facility</p>
+                  {facilities.length > 1 ? (
+                    <select value={selectedFacilityId} onChange={(event) => onFacilityChange(event.target.value)} className="mt-2 w-full rounded-xl border border-[#d5d2c9] bg-white px-4 py-3 text-sm font-black text-[#294b42]">
+                      <option value="">Choose a facility</option>
+                      {facilities.map((facility) => <option key={facility.facility_id} value={facility.facility_id}>{facility.facility_name}</option>)}
+                    </select>
+                  ) : selectedFacility ? (
+                    <p className="mt-2 text-lg font-black text-[#183f35]">{selectedFacility.facility_name}</p>
+                  ) : (
+                    <p className="mt-2 text-sm font-bold text-[#8b6b38]">No approved facility is linked to this requester account.</p>
+                  )}
+                  {selectedFacility ? (
+                    <p className={cx("mt-2 text-xs font-semibold", routeReady ? "text-[#557268]" : "text-[#9a6653]")}>
+                      {routeReady
+                        ? selectedFacility.partner_name
+                          ? `Care partner: ${selectedFacility.partner_name}`
+                          : "Approved care-partner route is ready."
+                        : "This facility is approved, but its ChurchWork care-partner route is not active yet."}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {supportOptions.map((option) => {
+                    const active = support.includes(option.value);
+                    return (
+                      <button key={option.value} type="button" onClick={() => onToggle(option.value)} className={cx("group relative min-h-[9.5rem] rounded-2xl border p-5 text-left transition", active ? "border-[#2f7b65] bg-[#edf6f1] shadow-[0_10px_28px_rgba(47,123,101,.10)] ring-1 ring-[#2f7b65]" : "border-[#ded9cf] bg-white hover:-translate-y-0.5 hover:border-[#9bb5a9] hover:shadow-md")}>
+                        <span className={cx("flex h-11 w-11 items-center justify-center rounded-xl transition", active ? "bg-[#2f7b65] text-white" : "bg-[#f1eee7] text-[#526a62] group-hover:bg-[#e8f0eb]")}><SupportIcon name={option.icon} /></span>
+                        <span className="mt-4 block text-base font-black text-[#183f35]">{option.title}</span>
+                        <span className="mt-1 block text-xs font-medium leading-5 text-[#6c7b7e]">{option.detail}</span>
+                        <span className={cx("absolute right-4 top-4 flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-black", active ? "border-[#2f7b65] bg-[#2f7b65] text-white" : "border-[#c9cbc6] bg-white text-transparent")}>✓</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             ) : step === 2 ? (
               <>
                 <div className="rounded-2xl bg-[#f5f2eb] p-5">
@@ -781,7 +829,7 @@ function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, 
                 </div>
                 <label className="mt-5 flex cursor-pointer items-start gap-4 rounded-2xl border border-[#bcd5c7] bg-[#edf6f1] p-5 shadow-sm">
                   <input type="checkbox" checked={noMedicalAck} onChange={(event) => onAck(event.target.checked)} className="mt-1 h-5 w-5 accent-[#2f7b65]" />
-                  <span><span className="block text-sm font-black text-[#183f35]">I confirm this request is for spiritual care only.</span><span className="mt-1 block text-xs font-semibold leading-5 text-[#667773]">Grandview Post Acute reviews every request before anything is shared with Hope Church.</span></span>
+                  <span><span className="block text-sm font-black text-[#183f35]">I confirm this request is for spiritual care only.</span><span className="mt-1 block text-xs font-semibold leading-5 text-[#667773]">{selectedFacility?.facility_name ?? "Your facility"} reviews every request before anything is shared with its approved care partner.</span></span>
                 </label>
               </>
             ) : (
@@ -792,7 +840,7 @@ function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, 
                 </div>
                 <div className="mt-4 flex gap-3 rounded-2xl border border-[#cfe0d5] bg-[#f0f7f3] p-5">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2f7b65] text-xs font-black text-white">✓</span>
-                  <div><p className="text-sm font-black text-[#294e42]">Safe to submit</p><p className="mt-1 text-xs font-semibold leading-5 text-[#587168]">ChurchWork will create the safe summary from your selections and send it to Grandview for review.</p></div>
+                  <div><p className="text-sm font-black text-[#294e42]">Safe to submit</p><p className="mt-1 text-xs font-semibold leading-5 text-[#587168]">ChurchWork will create the safe summary and send it to {selectedFacility?.facility_name ?? "your approved facility"} for review.</p></div>
                 </div>
               </>
             )}
@@ -801,7 +849,7 @@ function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, 
               {step > 1 ? <button type="button" onClick={() => onStep(step - 1)} className="rounded-xl border border-[#d5d2ca] bg-white px-5 py-3 text-sm font-black text-[#4d626a] shadow-sm">Back</button> : <span />}
               {step < 3
                 ? <button type="button" disabled={!canContinue} onClick={() => onStep(step + 1)} className="rounded-xl bg-[#164f3e] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15 transition hover:-translate-y-0.5 disabled:opacity-40 disabled:hover:translate-y-0">Continue →</button>
-                : <button type="button" disabled={isSaving} onClick={onSubmit} className="rounded-xl bg-[#164f3e] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15 disabled:opacity-50">{isSaving ? "Submitting…" : "Submit request"}</button>}
+                : <button type="button" disabled={isSaving || !canContinue} onClick={onSubmit} className="rounded-xl bg-[#164f3e] px-6 py-3 text-sm font-black text-white shadow-lg shadow-[#164f3e]/15 disabled:opacity-50">{isSaving ? "Submitting…" : "Submit request"}</button>}
             </div>
           </div>
         </Card>
@@ -809,13 +857,14 @@ function RequesterNewRequest({ support, noMedicalAck, step, isSaving, onToggle, 
         <Card className="h-fit overflow-hidden">
           <div className="bg-[#173f34] p-5 text-white">
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/55">Request summary</p>
-            <h3 className="mt-1 font-serif text-xl font-semibold">What Grandview will receive</h3>
+            <h3 className="mt-1 font-serif text-xl font-semibold">Where this request goes</h3>
           </div>
           <div className="p-5">
-            <div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Facility</p><p className="mt-1 text-sm font-black text-[#183f35]">Grandview Post Acute</p></div>
+            <div><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Facility</p><p className="mt-1 text-sm font-black text-[#183f35]">{selectedFacility?.facility_name ?? "Not assigned yet"}</p></div>
+            <div className="mt-5 border-t border-[#ebe6dc] pt-4"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Care partner</p><p className="mt-1 text-sm font-bold text-[#4f646c]">{selectedFacility?.partner_name ?? (selectedFacility?.route_ready ? "Approved care partner" : "Not configured")}</p></div>
             <div className="mt-5 border-t border-[#ebe6dc] pt-4"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Support</p><p className="mt-1 text-sm font-bold leading-6 text-[#4f646c]">{support.length ? support.join(", ") : "Choose support to continue"}</p></div>
             <div className="mt-5 border-t border-[#ebe6dc] pt-4"><p className="text-[10px] font-black uppercase tracking-[0.12em] text-[#7d8784]">Privacy</p><p className="mt-1 text-sm font-bold text-[#4f646c]">{noMedicalAck ? "✓ Spiritual-care scope confirmed" : "Confirmation required"}</p></div>
-            <div className="mt-5 rounded-xl bg-[#f4f1ea] p-4 text-xs font-semibold leading-5 text-[#6d7978]">You will be able to follow the request from review through care and final update.</div>
+            <div className="mt-5 rounded-xl bg-[#f4f1ea] p-4 text-xs font-semibold leading-5 text-[#6d7978]">You will be able to follow the request from facility review through care and the final update.</div>
           </div>
         </Card>
       </div>

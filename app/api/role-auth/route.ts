@@ -170,7 +170,7 @@ function normalizeAuthData(body: Record<string, unknown>): AuthSuccess {
   };
 }
 
-async function supabaseJsAttempt(env: ReturnType<typeof getSupabaseServerEnv>, mode: AuthMode, role: RoleKey, email: string, password: string): Promise<AuthAttempt> {
+async function supabaseJsAttempt(env: ReturnType<typeof getSupabaseServerEnv>, mode: AuthMode, role: RoleKey, email: string, password: string, captchaToken?: string): Promise<AuthAttempt> {
   const supabase = createClient(env.url, env.anonKey, {
     auth: {
       persistSession: false,
@@ -184,9 +184,16 @@ async function supabaseJsAttempt(env: ReturnType<typeof getSupabaseServerEnv>, m
       ? await supabase.auth.signUp({
           email,
           password,
-          options: role === "requester" ? { data: { churchwork_role: "requester" } } : undefined
+          options: {
+            ...(role === "requester" ? { data: { churchwork_role: "requester" } } : {}),
+            ...(captchaToken ? { captchaToken } : {})
+          }
         })
-      : await supabase.auth.signInWithPassword({ email, password });
+      : await supabase.auth.signInWithPassword({
+          email,
+          password,
+          ...(captchaToken ? { options: { captchaToken } } : {})
+        });
 
     if (result.error) {
       return {
@@ -219,7 +226,7 @@ async function supabaseJsAttempt(env: ReturnType<typeof getSupabaseServerEnv>, m
   }
 }
 
-async function restFallbackAttempt(env: ReturnType<typeof getSupabaseServerEnv>, mode: AuthMode, role: RoleKey, email: string, password: string): Promise<AuthAttempt> {
+async function restFallbackAttempt(env: ReturnType<typeof getSupabaseServerEnv>, mode: AuthMode, role: RoleKey, email: string, password: string, captchaToken?: string): Promise<AuthAttempt> {
   const endpoint = mode === "sign-up"
     ? `${env.url}/auth/v1/signup`
     : `${env.url}/auth/v1/token?grant_type=password`;
@@ -233,11 +240,12 @@ async function restFallbackAttempt(env: ReturnType<typeof getSupabaseServerEnv>,
     headers.Authorization = `Bearer ${env.anonKey}`;
   }
 
+  const security = captchaToken ? { gotrue_meta_security: { captcha_token: captchaToken } } : {};
   const requestBody = mode === "sign-up"
     ? role === "requester"
-      ? { email, password, data: { churchwork_role: "requester" } }
-      : { email, password }
-    : { email, password };
+      ? { email, password, data: { churchwork_role: "requester" }, ...security }
+      : { email, password, ...security }
+    : { email, password, ...security };
 
   try {
     const response = await fetch(endpoint, {
@@ -291,6 +299,7 @@ export async function POST(request: NextRequest) {
   const email = cleanEmail(payload.email);
   const password = cleanPassword(payload.password);
   const inviteToken = typeof payload.inviteToken === "string" ? payload.inviteToken.trim() : "";
+  const captchaToken = typeof payload.captchaToken === "string" ? payload.captchaToken.trim() : "";
 
   if (!isRole(role)) {
     return json(400, { ok: false, code: "bad-role", message: "Invalid ChurchWork role." });
@@ -365,15 +374,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const primaryAttempt = await supabaseJsAttempt(env, mode, role, email, password);
+  const primaryAttempt = await supabaseJsAttempt(env, mode, role, email, password, captchaToken || undefined);
   const shouldTryFallback = Boolean(primaryAttempt.error && isNetworkAuthError(primaryAttempt.error.message));
   let finalAttempt = shouldTryFallback
-    ? await restFallbackAttempt(env, mode, role, email, password)
+    ? await restFallbackAttempt(env, mode, role, email, password, captchaToken || undefined)
     : primaryAttempt;
 
   if (finalAttempt.error && isNetworkAuthError(finalAttempt.error.message)) {
     await new Promise((resolve) => setTimeout(resolve, 650));
-    finalAttempt = await restFallbackAttempt(env, mode, role, email, password);
+    finalAttempt = await restFallbackAttempt(env, mode, role, email, password, captchaToken || undefined);
   }
 
   if (finalAttempt.error || !finalAttempt.data) {

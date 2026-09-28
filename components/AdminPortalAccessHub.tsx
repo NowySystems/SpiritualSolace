@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { ChurchWorkAppShell, type ChurchWorkNavKey } from "@/components/ChurchWorkAppShell";
 import { OperatorAccessManager } from "@/components/OperatorAccessManager";
 import { OperatorAuditFeed } from "@/components/OperatorAuditFeed";
+import { PilotInviteManager } from "@/components/PilotInviteManager";
 
 type PilotSummary = {
   requests_total: number;
@@ -18,6 +19,7 @@ type PilotStaffing = {
   grandview_reviewers: number;
   hope_partner_users: number;
   pending_facility_invites: number;
+  pending_partner_invites?: number;
 };
 
 type PilotImpact = {
@@ -61,6 +63,9 @@ type OperatorRequest = {
 
 type OperatorSnapshot = {
   is_admin: boolean;
+  access_level?: "platform_admin" | "pilot_admin";
+  can_manage_access?: boolean;
+  can_view_activity?: boolean;
   current_user_id: string;
   summary: PilotSummary;
   staffing: PilotStaffing;
@@ -242,6 +247,9 @@ export function AdminPortalAccessHub() {
   }
 
   const { summary, staffing, impact, users, recent_requests: requests } = snapshot;
+  const canManageAccess = snapshot.can_manage_access === true;
+  const canViewActivity = snapshot.can_view_activity === true;
+  const isPilotAdmin = snapshot.access_level === "pilot_admin";
 
   const notifications = requests.flatMap((request) => {
     const age = minutesSince(stageStartedAt(request)) ?? 0;
@@ -275,9 +283,9 @@ export function AdminPortalAccessHub() {
     { key: "overview" as const, label: "Overview", icon: "home" as const },
     { key: "requests" as const, label: "Requests", icon: "request" as const },
     { key: "organizations" as const, label: "Organizations", icon: "building" as const },
-    { key: "users" as const, label: "Users & Roles", icon: "people" as const },
+    ...(canManageAccess ? [{ key: "users" as const, label: "Users & Roles", icon: "people" as const }] : []),
     { key: "impact" as const, label: "Impact", icon: "activity" as const },
-    { key: "activity" as const, label: "Activity", icon: "activity" as const }
+    ...(canViewActivity ? [{ key: "activity" as const, label: "Activity", icon: "activity" as const }] : [])
   ];
 
   return (
@@ -287,7 +295,7 @@ export function AdminPortalAccessHub() {
         <>
           <div className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <span className="inline-flex rounded-full border border-[#d8cfe1] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Owner console</span>
+              <span className="inline-flex rounded-full border border-[#d8cfe1] bg-white/70 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">{isPilotAdmin ? "Pilot Admin" : "Owner console"}</span>
               <h1 className="mt-3 font-serif text-4xl font-semibold tracking-[-0.055em] text-[#102f40] sm:text-[2.8rem]">Pilot operations</h1>
               <p className="mt-2 text-sm font-medium text-[#66777c]">A live view of requests, partner readiness, and ChurchWork access.</p>
             </div>
@@ -324,9 +332,10 @@ export function AdminPortalAccessHub() {
               <section className="rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
                 <h2 className="text-lg font-black text-[#183f35]">Quick actions</h2>
                 <div className="mt-4 grid gap-2">
-                  <button onClick={() => setActiveNav("users")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">Manage users</button>
+                  {canManageAccess ? <button onClick={() => setActiveNav("users")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">Invite / manage users</button> : null}
                   <button onClick={() => setActiveNav("requests")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">View requests</button>
-                  <button onClick={() => setActiveNav("activity")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">View activity</button>
+                  <button onClick={() => setActiveNav("impact")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">View impact</button>
+                  {canViewActivity ? <button onClick={() => setActiveNav("activity")} className="rounded-xl border border-[#ded9cf] px-4 py-3 text-left text-sm font-extrabold">View activity</button> : null}
                 </div>
               </section>
             </div>
@@ -359,10 +368,11 @@ export function AdminPortalAccessHub() {
         </>
       ) : null}
 
-      {activeNav === "users" ? (
+      {canManageAccess && activeNav === "users" ? (
         <>
-          <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Users & Roles</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Manage access for existing ChurchWork accounts.</p></div>
-          <OperatorAccessManager />
+          <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Users & Roles</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Invite new pilot users and manage access for existing ChurchWork accounts.</p></div>
+          <PilotInviteManager />
+          <div className="mt-5"><OperatorAccessManager /></div>
           <section className="mt-5 rounded-2xl border border-[#ded9cf] bg-[#fffdf9] p-6 shadow-sm">
             <h2 className="text-lg font-black text-[#183f35]">Current users</h2>
             <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -435,14 +445,14 @@ export function AdminPortalAccessHub() {
         </>
       ) : null}
 
-      {activeNav === "activity" ? (
+      {canViewActivity && activeNav === "activity" ? (
         <>
           <div className="mb-6"><h1 className="font-serif text-4xl font-semibold tracking-[-0.04em]">Activity</h1><p className="mt-2 text-sm font-medium text-[#66777c]">Recent operator and pilot actions.</p></div>
           <OperatorAuditFeed />
         </>
       ) : null}
 
-      {!diagnosticsConfigured && activeNav === "overview" ? <p className="mt-5 text-[11px] font-semibold text-[#929995]">Internal diagnostics routes remain intentionally fail-closed.</p> : null}
+      {canManageAccess && !diagnosticsConfigured && activeNav === "overview" ? <p className="mt-5 text-[11px] font-semibold text-[#929995]">Internal diagnostics routes remain intentionally fail-closed.</p> : null}
     </ChurchWorkAppShell>
   );
 }

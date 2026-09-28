@@ -631,7 +631,7 @@ function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: Store
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#2f7b65] shadow-sm"><SupportIcon name="heart" /></span>
                   <div>
                     <p className="text-sm font-black text-[#183f35]">
-                      {rawStatus(current) === "facility_review" ? "Grandview is reviewing your request."
+                      {rawStatus(current) === "facility_review" ? `${facilityName} is reviewing your request.`
                         : rawStatus(current) === "approved_for_partner" ? "Hope Church is caring for this request."
                         : rawStatus(current) === "partner_outcome_logged" ? "Grandview is reviewing the care update."
                         : current.requester_update ?? "Your request has been updated."}
@@ -880,18 +880,18 @@ function FacilityMetric({ value, label, tone }: { value: number; label: string; 
   return <Card className={cx("relative overflow-hidden bg-gradient-to-br p-5", toneClass)}><span className="absolute left-0 top-0 h-full w-1.5" style={{ background: accent }} /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{value}</p><p className="mt-1 text-sm font-black text-[#425a64]">{label}</p><p className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em]" style={{ color: accent }}>{value ? "Active" : "Clear"}</p></Card>;
 }
 
-function FacilityHome({ requests, counts, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; counts: { review: number; partner: number; release: number; updated: number }; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
+function FacilityHome({ requests, counts, isLoading, onOpen, currentUserId, organizationName }: { requests: StoredPilotRequest[]; counts: { review: number; partner: number; release: number; updated: number }; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null; organizationName: string }) {
   const needsReview = requests.filter((r) => rawStatus(r) === "facility_review");
   const readyToRelease = requests.filter((r) => rawStatus(r) === "partner_outcome_logged");
   const needsAction = needsReview.length + readyToRelease.length;
 
   return (
     <>
-      <PageTitle eyebrow="Grandview Post Acute" title="Care coordination" description={needsAction ? `${needsAction} request${needsAction === 1 ? "" : "s"} need Grandview's attention.` : "Everything is moving. There are no facility actions waiting right now."} />
+      <PageTitle eyebrow={organizationName} title="Care coordination" description={needsAction ? `${needsAction} request${needsAction === 1 ? "" : "s"} need ${organizationName}'s attention.` : "Everything is moving. There are no facility actions waiting right now."} />
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <FacilityMetric value={counts.review} label="Needs Review" tone="rose" />
-        <FacilityMetric value={counts.partner} label="With Hope Church" tone="blue" />
+        <FacilityMetric value={counts.partner} label="With Care Partner" tone="blue" />
         <FacilityMetric value={counts.release} label="Ready to Release" tone="green" />
         <FacilityMetric value={counts.updated} label="Requester Updated" tone="gray" />
       </div>
@@ -924,7 +924,7 @@ function FacilityHome({ requests, counts, isLoading, onOpen, currentUserId }: { 
               <p className="mt-1.5 text-xs font-semibold text-[#71807d]">{shortId(request.id)} · {ownerDisplay(request, "facility", currentUserId)}</p>
               <p className="mt-4 text-xs font-black text-[#3f7653]">Review & release →</p>
             </button>
-          )) : <div className="p-7"><p className="text-sm font-black text-[#34564c]">No updates waiting.</p><p className="mt-1 text-xs font-semibold leading-5 text-[#788582]">Hope Church outcomes return here before the requester sees anything.</p></div>}
+          )) : <div className="p-7"><p className="text-sm font-black text-[#34564c]">No updates waiting.</p><p className="mt-1 text-xs font-semibold leading-5 text-[#788582]">Care-partner outcomes return here before the requester sees anything.</p></div>}
         </Card>
       </div>
 
@@ -933,10 +933,10 @@ function FacilityHome({ requests, counts, isLoading, onOpen, currentUserId }: { 
   );
 }
 
-function FacilityRequests({ requests, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
+function FacilityRequests({ requests, isLoading, onOpen, currentUserId, organizationName }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null; organizationName: string }) {
   return (
     <>
-      <PageTitle eyebrow="Grandview Post Acute" title="Request queue" description="One view of every spiritual-care request moving through Grandview's review and release process." />
+      <PageTitle eyebrow={organizationName} title="Request queue" description={`One view of every spiritual-care request moving through ${organizationName}'s review and release process.`} />
       {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading requests…</Card> : requests.length ? (
         <Card className="overflow-hidden">
           <div className="hidden grid-cols-[1.3fr_.7fr_.8fr_.9fr_auto] gap-4 border-b border-[#e7e2d9] bg-[#f7f5ef] px-6 py-3 text-[10px] font-black uppercase tracking-[0.12em] text-[#84908e] md:grid"><span>Request</span><span>Waiting</span><span>Status</span><span>Owner</span><span></span></div>
@@ -954,51 +954,51 @@ function FacilityRequests({ requests, isLoading, onOpen, currentUserId }: { requ
             );
           })}
         </Card>
-      ) : <EmptyState title="Queue clear" detail="No Grandview spiritual-care requests are in the queue right now." />}
+      ) : <EmptyState title="Queue clear" detail="No spiritual-care requests are in the facility queue right now." />}
     </>
   );
 }
 
-function PartnerHome({ requests, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
+function PartnerHome({ requests, isLoading, onOpen, currentUserId, organizationName }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null; organizationName: string }) {
   const newAssignments = requests.filter((r) => rawStatus(r) === "approved_for_partner");
   const completed = requests.filter((r) => rawStatus(r) !== "approved_for_partner");
 
   return (
     <>
-      <PageTitle eyebrow="Hope Church" title="Care assignments" description={newAssignments.length ? `${newAssignments.length} Grandview-approved request${newAssignments.length === 1 ? " is" : "s are"} ready for care.` : "No new assignments are waiting right now."} />
+      <PageTitle eyebrow={organizationName} title="Care assignments" description={newAssignments.length ? `${newAssignments.length} facility-approved request${newAssignments.length === 1 ? " is" : "s are"} ready for care.` : "No new assignments are waiting right now."} />
 
       <div className="mb-7 grid gap-3 sm:grid-cols-2">
-        <Card className="relative overflow-hidden bg-gradient-to-br from-[#f5edd8] to-[#fffdf9] p-5"><span className="absolute left-0 top-0 h-full w-1.5 bg-[#87713a]" /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{newAssignments.length}</p><p className="mt-1 text-sm font-black text-[#514a34]">Ready for care</p><p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#87713a]">Grandview approved</p></Card>
-        <Card className="relative overflow-hidden bg-gradient-to-br from-[#edf5ef] to-[#fffdf9] p-5"><span className="absolute left-0 top-0 h-full w-1.5 bg-[#4f8160]" /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{completed.length}</p><p className="mt-1 text-sm font-black text-[#425a64]">Outcome logged</p><p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#4f8160]">Returned to Grandview</p></Card>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#f5edd8] to-[#fffdf9] p-5"><span className="absolute left-0 top-0 h-full w-1.5 bg-[#87713a]" /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{newAssignments.length}</p><p className="mt-1 text-sm font-black text-[#514a34]">Ready for care</p><p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#87713a]">Facility approved</p></Card>
+        <Card className="relative overflow-hidden bg-gradient-to-br from-[#edf5ef] to-[#fffdf9] p-5"><span className="absolute left-0 top-0 h-full w-1.5 bg-[#4f8160]" /><p className="text-3xl font-black tracking-[-0.045em] text-[#123044]">{completed.length}</p><p className="mt-1 text-sm font-black text-[#425a64]">Outcome logged</p><p className="mt-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#4f8160]">Returned to facility</p></Card>
       </div>
 
       <div className="mb-4 flex items-end justify-between"><div><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Assignments</p><h2 className="mt-1 text-xl font-black text-[#183f35]">Ready for your care team</h2></div><span className="text-xs font-bold text-[#7c8885]">{newAssignments.length} open</span></div>
 
       {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : newAssignments.length ? (
         <div className="grid gap-4 xl:grid-cols-2">{newAssignments.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} currentUserId={currentUserId} />)}</div>
-      ) : <EmptyState title="No new assignments" detail="Grandview-approved requests will appear here when they are ready for Hope Church." />}
+      ) : <EmptyState title="No new assignments" detail="Facility-approved requests will appear here when they are ready for your care team." />}
 
-      <PartnerImpact requests={requests} />
+      <PartnerImpact requests={requests} organizationName={organizationName} />
     </>
   );
 }
 
-function PartnerAssignments({ requests, isLoading, onOpen, currentUserId }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null }) {
+function PartnerAssignments({ requests, isLoading, onOpen, currentUserId, organizationName }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; currentUserId: string | null; organizationName: string }) {
   const open = requests.filter((request) => rawStatus(request) === "approved_for_partner");
   return (
     <>
-      <PageTitle eyebrow="Hope Church" title="Assignments" description="Grandview-approved spiritual-care requests available to Hope Church." />
-      {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : open.length ? <div className="grid gap-4 xl:grid-cols-2">{open.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} currentUserId={currentUserId} />)}</div> : <EmptyState title="No open assignments" detail="Grandview-approved requests will appear here when they are ready for Hope Church." />}
+      <PageTitle eyebrow={organizationName} title="Assignments" description="Facility-approved spiritual-care requests available to your care team." />
+      {isLoading ? <Card className="p-7 text-sm font-bold text-[#6d7b7e]">Loading assignments…</Card> : open.length ? <div className="grid gap-4 xl:grid-cols-2">{open.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} currentUserId={currentUserId} />)}</div> : <EmptyState title="No open assignments" detail="Facility-approved requests will appear here when they are ready for your care team." />}
     </>
   );
 }
 
-function PartnerCompleted({ requests, onOpen }: { requests: StoredPilotRequest[]; onOpen: (id: string) => void }) {
+function PartnerCompleted({ requests, onOpen, organizationName }: { requests: StoredPilotRequest[]; onOpen: (id: string) => void; organizationName: string }) {
   const completed = requests.filter((r) => rawStatus(r) !== "approved_for_partner");
   return (
     <>
-      <PageTitle eyebrow="Hope Church" title="Completed care" description="Assignments where Hope Church has already logged an outcome and returned it to Grandview." />
-      {completed.length ? <div className="grid gap-4 xl:grid-cols-2">{completed.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div> : <EmptyState title="Nothing completed yet" detail="Completed care responses will appear here after Hope Church logs an outcome." />}
+      <PageTitle eyebrow={organizationName} title="Completed care" description="Assignments where your care team has logged an outcome and returned it to the facility." />
+      {completed.length ? <div className="grid gap-4 xl:grid-cols-2">{completed.map((request) => <AssignmentRow key={request.id} request={request} onOpen={onOpen} />)}</div> : <EmptyState title="Nothing completed yet" detail="Completed care responses will appear here after your team logs an outcome." />}
     </>
   );
 }
@@ -1012,7 +1012,7 @@ function AssignmentRow({ request, onOpen, currentUserId }: { request: StoredPilo
         <span className={cx("rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.08em]", isNew ? "bg-[#f4edda] text-[#745f2b]" : "bg-[#e7f0e9] text-[#346247]")}>{request.partner_outcome ? outcomeLabel(request.partner_outcome) : "New assignment"}</span>
       </div>
       <p className="mt-5 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#183f35]">{request.support.join(" + ") || "Spiritual care"}</p>
-      <p className="mt-2 text-xs font-semibold text-[#738184]">{shortId(request.id)} · {isNew ? `waiting ${ageLabel(stageStartedAt(request))}` : "Outcome returned to Grandview"}</p>
+      <p className="mt-2 text-xs font-semibold text-[#738184]">{shortId(request.id)} · {isNew ? `waiting ${ageLabel(stageStartedAt(request))}` : "Outcome returned to facility"}</p>
       <div className="mt-4 flex items-center gap-2"><span className={cx("rounded-full px-3 py-1.5 text-[10px] font-black", request.partner_owner_user_id ? "bg-[#f1ead7] text-[#6b5a2e]" : "bg-[#fff0dc] text-[#85561a]")}>{isNew ? ownerDisplay(request, "partner", currentUserId) : "Stage complete"}</span></div>
       <div className="mt-5 flex items-center justify-between border-t border-[#eee9df] pt-4">
         <span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#8a8a78]">Safe spiritual-care context</span>
@@ -1032,7 +1032,7 @@ function FacilityImpact({ requests }: { requests: StoredPilotRequest[] }) {
     <section className="mt-8">
       <div className="mb-4"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#416f96]">Pilot impact</p><h2 className="mt-1 text-xl font-black text-[#183f35]">How the care loop is performing</h2></div>
       <div className="grid gap-3 sm:grid-cols-3">
-        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{formatDuration(reviewAvg)}</p><p className="mt-1 text-sm font-black text-[#425a64]">Avg. Grandview review</p></Card>
+        <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{formatDuration(reviewAvg)}</p><p className="mt-1 text-sm font-black text-[#425a64]">Avg. facility review</p></Card>
         <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{formatDuration(releaseAvg)}</p><p className="mt-1 text-sm font-black text-[#425a64]">Avg. update release</p></Card>
         <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{completed}</p><p className="mt-1 text-sm font-black text-[#425a64]">Closed-loop requests</p></Card>
       </div>
@@ -1040,7 +1040,7 @@ function FacilityImpact({ requests }: { requests: StoredPilotRequest[] }) {
   );
 }
 
-function PartnerImpact({ requests }: { requests: StoredPilotRequest[] }) {
+function PartnerImpact({ requests, organizationName }: { requests: StoredPilotRequest[]; organizationName: string }) {
   const outcomeCount = requests.filter((request) => request.partner_outcome).length;
   const visits = requests.filter((request) => request.partner_outcome === "visit_completed").length;
   const prayers = requests.filter((request) => request.partner_outcome === "prayer_logged").length;
@@ -1048,7 +1048,7 @@ function PartnerImpact({ requests }: { requests: StoredPilotRequest[] }) {
 
   return (
     <section className="mt-8">
-      <div className="mb-4"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Care impact</p><h2 className="mt-1 text-xl font-black text-[#183f35]">Hope Church activity</h2></div>
+      <div className="mb-4"><p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#87713a]">Care impact</p><h2 className="mt-1 text-xl font-black text-[#183f35]">{organizationName} activity</h2></div>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{outcomeCount}</p><p className="mt-1 text-sm font-black text-[#425a64]">Outcomes logged</p></Card>
         <Card className="p-5"><p className="text-2xl font-black text-[#123044]">{visits}</p><p className="mt-1 text-sm font-black text-[#425a64]">Visits completed</p></Card>
@@ -1059,8 +1059,8 @@ function PartnerImpact({ requests }: { requests: StoredPilotRequest[] }) {
   );
 }
 
-function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilityAction, onPartnerAction, onOwnershipAction }: {
-  role: RoleKey; request: StoredPilotRequest; isBusy: boolean; currentUserId: string | null; onBack: () => void;
+function RequestDetail({ role, request, organizationName, isBusy, currentUserId, onBack, onFacilityAction, onPartnerAction, onOwnershipAction }: {
+  role: RoleKey; request: StoredPilotRequest; organizationName: string; isBusy: boolean; currentUserId: string | null; onBack: () => void;
   onFacilityAction: (id: string, action: "approve" | "release_update") => Promise<void>;
   onPartnerAction: (id: string, outcome: PartnerOutcome) => Promise<void>;
   onOwnershipAction: (id: string, scope: "facility" | "partner", claim: boolean) => Promise<void>;
@@ -1074,6 +1074,8 @@ function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilit
   const claimedByMe = Boolean(ownerUserId && currentUserId && ownerUserId === currentUserId);
   const claimedByOther = Boolean(ownerUserId && !claimedByMe);
   const ownerLabel = role === "requester" ? "" : ownerDisplay(request, role, currentUserId);
+  const facilityName = request.facility_name || (role === "facility" ? organizationName : "Facility");
+  const partnerName = request.partner_name || (role === "partner" ? organizationName : "Care partner");
   const accent = role === "facility" ? "#416f96" : role === "partner" ? "#87713a" : "#2f7b65";
   const soft = role === "facility" ? "#eaf2f8" : role === "partner" ? "#f4edda" : "#e7f1eb";
 
@@ -1087,7 +1089,7 @@ function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilit
           <div className="p-6 pl-7 sm:p-8 sm:pl-9">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent }}>{role === "partner" ? "Hope Church assignment" : role === "facility" ? "Grandview request" : "My spiritual-care request"}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent }}>{role === "partner" ? `${partnerName} assignment` : role === "facility" ? `${facilityName} request` : "My spiritual-care request"}</p>
                 <h1 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#123044] sm:text-4xl">{request.support.join(" + ") || "Spiritual care"}</h1>
                 <p className="mt-2 text-sm font-semibold text-[#738185]">{shortId(request.id)} · Submitted {formatDate(request.created_at)}</p>
               </div>
@@ -1102,7 +1104,7 @@ function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilit
           <aside className="border-t border-[#e5e0d7] p-6 sm:p-8 xl:border-l xl:border-t-0" style={{ background: soft }}>
             <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: accent }}>Current step</p>
             <p className="mt-2 font-serif text-2xl font-semibold tracking-[-0.035em] text-[#183f35]">
-              {role === "facility" && canApprove ? "Grandview review"
+              {role === "facility" && canApprove ? `${facilityName} review`
                 : role === "facility" && canRelease ? "Release requester update"
                 : role === "partner" && canPartnerReport ? "Provide care & report outcome"
                 : role === "requester" && status === "facility_review" ? "Grandview review"
@@ -1111,8 +1113,8 @@ function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilit
                 : "No action needed"}
             </p>
             <p className="mt-2 text-xs font-semibold leading-5 text-[#667773]">
-              {role === "facility" && canApprove ? "Review the safe spiritual-care summary, then approve it for Hope Church."
-                : role === "facility" && canRelease ? "Hope Church has returned an outcome. Grandview controls the final requester update."
+              {role === "facility" && canApprove ? "Review the safe spiritual-care summary, then approve it for the care partner."
+                : role === "facility" && canRelease ? `The care partner has returned an outcome. ${facilityName} controls the final requester update.`
                 : role === "partner" && canPartnerReport ? "Choose the outcome that best reflects the spiritual care provided."
                 : role === "requester" ? "ChurchWork coordinates the handoffs for you. You do not need to close the request."
                 : "This part of the workflow is complete."}
@@ -1141,8 +1143,8 @@ function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilit
 
           {request.partner_outcome && role !== "requester" ? (
             <Card className="overflow-hidden">
-              <div className="border-b border-[#dce8df] bg-[#eff6f0] px-6 py-5"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#4f8160]">Hope Church outcome</p><h2 className="mt-1 text-lg font-black text-[#183f35]">{outcomeLabel(request.partner_outcome)}</h2></div>
-              <div className="p-6 text-sm font-semibold leading-6 text-[#60726b]">This outcome returns to Grandview before any requester-facing update is released.</div>
+              <div className="border-b border-[#dce8df] bg-[#eff6f0] px-6 py-5"><p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#4f8160]">Care-partner outcome</p><h2 className="mt-1 text-lg font-black text-[#183f35]">{outcomeLabel(request.partner_outcome)}</h2></div>
+              <div className="p-6 text-sm font-semibold leading-6 text-[#60726b]">This outcome returns to the facility before any requester-facing update is released.</div>
             </Card>
           ) : null}
 
@@ -1181,19 +1183,19 @@ function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilit
               {role === "facility" ? (
                 <>
                   <p className="text-sm font-semibold leading-6 text-[#65757a]">{canApprove ? "Review the safe request, then approve it for Hope Church." : canRelease ? "Review Hope Church's outcome and release the standardized update to the requester." : "No Grandview action is required right now."}</p>
-                  {canApprove ? <button disabled={isBusy} onClick={() => void onFacilityAction(request.id, "approve")} className="mt-5 w-full rounded-xl bg-[#315f83] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[#315f83]/15 disabled:opacity-50">{isBusy ? "Working…" : "Approve for Hope Church"}</button> : null}
+                  {canApprove ? <button disabled={isBusy} onClick={() => void onFacilityAction(request.id, "approve")} className="mt-5 w-full rounded-xl bg-[#315f83] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[#315f83]/15 disabled:opacity-50">{isBusy ? "Working…" : "Approve for care partner"}</button> : null}
                   {canRelease ? <button disabled={isBusy} onClick={() => void onFacilityAction(request.id, "release_update")} className="mt-5 w-full rounded-xl bg-[#3f7653] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[#3f7653]/15 disabled:opacity-50">{isBusy ? "Working…" : "Release safe update"}</button> : null}
                 </>
               ) : role === "partner" ? (
                 <>
-                  <p className="text-sm font-semibold leading-6 text-[#65757a]">{canPartnerReport ? "Log the spiritual-care outcome. Grandview will review it before the requester sees an update." : "Your outcome has been returned to Grandview. No additional action is required."}</p>
+                  <p className="text-sm font-semibold leading-6 text-[#65757a]">{canPartnerReport ? "Log the spiritual-care outcome. The facility will review it before the requester sees an update." : "Your outcome has been returned to Grandview. No additional action is required."}</p>
                   {canPartnerReport ? <div className="mt-4 space-y-2">{partnerOutcomes.map((outcome) => <button key={outcome.value} disabled={isBusy} onClick={() => void onPartnerAction(request.id, outcome.value)} className="group w-full rounded-xl border border-[#ddd8ca] bg-white p-3.5 text-left transition hover:border-[#b9aa7d] hover:bg-[#faf7ed] disabled:opacity-50"><span className="block text-sm font-black text-[#183f35]">{outcome.label}</span><span className="mt-1 block text-xs font-medium leading-5 text-[#718083]">{outcome.detail}</span></button>)}</div> : null}
                 </>
               ) : (
                 <p className="text-sm font-semibold leading-6 text-[#65757a]">
                   {status === "facility_review" ? "Grandview is reviewing your request."
-                    : status === "approved_for_partner" ? "Hope Church is caring for your request."
-                    : status === "partner_outcome_logged" ? "Grandview is reviewing the care update before anything is released."
+                    : status === "approved_for_partner" ? `${partnerName} is caring for your request.`
+                    : status === "partner_outcome_logged" ? `${facilityName} is reviewing the care update before anything is released.`
                     : status === "requester_updated" || status === "closed" ? "Your update has been released. This request is complete."
                     : "ChurchWork is keeping your request moving."}
                 </p>
@@ -1205,8 +1207,8 @@ function RequestDetail({ role, request, isBusy, currentUserId, onBack, onFacilit
             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7c8884]">Activity</p>
             <div className="mt-5 space-y-5 text-sm">
               <ActivityItem done label="Request submitted" detail={formatDate(request.created_at, true)} />
-              <ActivityItem done={progressIndex(status) >= 2} label="Grandview review" detail={progressIndex(status) >= 2 ? "Approved" : "In review"} />
-              <ActivityItem done={progressIndex(status) >= 3} label="Hope Church care" detail={request.partner_outcome ? outcomeLabel(request.partner_outcome) : progressIndex(status) >= 2 ? "Engaged" : "Pending"} />
+              <ActivityItem done={progressIndex(status) >= 2} label={`${facilityName} review`} detail={progressIndex(status) >= 2 ? "Approved" : "In review"} />
+              <ActivityItem done={progressIndex(status) >= 3} label={`${partnerName} care`} detail={request.partner_outcome ? outcomeLabel(request.partner_outcome) : progressIndex(status) >= 2 ? "Engaged" : "Pending"} />
               <ActivityItem done={progressIndex(status) >= 4} label={role === "requester" ? "Update released" : "Requester update"} detail={request.requester_update_status === "released" ? "Released · complete" : "Pending"} />
             </div>
           </Card>

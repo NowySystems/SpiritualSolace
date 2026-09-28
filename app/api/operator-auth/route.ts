@@ -85,14 +85,14 @@ export async function POST(request: NextRequest) {
     return json(403, {
       ok: false,
       code: "operator-role-required",
-      message: "This account does not have active ChurchWork owner/admin access."
+      message: "This account does not have active ChurchWork admin or Pilot Admin access."
     });
   }
 
   const response = json(200, {
     ok: true,
     email: data.user.email ?? email,
-    message: "ChurchWork operator access verified."
+    message: "ChurchWork admin access verified."
   });
 
   response.cookies.set("churchwork_operator_session", token, {

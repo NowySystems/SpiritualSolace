@@ -56,10 +56,12 @@ export function LandingPageV1() {
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
             <a href="#portals" className="hover:text-[#d7e7b7]">Login portals</a>
             <a href="#how-it-works" className="hover:text-[#d7e7b7]">How it works</a>
+            <Link href="/tour" className="hover:text-[#d7e7b7]">Demo</Link>
           </nav>
-          <a href="#portals" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
-            Login
-          </a>
+          <div className="flex items-center gap-3">
+            <Link href="/tour" className="hidden rounded-md border border-white/35 bg-white/5 px-5 py-3 text-sm font-bold text-white backdrop-blur hover:bg-white/10 sm:inline-flex">Demo</Link>
+            <a href="#portals" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">Login</a>
+          </div>
         </div>
       </header>
 
@@ -95,6 +97,9 @@ export function LandingPageV1() {
                 </Link>
                 <Link href="/partner-login" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
                   Partner Login
+                </Link>
+                <Link href="/tour" className="rounded-lg border border-[#d7e7b7]/60 bg-[#d7e7b7]/10 px-8 py-4 text-base font-bold text-[#eff7df] backdrop-blur hover:bg-[#d7e7b7]/20">
+                  View Demo
                 </Link>
               </div>
             </div>

@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { OperatorPortalSwitcher } from "@/components/OperatorPortalSwitcher";
 
-export type ChurchWorkNavKey = "home" | "requests" | "new" | "assignments" | "completed" | "overview" | "organizations" | "users" | "activity" | "impact" | "settings";
+export type ChurchWorkNavKey = "home" | "requests" | "new" | "assignments" | "completed" | "team" | "overview" | "organizations" | "users" | "activity" | "impact" | "settings";
 
 type NavItem = {
   key: ChurchWorkNavKey;

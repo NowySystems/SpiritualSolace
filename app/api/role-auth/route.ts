@@ -184,7 +184,7 @@ async function supabaseJsAttempt(env: ReturnType<typeof getSupabaseServerEnv>, m
       ? await supabase.auth.signUp({
           email,
           password,
-          options: { data: { churchwork_role: role } }
+          options: role === "requester" ? { data: { churchwork_role: "requester" } } : undefined
         })
       : await supabase.auth.signInWithPassword({ email, password });
 
@@ -234,7 +234,9 @@ async function restFallbackAttempt(env: ReturnType<typeof getSupabaseServerEnv>,
   }
 
   const requestBody = mode === "sign-up"
-    ? { email, password, data: { churchwork_role: role } }
+    ? role === "requester"
+      ? { email, password, data: { churchwork_role: "requester" } }
+      : { email, password }
     : { email, password };
 
   try {
@@ -288,6 +290,7 @@ export async function POST(request: NextRequest) {
   const mode = cleanMode(payload.mode);
   const email = cleanEmail(payload.email);
   const password = cleanPassword(payload.password);
+  const inviteToken = typeof payload.inviteToken === "string" ? payload.inviteToken.trim() : "";
 
   if (!isRole(role)) {
     return json(400, { ok: false, code: "bad-role", message: "Invalid ChurchWork role." });
@@ -297,11 +300,11 @@ export async function POST(request: NextRequest) {
     return json(400, { ok: false, code: "bad-credentials", message: "Email and an 8+ character password are required." });
   }
 
-  if (mode === "sign-up" && role !== "requester") {
+  if (mode === "sign-up" && role !== "requester" && !inviteToken) {
     return json(403, {
       ok: false,
       code: "role-signup-blocked",
-      message: "Only requester accounts can be created from the public pilot page. Facility and partner accounts must be approved/invited."
+      message: "Facility and partner accounts are created from an approved ChurchWork invitation."
     });
   }
 
@@ -316,6 +319,50 @@ export async function POST(request: NextRequest) {
       code: "auth-service-unavailable",
       message: "ChurchWork sign-in is temporarily unavailable. Please try again shortly."
     });
+  }
+
+  let inviteDetails: Record<string, unknown> | null = null;
+  if (inviteToken) {
+    const inviteClient = createClient(env.url, env.anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+    const { data: inviteData, error: inviteError } = await inviteClient.rpc("validate_churchwork_portal_invite", {
+      p_token: inviteToken
+    });
+
+    if (inviteError) {
+      return json(503, {
+        ok: false,
+        code: "invite-check-unavailable",
+        message: "ChurchWork could not verify this invitation right now."
+      });
+    }
+
+    inviteDetails = inviteData && typeof inviteData === "object" ? inviteData as Record<string, unknown> : null;
+    if (!inviteDetails?.valid) {
+      return json(410, {
+        ok: false,
+        code: "invite-invalid",
+        message: "This ChurchWork invitation is invalid, expired, or has already been used."
+      });
+    }
+
+    const invitePortal = inviteDetails.portal;
+    if ((role === "facility" && invitePortal !== "facility") || (role === "partner" && invitePortal !== "partner") || role === "requester") {
+      return json(403, {
+        ok: false,
+        code: "invite-role-mismatch",
+        message: "This invitation belongs to a different ChurchWork portal."
+      });
+    }
+
+    if (typeof inviteDetails.email === "string" && inviteDetails.email.toLowerCase() !== email) {
+      return json(403, {
+        ok: false,
+        code: "invite-email-mismatch",
+        message: "Use the email address this ChurchWork invitation was sent to."
+      });
+    }
   }
 
   const primaryAttempt = await supabaseJsAttempt(env, mode, role, email, password);
@@ -362,7 +409,29 @@ export async function POST(request: NextRequest) {
 
   const user = finalAttempt.data.user;
   const session = finalAttempt.data.session;
-  let roleVerified = mode === "sign-up" && role === "requester" && rolesFromMetadata(user).has("requester");
+  let inviteAccepted = false;
+
+  if (inviteDetails && inviteToken && user?.id && role !== "requester") {
+    const inviteClient = createClient(env.url, env.anonKey, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+    const { data: accepted, error: acceptError } = await inviteClient.rpc("accept_churchwork_portal_invite", {
+      p_token: inviteToken,
+      p_user_id: user.id
+    });
+
+    if (acceptError || !accepted) {
+      return json(409, {
+        ok: false,
+        code: "invite-accept-failed",
+        message: "Your account was reached, but ChurchWork could not finish the invitation. Contact the pilot admin."
+      });
+    }
+    inviteAccepted = true;
+  }
+
+  let roleVerified = (mode === "sign-up" && role === "requester" && rolesFromMetadata(user).has("requester"))
+    || inviteAccepted;
 
   if (mode === "sign-in") {
     const roleCheck = await approvedPortalRoles(env, session?.access_token, user);
@@ -375,7 +444,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    roleVerified = roleCheck.roles.has(role);
+    roleVerified = roleCheck.roles.has(role) || inviteAccepted;
 
     if (!roleVerified) {
       const availableRoles = Array.from(roleCheck.roles);
@@ -399,8 +468,8 @@ export async function POST(request: NextRequest) {
   if (mode === "sign-up" && session?.access_token && !roleVerified) {
     return json(500, {
       ok: false,
-      code: "requester-role-setup-failed",
-      message: "Requester account was created, but its pilot role could not be verified."
+      code: "role-setup-failed",
+      message: "ChurchWork created the account, but its pilot access could not be verified."
     });
   }
 
@@ -414,8 +483,12 @@ export async function POST(request: NextRequest) {
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
     authSource: finalAttempt.source,
     message: mode === "sign-up"
-      ? "Requester account created. Check your email if confirmation is required."
-      : "Signed in."
+      ? role === "requester"
+        ? "Requester account created. Check your email if confirmation is required."
+        : "Pilot account created. Check your email if confirmation is required."
+      : inviteAccepted
+        ? "Signed in and invitation accepted."
+        : "Signed in."
   });
 
   if (session?.access_token && roleVerified) {

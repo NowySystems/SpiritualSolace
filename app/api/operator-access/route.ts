@@ -8,6 +8,7 @@ type OrgSlug = "churchwork" | "grandview-post-acute" | "hope-church";
 type RoleName =
   | "owner"
   | "platform_admin"
+  | "pilot_admin"
   | "requester"
   | "facility_admin"
   | "facility_staff"
@@ -33,7 +34,7 @@ type OperatorSnapshot = {
 };
 
 const allowedRolesByOrg: Record<OrgSlug, Set<RoleName>> = {
-  churchwork: new Set<RoleName>(["owner", "platform_admin", "requester"]),
+  churchwork: new Set<RoleName>(["owner", "platform_admin", "pilot_admin", "requester"]),
   "grandview-post-acute": new Set<RoleName>(["facility_admin", "facility_staff"]),
   "hope-church": new Set<RoleName>(["partner_admin", "partner_user"])
 };

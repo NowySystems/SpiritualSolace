@@ -1,12 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ChurchWorkAppShell, type ChurchWorkNavKey } from "@/components/ChurchWorkAppShell";
 import { OperatorAccessManager } from "@/components/OperatorAccessManager";
 import { OperatorAuditFeed } from "@/components/OperatorAuditFeed";
 import { PilotInviteManager } from "@/components/PilotInviteManager";
 import { PilotAccessApplications } from "@/components/PilotAccessApplications";
 import { PilotOrganizations } from "@/components/PilotOrganizations";
+import { PasswordField } from "@/components/PasswordField";
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type PilotSummary = {
   requests_total: number;
@@ -152,6 +154,7 @@ function Metric({ value, label, tone, accent }: { value: number; label: string; 
 }
 
 export function AdminPortalAccessHub() {
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [snapshot, setSnapshot] = useState<OperatorSnapshot | null>(null);
   const [operatorEmail, setOperatorEmail] = useState<string | null>(null);
   const [diagnosticsConfigured, setDiagnosticsConfigured] = useState(false);
@@ -211,6 +214,25 @@ export function AdminPortalAccessHub() {
     await loadOverview();
   }
 
+  async function handlePasswordReset() {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setMessage("Enter your admin email first, then choose Forgot password.");
+      return;
+    }
+
+    setIsBusy(true);
+    setMessage("Sending a secure password reset link...");
+
+    const redirectTo = `${window.location.origin}/pilot/reset-password`;
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo });
+
+    setMessage(error
+      ? "ChurchWork could not start password recovery right now. Try again shortly."
+      : "If that email belongs to a ChurchWork account, a secure reset link is on the way.");
+    setIsBusy(false);
+  }
+
   async function handleSignOut() {
     setIsBusy(true);
     await fetch("/api/operator-sign-out", { method: "POST" }).catch(() => null);
@@ -239,8 +261,17 @@ export function AdminPortalAccessHub() {
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f5c8c]">Admin / Pilot Admin</p>
             <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">Open operations</h2>
             <label className="mt-6 block text-sm font-black text-[#28463d]">Email<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
-            <label className="mt-4 block text-sm font-black text-[#28463d]">Password<input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} className="mt-2 w-full rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]" /></label>
+            <PasswordField
+              label="Password"
+              value={password}
+              onChange={setPassword}
+              minLength={1}
+              autoComplete="current-password"
+              className="mt-4 block text-sm font-black text-[#28463d]"
+              inputClassName="rounded-xl border border-[#d8d3c9] bg-white px-4 py-3 outline-none focus:border-[#2f7b65]"
+            />
             <button type="submit" disabled={isBusy} className="mt-6 w-full rounded-xl bg-[#164f3e] px-5 py-3 text-sm font-extrabold text-white disabled:opacity-50">{isBusy ? "Checking..." : "Open admin"}</button>
+            <button type="button" onClick={() => void handlePasswordReset()} disabled={isBusy} className="mt-3 w-full rounded-xl border border-[#d8d3c9] bg-white px-5 py-3 text-sm font-black text-[#4d3f68] hover:bg-[#f8f5fb] disabled:opacity-50">Forgot password?</button>
             <p className="mt-4 text-xs font-semibold leading-5 text-[#6a797d]">{message}</p>
           </form>
         </section>

@@ -114,7 +114,6 @@ export async function GET() {
       });
     }
 
-    const requests = ((data ?? []) as PilotRequestRow[]).map(toWorkspaceRequest);
     const { data: requesterFacilities, error: facilityError } = await session.supabase.rpc("get_my_requester_facilities");
 
     if (facilityError) {
@@ -125,11 +124,22 @@ export async function GET() {
       });
     }
 
+    const facilities = Array.isArray(requesterFacilities) ? requesterFacilities as Array<Record<string, unknown>> : [];
+    const requests = ((data ?? []) as PilotRequestRow[]).map((row) => {
+      const mapped = toWorkspaceRequest(row);
+      const facility = facilities.find((item) => item.facility_id === row.facility_id);
+      return {
+        ...mapped,
+        facility_name: typeof facility?.facility_name === "string" ? facility.facility_name : null,
+        partner_name: typeof facility?.partner_name === "string" ? facility.partner_name : null
+      };
+    });
+
     return json(200, {
       ok: true,
       current_user_id: session.user.id,
       requests,
-      requester_facilities: Array.isArray(requesterFacilities) ? requesterFacilities : []
+      requester_facilities: facilities
     });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-list-failed", message: errorMessage(error) });

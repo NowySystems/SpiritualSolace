@@ -39,8 +39,9 @@ export async function POST(request: NextRequest) {
   const payload = await request.json().catch(() => null);
   const email = cleanEmail(payload?.email);
   const password = cleanPassword(payload?.password);
+  const captchaToken = typeof payload?.captchaToken === "string" ? payload.captchaToken.trim() : "";
 
-  if (!email || password.length < 8) {
+  if (!email || !password) {
     return json(400, {
       ok: false,
       code: "bad-credentials",
@@ -67,7 +68,11 @@ export async function POST(request: NextRequest) {
     }
   });
 
-  const { data, error } = await authClient.auth.signInWithPassword({ email, password });
+  const { data, error } = await authClient.auth.signInWithPassword({
+    email,
+    password,
+    ...(captchaToken ? { options: { captchaToken } } : {})
+  });
   const token = data.session?.access_token;
 
   if (error || !token || !data.user) {

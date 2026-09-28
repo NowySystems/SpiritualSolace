@@ -128,7 +128,7 @@ export async function GET() {
     return json(503, {
       ok: false,
       code: "partner-queue-unavailable",
-      message: "The Hope Church assignment queue is temporarily unavailable."
+      message: "The care-partner assignment queue is temporarily unavailable."
     });
   }
 
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest) {
         code: "partner-claim-rejected",
         message: action === "claim"
           ? "This assignment is already claimed or is not ready for Hope Church."
-          : "This Hope Church claim could not be released."
+          : "This care-partner claim could not be released."
       });
     }
   } else {
@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
       ok: true,
       message: action === "claim" ? "Assignment claimed."
         : action === "release_claim" ? "Claim released."
-        : "Spiritual-care outcome logged for Grandview review."
+        : "Spiritual-care outcome logged for facility review."
     });
   }
 
@@ -233,6 +233,6 @@ export async function POST(request: NextRequest) {
     request: toWorkspaceRequest(data as PilotRequestRow, owners.get(requestId)),
     message: action === "claim" ? "Assignment claimed."
       : action === "release_claim" ? "Claim released."
-      : "Spiritual-care outcome logged for Grandview review."
+      : "Spiritual-care outcome logged for facility review."
   });
 }

@@ -592,6 +592,8 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
 function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: StoredPilotRequest[]; isLoading: boolean; onOpen: (id: string) => void; onNew: () => void }) {
   const current = requests.find((item) => !["requester_updated", "closed"].includes(rawStatus(item))) ?? requests[0] ?? null;
   const completedCount = requests.filter((item) => ["requester_updated", "closed"].includes(rawStatus(item))).length;
+  const facilityName = current?.facility_name || "Your facility";
+  const partnerName = current?.partner_name || "The care partner";
 
   return (
     <>
@@ -632,8 +634,8 @@ function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: Store
                   <div>
                     <p className="text-sm font-black text-[#183f35]">
                       {rawStatus(current) === "facility_review" ? `${facilityName} is reviewing your request.`
-                        : rawStatus(current) === "approved_for_partner" ? "Hope Church is caring for this request."
-                        : rawStatus(current) === "partner_outcome_logged" ? "Grandview is reviewing the care update."
+                        : rawStatus(current) === "approved_for_partner" ? `${partnerName} is caring for this request.`
+                        : rawStatus(current) === "partner_outcome_logged" ? `${facilityName} is reviewing the care update.`
                         : current.requester_update ?? "Your request has been updated."}
                     </p>
                     <p className="mt-1 text-xs font-semibold leading-5 text-[#64786f]">You do not need to coordinate the handoffs. ChurchWork keeps the care loop moving for you.</p>
@@ -655,7 +657,7 @@ function RequesterHome({ requests, isLoading, onOpen, onNew }: { requests: Store
                   <p className="mt-1 text-xs font-bold text-[#6d7c80]">Completed</p>
                 </div>
               </div>
-              <p className="mt-5 text-xs font-semibold leading-5 text-[#7a8785]">Grandview Post Acute reviews requests before they are shared with Hope Church.</p>
+              <p className="mt-5 text-xs font-semibold leading-5 text-[#7a8785]">{facilityName} reviews requests before they are shared with {partnerName}.</p>
             </aside>
           </div>
         </Card>
@@ -1107,7 +1109,7 @@ function RequestDetail({ role, request, organizationName, isBusy, currentUserId,
               {role === "facility" && canApprove ? `${facilityName} review`
                 : role === "facility" && canRelease ? "Release requester update"
                 : role === "partner" && canPartnerReport ? "Provide care & report outcome"
-                : role === "requester" && status === "facility_review" ? "Grandview review"
+                : role === "requester" && status === "facility_review" ? `${facilityName} review`
                 : role === "requester" && status === "approved_for_partner" ? "Care in progress"
                 : role === "requester" && status === "partner_outcome_logged" ? "Update in review"
                 : "No action needed"}

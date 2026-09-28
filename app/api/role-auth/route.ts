@@ -300,14 +300,6 @@ export async function POST(request: NextRequest) {
     return json(400, { ok: false, code: "bad-credentials", message: "Email and an 8+ character password are required." });
   }
 
-  if (mode === "sign-up" && role !== "requester" && !inviteToken) {
-    return json(403, {
-      ok: false,
-      code: "role-signup-blocked",
-      message: "Facility and partner accounts are created from an approved ChurchWork invitation."
-    });
-  }
-
   let env: ReturnType<typeof getSupabaseServerEnv>;
 
   try {
@@ -348,7 +340,11 @@ export async function POST(request: NextRequest) {
     }
 
     const invitePortal = inviteDetails.portal;
-    if ((role === "facility" && invitePortal !== "facility") || (role === "partner" && invitePortal !== "partner") || role === "requester") {
+    if (
+      (role === "facility" && invitePortal !== "facility")
+      || (role === "partner" && invitePortal !== "partner")
+      || (role === "requester" && invitePortal !== "requester")
+    ) {
       return json(403, {
         ok: false,
         code: "invite-role-mismatch",
@@ -411,7 +407,7 @@ export async function POST(request: NextRequest) {
   const session = finalAttempt.data.session;
   let inviteAccepted = false;
 
-  if (inviteDetails && inviteToken && user?.id && role !== "requester") {
+  if (inviteDetails && inviteToken && user?.id) {
     const inviteClient = createClient(env.url, env.anonKey, {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
     });
@@ -446,32 +442,19 @@ export async function POST(request: NextRequest) {
 
     roleVerified = roleCheck.roles.has(role) || inviteAccepted;
 
-    if (!roleVerified) {
+    if (!roleVerified && role === "requester") {
       const availableRoles = Array.from(roleCheck.roles);
-
-      if (availableRoles.length === 0) {
-        return json(403, {
-          ok: false,
-          code: "role-not-assigned",
-          message: "This account does not have an active ChurchWork pilot role yet. Contact the pilot admin before signing in."
-        });
-      }
-
       return json(403, {
         ok: false,
-        code: "wrong-role",
-        message: `This account is approved for ${availableRoles.join(" / ")} access, not ${role}. Use the correct ChurchWork portal.`
+        code: availableRoles.length ? "wrong-role" : "role-not-assigned",
+        message: availableRoles.length
+          ? `This account is approved for ${availableRoles.join(" / ")} access, not requester access.`
+          : "This account does not have requester access."
       });
     }
   }
 
-  if (mode === "sign-up" && session?.access_token && !roleVerified) {
-    return json(500, {
-      ok: false,
-      code: "role-setup-failed",
-      message: "ChurchWork created the account, but its pilot access could not be verified."
-    });
-  }
+  const accessPending = !roleVerified && (role === "facility" || role === "partner");
 
   const result = json(200, {
     ok: true,
@@ -480,15 +463,20 @@ export async function POST(request: NextRequest) {
     email: user?.email ?? email,
     userId: user?.id ?? null,
     roleVerified,
+    accessPending,
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
     authSource: finalAttempt.source,
     message: mode === "sign-up"
       ? role === "requester"
         ? "Requester account created. Check your email if confirmation is required."
-        : "Pilot account created. Check your email if confirmation is required."
+        : accessPending
+          ? "Pilot account created. Complete the organization access form after email confirmation."
+          : "Pilot account created."
       : inviteAccepted
         ? "Signed in and invitation accepted."
-        : "Signed in."
+        : accessPending
+          ? "Signed in. Complete or check your pilot access application."
+          : "Signed in."
   });
 
   if (session?.access_token && roleVerified) {
@@ -500,6 +488,24 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 8
     });
     result.cookies.set("churchwork_role", role, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 8
+    });
+    result.cookies.set("churchwork_pending_session", "", {
+      httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0
+    });
+  } else if (session?.access_token && accessPending) {
+    result.cookies.set("churchwork_pending_session", session.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 8
+    });
+    result.cookies.set("churchwork_pending_portal", role, {
       httpOnly: true,
       secure: true,
       sameSite: "lax",

@@ -83,22 +83,27 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
 
   const isRequesterSignup = role === "requester" && mode === "sign-up";
   const isRecovery = mode === "forgot-password";
+  const requiresCaptcha = mode === "sign-in" || mode === "sign-up" || mode === "forgot-password";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsBusy(true);
 
-    if (isRecovery) {
-      setStatus("Sending secure password reset email...");
-      const redirectTo = `${window.location.origin}/pilot/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
-      setStatus(error ? error.message : "If that email has a ChurchWork account, a password reset link has been sent.");
+    if (requiresCaptcha && !captchaToken) {
+      setStatus("Complete the security check before continuing.");
       setIsBusy(false);
       return;
     }
 
-    if (isRequesterSignup && !captchaToken) {
-      setStatus("Complete the security check before creating your account.");
+    if (isRecovery) {
+      setStatus("Sending secure password reset email...");
+      const redirectTo = `${window.location.origin}/pilot/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo, captchaToken: captchaToken ?? undefined });
+      if (error) {
+        setCaptchaToken(null);
+        setCaptchaResetKey((value) => value + 1);
+      }
+      setStatus(error ? error.message : "If that email has a ChurchWork account, a password reset link has been sent.");
       setIsBusy(false);
       return;
     }
@@ -116,17 +121,15 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
           mode,
           email,
           password,
-          ...(isRequesterSignup ? { captchaToken } : {})
+          ...(captchaToken ? { captchaToken } : {})
         })
       });
 
       const body = await response.json().catch(() => null);
 
       if (!response.ok || !body?.ok) {
-        if (isRequesterSignup) {
-          setCaptchaToken(null);
-          setCaptchaResetKey((value) => value + 1);
-        }
+        setCaptchaToken(null);
+        setCaptchaResetKey((value) => value + 1);
         setStatus(messageFromResponse(body, "ChurchWork auth did not complete. Check the server auth diagnostics."));
         setIsBusy(false);
         return;
@@ -146,7 +149,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
         roleVerified: body.roleVerified === true
       });
       setStatus(`${messageFromResponse(body, "Signed in.")} Opening pilot MVP...`);
-      window.location.assign("/pilot-mvp");
+      window.location.assign(copy.route);
     } catch {
       setStatus("ChurchWork server auth route is unreachable. Check the latest deploy and /pilot-auth-server-check.");
       setIsBusy(false);
@@ -247,16 +250,16 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                 </label>
               ) : null}
 
-              {isRequesterSignup ? <TurnstileChallenge onToken={setCaptchaToken} resetKey={captchaResetKey} /> : null}
+              {requiresCaptcha ? <TurnstileChallenge onToken={setCaptchaToken} resetKey={captchaResetKey} /> : null}
 
-              <button type="submit" disabled={isBusy || (isRequesterSignup && !captchaToken)} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">
+              <button type="submit" disabled={isBusy || (requiresCaptcha && !captchaToken)} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">
                 {submitLabel()}
               </button>
 
               {!isRecovery ? (
-                <button type="button" onClick={() => { setMode("forgot-password"); setPassword(""); setStatus("Enter your account email and ChurchWork will send a secure reset link."); }} className="w-full text-sm font-black text-[#173b2d] underline-offset-4 hover:underline">Forgot password?</button>
+                <button type="button" onClick={() => { setMode("forgot-password"); setPassword(""); setCaptchaToken(null); setCaptchaResetKey((value) => value + 1); setStatus("Enter your account email and ChurchWork will send a secure reset link."); }} className="w-full text-sm font-black text-[#173b2d] underline-offset-4 hover:underline">Forgot password?</button>
               ) : (
-                <button type="button" onClick={() => { setMode("sign-in"); setPassword(""); setStatus(copy.accountHelp); }} className="w-full rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-5 py-3 text-sm font-black text-[#173b2d] hover:bg-white">Back to sign in</button>
+                <button type="button" onClick={() => { setMode("sign-in"); setPassword(""); setCaptchaToken(null); setCaptchaResetKey((value) => value + 1); setStatus(copy.accountHelp); }} className="w-full rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-5 py-3 text-sm font-black text-[#173b2d] hover:bg-white">Back to sign in</button>
               )}
 
               {!isRecovery && copy.canCreateAccount ? (
@@ -264,6 +267,8 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                   type="button"
                   onClick={() => {
                     setMode(mode === "sign-up" ? "sign-in" : "sign-up");
+                    setCaptchaToken(null);
+                    setCaptchaResetKey((value) => value + 1);
                     setStatus(mode === "sign-up" ? copy.accountHelp : "Create a requester account for the ChurchWork pilot.");
                   }}
                   className="w-full rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-5 py-3 text-sm font-black text-[#173b2d] hover:bg-white"

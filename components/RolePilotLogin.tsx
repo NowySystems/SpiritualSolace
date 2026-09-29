@@ -1,9 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabaseBrowserEnv } from "@/lib/supabase/env";
 
 type RoleKey = "requester" | "facility" | "partner";
-type AuthMode = "sign-in" | "sign-up";
+type AuthMode = "sign-in" | "sign-up" | "forgot-password";
 
 type RolePilotLoginProps = {
   role: RoleKey;
@@ -61,6 +63,10 @@ function messageFromResponse(body: unknown, fallback: string) {
 
 export function RolePilotLogin({ role }: RolePilotLoginProps) {
   const copy = roleCopy[role];
+  const supabase = useMemo(() => {
+    const env = getSupabaseBrowserEnv();
+    return createClient(env.url, env.anonKey);
+  }, []);
   const [signedIn, setSignedIn] = useState<SignedInState | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -69,10 +75,21 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
   const [isBusy, setIsBusy] = useState(false);
 
   const isRequesterSignup = role === "requester" && mode === "sign-up";
+  const isRecovery = mode === "forgot-password";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsBusy(true);
+
+    if (isRecovery) {
+      setStatus("Sending secure password reset email...");
+      const redirectTo = `${window.location.origin}/reset-password`;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+      setStatus(error ? error.message : "If that email has a ChurchWork account, a password reset link has been sent.");
+      setIsBusy(false);
+      return;
+    }
+
     setStatus(isRequesterSignup ? "Creating requester account through server auth..." : "Signing in through server auth...");
 
     try {
@@ -125,7 +142,8 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
   }
 
   function submitLabel() {
-    if (isBusy) return isRequesterSignup ? "Creating account..." : "Signing in...";
+    if (isBusy) return isRecovery ? "Sending reset link..." : isRequesterSignup ? "Creating account..." : "Signing in...";
+    if (isRecovery) return "Send password reset link";
     return isRequesterSignup ? "Create requester account" : "Sign in";
   }
 
@@ -173,9 +191,9 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Pilot account</p>
-                <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{isRequesterSignup ? "Create requester account" : "Sign in"}</h2>
+                <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{isRecovery ? "Reset password" : isRequesterSignup ? "Create requester account" : "Sign in"}</h2>
                 <p className="mt-3 text-sm font-semibold leading-6 text-[#4d5d55]">
-                  {isRequesterSignup ? "Create a requester account for the ChurchWork pilot." : copy.accountHelp}
+                  {isRecovery ? "Enter your account email and ChurchWork will send a secure reset link." : isRequesterSignup ? "Create a requester account for the ChurchWork pilot." : copy.accountHelp}
                 </p>
               </div>
 
@@ -191,29 +209,37 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                 />
               </label>
 
-              <label className="block text-sm font-black text-[#173b2d]">
-                Password
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                  minLength={8}
-                  autoComplete={isRequesterSignup ? "new-password" : "current-password"}
-                  className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
-                />
-                {isRequesterSignup ? (
-                  <span className="mt-2 block text-xs font-semibold leading-5 text-[#4d5d55]">
-                    Use at least 8 characters. A longer passphrase is better.
-                  </span>
-                ) : null}
-              </label>
+              {!isRecovery ? (
+                <label className="block text-sm font-black text-[#173b2d]">
+                  Password
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
+                    minLength={12}
+                    autoComplete={isRequesterSignup ? "new-password" : "current-password"}
+                    className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
+                  />
+                  {isRequesterSignup ? (
+                    <span className="mt-2 block text-xs font-semibold leading-5 text-[#4d5d55]">
+                      Use at least 12 characters. A longer passphrase is better.
+                    </span>
+                  ) : null}
+                </label>
+              ) : null}
 
               <button type="submit" disabled={isBusy} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">
                 {submitLabel()}
               </button>
 
-              {copy.canCreateAccount ? (
+              {!isRecovery ? (
+                <button type="button" onClick={() => { setMode("forgot-password"); setPassword(""); setStatus("Enter your account email and ChurchWork will send a secure reset link."); }} className="w-full text-sm font-black text-[#173b2d] underline-offset-4 hover:underline">Forgot password?</button>
+              ) : (
+                <button type="button" onClick={() => { setMode("sign-in"); setPassword(""); setStatus(copy.accountHelp); }} className="w-full rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-5 py-3 text-sm font-black text-[#173b2d] hover:bg-white">Back to sign in</button>
+              )}
+
+              {!isRecovery && copy.canCreateAccount ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -224,11 +250,11 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                 >
                   {mode === "sign-up" ? "Already have an account? Sign in" : "New requester? Create an account"}
                 </button>
-              ) : (
+              ) : !isRecovery ? (
                 <p className="rounded-xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">
                   Need access? Contact the ChurchWork pilot admin for an approved {role} account.
                 </p>
-              )}
+              ) : null}
 
               <p className="rounded-xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">{status}</p>
             </form>

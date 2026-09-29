@@ -217,13 +217,13 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     required
-                    minLength={12}
+                    minLength={8}
                     autoComplete={isRequesterSignup ? "new-password" : "current-password"}
                     className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
                   />
                   {isRequesterSignup ? (
                     <span className="mt-2 block text-xs font-semibold leading-5 text-[#4d5d55]">
-                      Use at least 12 characters. A longer passphrase is better.
+                      Use at least 8 characters. A longer passphrase is better.
                     </span>
                   ) : null}
                 </label>

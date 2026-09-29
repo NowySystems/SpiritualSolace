@@ -4,6 +4,7 @@ import { getSupabaseServerEnv } from "@/lib/supabase/env";
 const fields = "id,requester_email,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update,created_at,updated_at";
 
 function sessionToken(request: NextRequest) {
+  if (request.cookies.get("churchwork_role")?.value !== "facility") return "";
   return request.cookies.get("churchwork_role_session")?.value ?? "";
 }
 

@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { getSupabaseBrowserEnv } from "@/lib/supabase/env";
+import { TurnstileChallenge } from "@/components/TurnstileChallenge";
 
 type RoleKey = "requester" | "facility" | "partner";
 type AuthMode = "sign-in" | "sign-up" | "forgot-password";
@@ -73,6 +74,8 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [status, setStatus] = useState(copy.accountHelp);
   const [isBusy, setIsBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
   const isRequesterSignup = role === "requester" && mode === "sign-up";
   const isRecovery = mode === "forgot-password";
@@ -90,6 +93,12 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       return;
     }
 
+    if (isRequesterSignup && !captchaToken) {
+      setStatus("Complete the security check before creating your account.");
+      setIsBusy(false);
+      return;
+    }
+
     setStatus(isRequesterSignup ? "Creating requester account through server auth..." : "Signing in through server auth...");
 
     try {
@@ -102,13 +111,18 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
           role,
           mode,
           email,
-          password
+          password,
+          ...(isRequesterSignup ? { captchaToken } : {})
         })
       });
 
       const body = await response.json().catch(() => null);
 
       if (!response.ok || !body?.ok) {
+        if (isRequesterSignup) {
+          setCaptchaToken(null);
+          setCaptchaResetKey((value) => value + 1);
+        }
         setStatus(messageFromResponse(body, "ChurchWork auth did not complete. Check the server auth diagnostics."));
         setIsBusy(false);
         return;
@@ -229,7 +243,9 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                 </label>
               ) : null}
 
-              <button type="submit" disabled={isBusy} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">
+              {isRequesterSignup ? <TurnstileChallenge onToken={setCaptchaToken} resetKey={captchaResetKey} /> : null}
+
+              <button type="submit" disabled={isBusy || (isRequesterSignup && !captchaToken)} className="w-full rounded-xl bg-[#173b2d] px-5 py-3 text-base font-black text-white shadow-lg hover:bg-[#102b3a] disabled:opacity-60">
                 {submitLabel()}
               </button>
 

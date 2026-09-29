@@ -134,7 +134,7 @@ async function supabaseJsAttempt(env: ReturnType<typeof getSupabaseServerEnv>, m
           password,
           options: { data: { churchwork_role: role }, ...(captchaToken ? { captchaToken } : {}) }
         })
-      : await supabase.auth.signInWithPassword({ email, password });
+      : await supabase.auth.signInWithPassword({ email, password, options: { ...(captchaToken ? { captchaToken } : {}) } });
 
     if (result.error) {
       return {
@@ -247,8 +247,8 @@ export async function POST(request: NextRequest) {
     return json(400, { ok: false, code: "bad-credentials", message: "Email and an 8+ character password are required." });
   }
 
-  if (mode === "sign-up" && role === "requester" && !captchaToken) {
-    return json(400, { ok: false, code: "captcha-required", message: "Complete the security check before creating your account." });
+  if (!captchaToken) {
+    return json(400, { ok: false, code: "captcha-required", message: "Complete the security check before continuing." });
   }
 
   if (mode === "sign-up" && role !== "requester") {

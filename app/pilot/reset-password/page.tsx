@@ -14,8 +14,8 @@ export default function PilotResetPasswordPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (password.length < 8) {
-      setStatus("Password must be at least 8 characters.");
+    if (password.length < 12) {
+      setStatus("Password must be at least 12 characters.");
       return;
     }
 
@@ -58,12 +58,12 @@ export default function PilotResetPasswordPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
-              minLength={8}
+              minLength={12}
               autoComplete="new-password"
               className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
             />
             <span className="mt-2 block text-xs leading-5 text-[#4d5d55]">
-              Use at least 8 characters. A longer passphrase with a mix of letters, numbers, and symbols is better.
+              Use at least 12 characters. A longer passphrase with a mix of letters, numbers, and symbols is better.
             </span>
           </label>
 
@@ -74,7 +74,7 @@ export default function PilotResetPasswordPage() {
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               required
-              minLength={8}
+              minLength={12}
               autoComplete="new-password"
               className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
             />
@@ -94,8 +94,8 @@ export default function PilotResetPasswordPage() {
         </form>
 
         <div className="mt-5 flex flex-col gap-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-          <Link href="/pilot" className="font-bold text-[#173b2d] underline-offset-4 hover:underline">
-            Return to pilot sign in
+          <Link href="/requester-login" className="font-bold text-[#173b2d] underline-offset-4 hover:underline">
+            Return to requester sign in
           </Link>
           <p className="font-semibold text-[#4d5d55]">{status}</p>
         </div>

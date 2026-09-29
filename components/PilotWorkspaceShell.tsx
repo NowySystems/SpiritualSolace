@@ -1,11 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { FacilitySignupCard } from "@/components/FacilitySignupCard";
-import { FacilityUserManagementCard } from "@/components/FacilityUserManagementCard";
-import { OwnerAdminAccessCenter } from "@/components/OwnerAdminAccessCenter";
-import { StructuredRequesterIntake } from "@/components/StructuredRequesterIntake";
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type PilotWorkspaceShellProps = {
@@ -20,39 +17,37 @@ type OrganizationPreview = {
   status: string;
 };
 
-type WorkspaceKey = "overview" | "owner" | "facility" | "requester";
-
-const workspaceTabs: { key: WorkspaceKey; label: string; eyebrow: string; description: string }[] = [
-  { key: "overview", label: "Overview", eyebrow: "Pilot status", description: "Current pilot targets, guardrails, seed check, and next build path." },
-  { key: "owner", label: "Owner/Admin", eyebrow: "Platform view", description: "Users, role buckets, requests, and timeline oversight." },
-  { key: "facility", label: "Facility", eyebrow: "Facility ops", description: "Create a facility workspace and manage facility users." },
-  { key: "requester", label: "Requester", eyebrow: "Spiritual-care request", description: "Submit a structured spiritual-care request with no medical notes." }
-];
-
-const pilotTargets = [
+const portalCards = [
   {
-    name: "Grandview Post Acute",
-    role: "First facility pilot target",
-    detail: "Facility review queue, resident/request context, consent boundaries, and status visibility."
+    title: "Requester Portal",
+    eyebrow: "Family / resident view",
+    href: "/requester-portal",
+    accent: "requester",
+    description: "Submit a structured spiritual-care request and view approved updates only.",
+    primaryAction: "Open requester view"
   },
   {
-    name: "Hope Church",
-    role: "First church partner target",
-    detail: "Partner-safe workspace, assigned requests, shared care timeline, and report-back actions."
+    title: "Facility Portal",
+    eyebrow: "Review / consent lane",
+    href: "/facility-portal",
+    accent: "facility",
+    description: "Review requests, confirm consent, approve sharing, and track the care ledger.",
+    primaryAction: "Open facility view"
   },
   {
-    name: "ChurchWork Owner/Admin",
-    role: "Control layer",
-    detail: "Cole and Sam keep access, routing, visibility, and pilot safety under human review."
+    title: "Partner Portal",
+    eyebrow: "Church partner lane",
+    href: "/partner-portal",
+    accent: "partner",
+    description: "See approved assignments, accept care work, and report structured outcomes.",
+    primaryAction: "Open partner view"
   }
 ];
 
-const nextBuildPath = [
-  "Role-based pilot routing so each signed-in user lands in the right workspace.",
-  "Grandview facility request review queue with safe actions only.",
-  "Hope Church partner workspace with assigned care needs and report-back actions.",
-  "Requester status view tied to the shared timeline with only requester-safe updates.",
-  "Timeline visibility and RLS test matrix before real pilot data."
+const operatingChecks = [
+  "Use fake pilot data only until the live workflow is approved.",
+  "Do not enter symptoms, medications, diagnoses, chart notes, or insurance details.",
+  "Use the three portals to test the role experience before building deeper admin analytics."
 ];
 
 function formatSystemLabel(value: string | null | undefined) {
@@ -64,11 +59,37 @@ function formatSystemLabel(value: string | null | undefined) {
     .join(" ");
 }
 
+function accentClasses(accent: string) {
+  if (accent === "facility") {
+    return {
+      card: "border-[#7eb5b1] bg-[#eef8f7]",
+      bar: "bg-[#1f6f6b]",
+      pill: "bg-[#d9efed] text-[#1f5d5a]",
+      button: "bg-[#1f6f6b] hover:bg-[#185956]"
+    };
+  }
+
+  if (accent === "partner") {
+    return {
+      card: "border-[#9dbb82] bg-[#f0f7ed]",
+      bar: "bg-[#315f44]",
+      pill: "bg-[#e1efd8] text-[#315f44]",
+      button: "bg-[#315f44] hover:bg-[#244936]"
+    };
+  }
+
+  return {
+    card: "border-[#e0bd65] bg-[#fff8e5]",
+    bar: "bg-[#a8791f]",
+    pill: "bg-[#f7e8b9] text-[#76551c]",
+    button: "bg-[#173b2d] hover:bg-[#102b3a]"
+  };
+}
+
 export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [organizations, setOrganizations] = useState<OrganizationPreview[]>([]);
-  const [status, setStatus] = useState("Checking Pilot Safe v1 seed data...");
-  const [activeWorkspace, setActiveWorkspace] = useState<WorkspaceKey>("overview");
+  const [status, setStatus] = useState("Checking pilot workspace...");
 
   const userEmail = useMemo(() => session.user.email ?? "Signed-in pilot user", [session.user.email]);
 
@@ -89,7 +110,7 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
         }
 
         setOrganizations((data as OrganizationPreview[] | null) ?? []);
-        setStatus("Pilot seed check completed for ChurchWork, Grandview Post Acute, and Hope Church.");
+        setStatus("Pilot workspace ready.");
       });
 
     return () => {
@@ -98,128 +119,77 @@ export function PilotWorkspaceShell({ session }: PilotWorkspaceShellProps) {
   }, [supabase]);
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-10">
-      <section className="overflow-hidden rounded-[2rem] border border-[#d8d0c0] bg-white shadow-sm">
-        <div className="bg-[#102b3a] p-8 text-white md:p-10">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">ChurchWork Pilot</p>
-          <div className="mt-4 grid gap-8 lg:grid-cols-[1.3fr_0.7fr] lg:items-end">
+    <main className="mx-auto max-w-7xl px-6 py-10">
+      <section className="overflow-hidden rounded-[2.2rem] border border-[#173b2d]/15 bg-white shadow-[0_2rem_7rem_rgba(13,43,59,0.12)]">
+        <div className="bg-[linear-gradient(135deg,#082838_0%,#0d2b3b_58%,#123c3d_100%)] p-8 text-white md:p-10">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-[#c8d9b3]">Internal operator workspace</p>
+          <div className="mt-4 grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
             <div>
-              <h2 className="font-serif text-4xl font-semibold tracking-[-0.04em] md:text-5xl">Pilot workspace.</h2>
+              <h2 className="font-serif text-4xl font-semibold tracking-[-0.04em] md:text-5xl">Choose the portal you need.</h2>
               <p className="mt-4 max-w-3xl text-sm leading-7 text-[#d4dedc]">
-                {userEmail} is inside the controlled pilot. ChurchWork is now in pilot hardening for the Grandview Post Acute and Hope Church path: structured spiritual-care intake, role-based workspaces, shared timeline visibility, and owner/admin review.
+                {userEmail} is signed in for pilot operations. Use this launchpad to test and support the requester, facility, and partner experiences without building a full owner/admin command center yet.
               </p>
             </div>
             <div className="rounded-2xl border border-white/15 bg-white/10 p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c8d9b3]">Safety rule</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c8d9b3]">Current focus</p>
               <p className="mt-3 text-sm leading-6 text-[#edf5e6]">
-                Keep all sandbox tests fake. ChurchWork is for spiritual-care coordination only and is not an emergency, clinical, or medical-record system.
+                Keep the pilot case-first: submit the need, review it, approve sharing, and complete partner follow-up. Admin KPIs and reporting can come later.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-3 border-b border-[#d8d0c0] bg-[#f7f3ea] p-4 md:grid-cols-4">
-          {workspaceTabs.map((tab) => {
-            const isActive = activeWorkspace === tab.key;
+        <div className="grid gap-4 bg-[#eef4f1] p-5 md:grid-cols-3">
+          {portalCards.map((portal) => {
+            const classes = accentClasses(portal.accent);
             return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveWorkspace(tab.key)}
-                className={`rounded-2xl border p-4 text-left transition ${
-                  isActive
-                    ? "border-[#173b2d] bg-white shadow-sm"
-                    : "border-[#d8d0c0] bg-[#f7f3ea] hover:bg-white"
-                }`}
+              <Link
+                key={portal.title}
+                href={portal.href}
+                className={`group relative overflow-hidden rounded-[1.7rem] border ${classes.card} p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl`}
               >
-                <span className="block text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#789052]">{tab.eyebrow}</span>
-                <span className="mt-2 block font-serif text-xl font-semibold text-[#102b3a]">{tab.label}</span>
-                <span className="mt-2 block text-sm leading-6 text-[#4d5d55]">{tab.description}</span>
-              </button>
+                <span className={`absolute inset-x-0 top-0 h-1.5 ${classes.bar}`} />
+                <span className={`inline-flex rounded-full px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.14em] ${classes.pill}`}>{portal.eyebrow}</span>
+                <h3 className="mt-5 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#0d2b3b]">{portal.title}</h3>
+                <p className="mt-3 min-h-16 text-sm font-semibold leading-7 text-[#4d5d55]">{portal.description}</p>
+                <span className={`mt-6 inline-flex rounded-xl px-4 py-3 text-sm font-black text-white shadow-sm transition ${classes.button}`}>
+                  {portal.primaryAction} →
+                </span>
+              </Link>
             );
           })}
         </div>
       </section>
 
-      {activeWorkspace === "overview" ? (
-        <section className="mt-8 rounded-[2rem] border border-[#d8d0c0] bg-white p-8 shadow-sm">
-          <div className="grid gap-4 md:grid-cols-4">
-            <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Owner/Admin</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active for Cole and Sam: view users, buckets, requests, timeline activity, and access status.</p>
-            </article>
-            <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Requester path</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: structured spiritual-care request only, with no medical notes or open chat.</p>
-            </article>
-            <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Facility path</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Active: create a facility workspace and manage facility users inside that organization.</p>
-            </article>
-            <article className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Partner path</p>
-              <p className="mt-3 text-sm leading-6 text-[#4d5d55]">Next: Hope Church partner workspace, partner admins, and partner-safe assignments.</p>
-            </article>
-          </div>
-
-          <div className="mt-8 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-            <section className="rounded-2xl border border-[#d8d0c0] bg-[#fffaf0] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Pilot targets</p>
-              <div className="mt-4 space-y-3">
-                {pilotTargets.map((target) => (
-                  <article key={target.name} className="rounded-xl border border-[#e4d8bd] bg-white/75 p-4">
-                    <p className="font-serif text-lg font-semibold text-[#102b3a]">{target.name}</p>
-                    <p className="mt-1 text-xs font-black uppercase tracking-[0.14em] text-[#789052]">{target.role}</p>
-                    <p className="mt-2 text-sm leading-6 text-[#4d5d55]">{target.detail}</p>
-                  </article>
-                ))}
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.9fr]">
+        <section className="rounded-[2rem] border border-[#173b2d]/10 bg-white p-7 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#506a49]">Operator notes</p>
+          <h3 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.03em] text-[#0d2b3b]">Pilot operations before admin analytics.</h3>
+          <div className="mt-5 grid gap-3">
+            {operatingChecks.map((check, index) => (
+              <div key={check} className="flex gap-3 rounded-2xl border border-[#dfe6dd] bg-[#f8faf7] p-4 text-sm font-semibold leading-6 text-[#4d5d55]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#173b2d] text-xs font-black text-white">{index + 1}</span>
+                <span>{check}</span>
               </div>
-            </section>
-
-            <section className="rounded-2xl border border-[#d8d0c0] bg-[#f7f3ea] p-5">
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">Next build path</p>
-              <ol className="mt-4 space-y-3">
-                {nextBuildPath.map((step, index) => (
-                  <li key={step} className="flex gap-3 rounded-xl border border-[#ded6c8] bg-white/75 p-4 text-sm leading-6 text-[#4d5d55]">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#173b2d] text-xs font-black text-white">{index + 1}</span>
-                    <span>{step}</span>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-[#d8d0c0] bg-[#173b2d] p-5 text-white">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#c8d9b3]">Supabase seed check</p>
-            <p className="mt-2 text-sm font-semibold text-[#edf5e6]">{status}</p>
-            {organizations.length ? (
-              <ul className="mt-4 grid gap-3 md:grid-cols-3">
-                {organizations.map((organization) => (
-                  <li key={organization.id} className="rounded-xl border border-white/20 bg-white/10 p-4 text-sm">
-                    <span className="block font-black">{organization.name}</span>
-                    <span className="block text-[#d4dedc]">{formatSystemLabel(organization.organization_type)} · {formatSystemLabel(organization.status)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
-
-          <div className="mt-8 rounded-2xl border border-[#ddb66c]/45 bg-[#fff8e7] p-5 text-sm leading-7 text-[#5f4b1f]">
-            Keep sandbox tests fake until role membership, RLS tests, facility review, partner assignment, and timeline visibility are complete. Worship From Home is queued as a landing-page content layer after the pilot path stays stable.
+            ))}
           </div>
         </section>
-      ) : null}
 
-      {activeWorkspace === "owner" ? <OwnerAdminAccessCenter session={session} /> : null}
-
-      {activeWorkspace === "facility" ? (
-        <>
-          <FacilitySignupCard session={session} />
-          <FacilityUserManagementCard session={session} />
-        </>
-      ) : null}
-
-      {activeWorkspace === "requester" ? <StructuredRequesterIntake session={session} /> : null}
+        <section className="rounded-[2rem] border border-[#173b2d]/10 bg-[#0d2b3b] p-7 text-white shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-[#c8d9b3]">Connected pilot orgs</p>
+          <p className="mt-3 text-sm font-semibold leading-7 text-[#d4dedc]">{status}</p>
+          {organizations.length ? (
+            <ul className="mt-5 grid gap-3">
+              {organizations.map((organization) => (
+                <li key={organization.id} className="rounded-2xl border border-white/15 bg-white/10 p-4 text-sm">
+                  <span className="block font-black">{organization.name}</span>
+                  <span className="mt-1 block text-[#d4dedc]">{formatSystemLabel(organization.organization_type)} · {formatSystemLabel(organization.status)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+      </div>
     </main>
   );
 }

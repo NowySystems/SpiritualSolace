@@ -19,6 +19,7 @@ type RoleCopy = {
   destination: string;
   accountHelp: string;
   canCreateAccount: boolean;
+  route: string;
 };
 
 type SignedInState = {
@@ -34,7 +35,8 @@ const roleCopy = {
     body: "Sign in to start or check a spiritual-care request. New requesters can create an account for the pilot.",
     destination: "Requester workspace",
     accountHelp: "Requesters may create an account. Facility review still controls what is shared with care partners.",
-    canCreateAccount: true
+    canCreateAccount: true,
+    route: "/pilot-mvp"
   },
   facility: {
     eyebrow: "Facility portal",
@@ -42,7 +44,8 @@ const roleCopy = {
     body: "Sign in with your approved facility account to review requests and control what may be released to approved care partners.",
     destination: "Facility review workspace",
     accountHelp: "Facility accounts are invited or approved by ChurchWork pilot admins. Do not create a public account for facility access.",
-    canCreateAccount: false
+    canCreateAccount: false,
+    route: "/facility"
   },
   partner: {
     eyebrow: "Partner portal",
@@ -50,7 +53,8 @@ const roleCopy = {
     body: "Sign in with your approved partner account to view assignments and submit safe, non-medical report-backs.",
     destination: "Partner assignment workspace",
     accountHelp: "Partner accounts are invited or approved by ChurchWork pilot admins. Do not create a public account for partner access.",
-    canCreateAccount: false
+    canCreateAccount: false,
+    route: "/pilot-mvp"
   }
 } satisfies Record<RoleKey, RoleCopy>;
 
@@ -187,14 +191,14 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
               <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Signed in</p>
               <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{copy.destination}</h2>
               <p className="mt-4 text-sm font-semibold leading-7 text-[#4d5d55]">
-                You are signed in as {signedIn.email}. Opening the pilot MVP now.
+                You are signed in as {signedIn.email}. Opening the {copy.destination.toLowerCase()} now.
               </p>
               <div className="mt-4 rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] p-4 text-sm font-semibold leading-6 text-[#4d5d55]">
                 Role: <strong className="text-[#173b2d]">{signedIn.role}</strong>{" "}
                 {signedIn.roleVerified ? "· Metadata verified" : "· Metadata not yet verified"}
               </div>
               <div className="mt-6 grid gap-3">
-                <a href="/pilot-mvp" className="rounded-xl bg-[#173b2d] px-4 py-3 text-center text-sm font-black text-white hover:bg-[#102b3a]">Open pilot MVP</a>
+                <a href={copy.route} className="rounded-xl bg-[#173b2d] px-4 py-3 text-center text-sm font-black text-white hover:bg-[#102b3a]">Open {copy.destination}</a>
                 <a href="/" className="rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-4 py-3 text-center text-sm font-black text-[#173b2d] hover:bg-white">Back to public site</a>
                 <button type="button" onClick={handleSignOut} disabled={isBusy} className="rounded-xl border border-[#d8d0c0] bg-white px-4 py-3 text-sm font-black text-[#173b2d] hover:bg-[#f8fbf8] disabled:opacity-60">
                   Sign out

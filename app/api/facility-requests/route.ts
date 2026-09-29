@@ -47,3 +47,11 @@ export async function POST(request: NextRequest) {
   const body = await response.json().catch(() => null);
   return NextResponse.json(body, { status: response.status, headers: { "Cache-Control": "private, no-store" } });
 }
+
+
+export async function DELETE() {
+  const response = NextResponse.json({ ok: true }, { headers: { "Cache-Control": "private, no-store" } });
+  response.cookies.set("churchwork_role_session", "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 });
+  response.cookies.set("churchwork_role", "", { httpOnly: true, secure: true, sameSite: "lax", path: "/", maxAge: 0 });
+  return response;
+}

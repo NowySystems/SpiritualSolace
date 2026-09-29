@@ -19,6 +19,7 @@ type RoleCopy = {
   destination: string;
   accountHelp: string;
   canCreateAccount: boolean;
+  route: string;
 };
 
 type SignedInState = {
@@ -34,7 +35,8 @@ const roleCopy = {
     body: "Sign in to start or check a spiritual-care request. New requesters can create an account for the pilot.",
     destination: "Requester workspace",
     accountHelp: "Requesters may create an account. Facility review still controls what is shared with care partners.",
-    canCreateAccount: true
+    canCreateAccount: true,
+    route: "/pilot-mvp"
   },
   facility: {
     eyebrow: "Facility portal",
@@ -42,7 +44,8 @@ const roleCopy = {
     body: "Sign in with your approved facility account to review requests and control what may be released to approved care partners.",
     destination: "Facility review workspace",
     accountHelp: "Facility accounts are invited or approved by ChurchWork pilot admins. Do not create a public account for facility access.",
-    canCreateAccount: false
+    canCreateAccount: false,
+    route: "/facility"
   },
   partner: {
     eyebrow: "Partner portal",
@@ -50,7 +53,8 @@ const roleCopy = {
     body: "Sign in with your approved partner account to view assignments and submit safe, non-medical report-backs.",
     destination: "Partner assignment workspace",
     accountHelp: "Partner accounts are invited or approved by ChurchWork pilot admins. Do not create a public account for partner access.",
-    canCreateAccount: false
+    canCreateAccount: false,
+    route: "/pilot-mvp"
   }
 } satisfies Record<RoleKey, RoleCopy>;
 

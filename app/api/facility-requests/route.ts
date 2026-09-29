@@ -16,11 +16,21 @@ function headers(anonKey: string, token: string) {
   };
 }
 
+async function hasFacilityMembership(env: ReturnType<typeof getSupabaseServerEnv>, token: string) {
+  const response = await fetch(`${env.url}/rest/v1/role_memberships?select=id&role=in.(facility_admin,facility_staff)&status=eq.active&limit=1`, {
+    headers: headers(env.anonKey, token), cache: "no-store"
+  });
+  if (!response.ok) return false;
+  const body = await response.json().catch(() => []);
+  return Array.isArray(body) && body.length > 0;
+}
+
 export async function GET(request: NextRequest) {
   const token = sessionToken(request);
   if (!token) return NextResponse.json({ message: "Facility sign-in required." }, { status: 401 });
 
   const env = getSupabaseServerEnv();
+  if (!(await hasFacilityMembership(env, token))) return NextResponse.json({ message: "Approved facility access required." }, { status: 403 });
   const response = await fetch(
     `${env.url}/rest/v1/churchwork_pilot_requests?select=${encodeURIComponent(fields)}&order=created_at.desc`,
     { headers: headers(env.anonKey, token), cache: "no-store" }
@@ -39,6 +49,7 @@ export async function POST(request: NextRequest) {
   }
 
   const env = getSupabaseServerEnv();
+  if (!(await hasFacilityMembership(env, token))) return NextResponse.json({ message: "Approved facility access required." }, { status: 403 });
   const response = await fetch(`${env.url}/rest/v1/rpc/facility_advance_churchwork_pilot_request`, {
     method: "POST",
     headers: headers(env.anonKey, token),

@@ -83,7 +83,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
 
     if (isRecovery) {
       setStatus("Sending secure password reset email...");
-      const redirectTo = `${window.location.origin}/reset-password`;
+      const redirectTo = `${window.location.origin}/pilot/reset-password`;
       const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
       setStatus(error ? error.message : "If that email has a ChurchWork account, a password reset link has been sent.");
       setIsBusy(false);

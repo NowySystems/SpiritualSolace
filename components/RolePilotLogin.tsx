@@ -54,7 +54,7 @@ const roleCopy = {
     destination: "Partner assignment workspace",
     accountHelp: "Partner accounts are invited or approved by ChurchWork pilot admins. Do not create a public account for partner access.",
     canCreateAccount: false,
-    route: "/pilot-mvp"
+    route: "/partner-portal"
   }
 } satisfies Record<RoleKey, RoleCopy>;
 

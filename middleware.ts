@@ -25,6 +25,7 @@ function internalKey() {
 }
 
 function isInternalPath(pathname: string) {
+  if (pathname === "/pilot/reset-password") return false;
   return INTERNAL_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 }
 

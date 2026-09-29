@@ -87,7 +87,7 @@ export async function GET() {
 
     const { data, error: listError } = await supabase
       .from("churchwork_pilot_requests")
-      .select("id,support,safe_note,status,facility_review_status,partner_assignment_status,requester_update_status,created_at,updated_at")
+      .select("id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update,requester_update_released_at,created_at,updated_at")
       .order("created_at", { ascending: false })
       .limit(10);
 
@@ -99,7 +99,19 @@ export async function GET() {
       });
     }
 
-    return json(200, { ok: true, requests: data ?? [] });
+    const requests = (data ?? []).map((item) => ({
+      id: item.id,
+      support: item.support_options,
+      safe_note: item.safe_context_note,
+      status: item.status,
+      facility_review_status: item.facility_approved_at ? "approved" : "pending",
+      partner_assignment_status: item.partner_outcome ? "reported" : item.partner_assigned_at ? "assigned" : "pending",
+      requester_update_status: item.requester_update_released_at ? "released" : "pending",
+      created_at: item.created_at,
+      updated_at: item.updated_at
+    }));
+
+    return json(200, { ok: true, requests });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-list-failed", message: errorMessage(error) });
   }
@@ -131,17 +143,27 @@ export async function POST(request: NextRequest) {
     const { supabase, error } = await clientForSession();
     if (error || !supabase) return error;
 
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !userData.user) {
+      return json(401, { ok: false, code: "invalid-session", message: "Your ChurchWork session is no longer valid. Sign in again." });
+    }
+
     const { data, error: insertError } = await supabase
       .from("churchwork_pilot_requests")
       .insert({
-        support,
-        safe_note: safeNote,
+        requester_user_id: userData.user.id,
+        requester_email: userData.user.email ?? null,
+        support_options: support,
+        safe_context_note: safeNote,
         status: "facility_review",
-        facility_review_status: "pending",
-        partner_assignment_status: "pending",
-        requester_update_status: "pending"
+        activity_log: [{
+          event: "request_submitted",
+          at: new Date().toISOString(),
+          actor_user_id: userData.user.id
+        }]
       })
-      .select("id,support,safe_note,status,facility_review_status,partner_assignment_status,requester_update_status,created_at,updated_at")
+      .select("id,support_options,safe_context_note,status,facility_approved_at,partner_assigned_at,partner_outcome,requester_update,requester_update_released_at,created_at,updated_at")
       .single();
 
     if (insertError) {
@@ -152,7 +174,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return json(201, { ok: true, request: data, message: "Request saved and sent to facility review." });
+    const savedRequest = {
+      id: data.id,
+      support: data.support_options,
+      safe_note: data.safe_context_note,
+      status: data.status,
+      facility_review_status: data.facility_approved_at ? "approved" : "pending",
+      partner_assignment_status: data.partner_outcome ? "reported" : data.partner_assigned_at ? "assigned" : "pending",
+      requester_update_status: data.requester_update_released_at ? "released" : "pending",
+      created_at: data.created_at,
+      updated_at: data.updated_at
+    };
+
+    return json(201, { ok: true, request: savedRequest, message: "Request saved and sent to facility review." });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-save-failed", message: errorMessage(error) });
   }

@@ -27,6 +27,7 @@ jobs:
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://synthetic.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: synthetic-anon-key-for-ui-tests-only
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: synthetic-site-key-for-ui-tests-only
     steps:
       - name: Checkout
         uses: actions/checkout@v4

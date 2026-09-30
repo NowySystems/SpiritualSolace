@@ -251,14 +251,6 @@ export async function POST(request: NextRequest) {
     return json(400, { ok: false, code: "captcha-required", message: "Complete the security check before continuing." });
   }
 
-  if (mode === "sign-up" && role !== "requester") {
-    return json(403, {
-      ok: false,
-      code: "role-signup-blocked",
-      message: "Only requester accounts can be created from the public pilot page. Facility and partner accounts must be approved/invited."
-    });
-  }
-
   let env: ReturnType<typeof getSupabaseServerEnv>;
 
   try {
@@ -312,7 +304,7 @@ export async function POST(request: NextRequest) {
     needsEmailConfirmation: mode === "sign-up" && !session?.access_token,
     authSource: finalAttempt.source,
     message: mode === "sign-up"
-      ? "Requester account created. Check email confirmation settings if sign-in is not immediate."
+      ? `${role === "requester" ? "Requester" : role === "facility" ? "Facility" : "Care partner"} account created. Confirm the email before signing in if confirmation is required.`
       : "Signed in through Supabase auth."
   });
 

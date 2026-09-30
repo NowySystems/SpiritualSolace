@@ -108,7 +108,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       return;
     }
 
-    setStatus(isSignup ? "Creating requester account through server auth..." : "Signing in through server auth...");
+    setStatus(isSignup ? `Creating ${role} account through server auth...` : "Signing in through server auth...");
 
     try {
       const response = await fetch("/api/role-auth", {
@@ -136,7 +136,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       }
 
       if (isSignup && body.needsEmailConfirmation) {
-        setStatus("Requester account created. Check your email to confirm the account before signing in.");
+        setStatus(`${role === "requester" ? "Requester" : role === "facility" ? "Facility" : "Care partner"} account created. Check your email to confirm the account before signing in.`);
         setMode("sign-in");
         setPassword("");
         setIsBusy(false);
@@ -165,7 +165,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
   function submitLabel() {
     if (isBusy) return isRecovery ? "Sending reset link..." : isSignup ? "Creating account..." : "Signing in...";
     if (isRecovery) return "Send password reset link";
-    return isSignup ? "Create requester account" : "Sign in";
+    return isSignup ? `Create ${role === "partner" ? "care partner" : role} account` : "Sign in";
   }
 
   return (
@@ -212,9 +212,9 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Pilot account</p>
-                <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{isRecovery ? "Reset password" : isSignup ? "Create requester account" : "Sign in"}</h2>
+                <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{isRecovery ? "Reset password" : isSignup ? `Create ${role === "partner" ? "care partner" : role} account` : "Sign in"}</h2>
                 <p className="mt-3 text-sm font-semibold leading-6 text-[#4d5d55]">
-                  {isRecovery ? "Enter your account email and ChurchWork will send a secure reset link." : isSignup ? "Create a requester account for the ChurchWork pilot." : copy.accountHelp}
+                  {isRecovery ? "Enter your account email and ChurchWork will send a secure reset link." : isSignup ? `Create a ${role === "partner" ? "care partner" : role} account for ChurchWork.` : copy.accountHelp}
                 </p>
               </div>
 
@@ -269,11 +269,11 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                     setMode(mode === "sign-up" ? "sign-in" : "sign-up");
                     setCaptchaToken(null);
                     setCaptchaResetKey((value) => value + 1);
-                    setStatus(mode === "sign-up" ? copy.accountHelp : "Create a requester account for the ChurchWork pilot.");
+                    setStatus(mode === "sign-up" ? copy.accountHelp : `Create a ${role === "partner" ? "care partner" : role} account for ChurchWork.`);
                   }}
                   className="w-full rounded-xl border border-[#d8d0c0] bg-[#f8fbf8] px-5 py-3 text-sm font-black text-[#173b2d] hover:bg-white"
                 >
-                  {mode === "sign-up" ? "Already have an account? Sign in" : "New requester? Create an account"}
+                  {mode === "sign-up" ? "Already have an account? Sign in" : `New ${role === "partner" ? "care partner" : role}? Create an account`}
                 </button>
               ) : !isRecovery ? (
                 <p className="rounded-xl border border-[#ddb66c]/45 bg-[#fff8e7] p-4 text-sm font-semibold leading-6 text-[#5f4b1f]">

@@ -45,3 +45,9 @@ update public.churchwork_pilot_requests set status='partner_outcome_logged',part
 return jsonb_build_object('ok',true,'id',p_request_id,'status','partner_outcome_logged');
 end $$;
 drop table if exists private.churchwork_pilot_request_ownership;
+
+drop table if exists public.timeline_events;
+drop table if exists public.request_partner_assignments;
+drop table if exists public.care_requests;
+drop function if exists public.partner_can_access_request(uuid);
+drop function if exists public.user_can_access_request(uuid);

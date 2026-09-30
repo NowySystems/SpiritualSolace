@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
-type RoleKey = "requester" | "facility" | "partner";
 type SupportOption = "Prayer" | "Friendly visit" | "Encouragement" | "Pastoral call";
 
 type StoredPilotRequest = {
@@ -19,18 +18,8 @@ type StoredPilotRequest = {
 
 type RequestChoice = { facility_id: string; facility_name: string; city?: string | null; state?: string | null; partners: Array<{ partner_id: string; partner_name: string }> };
 
-type PilotWorkspaceProps = {
-  role: RoleKey;
-};
-
 const supportOptions: SupportOption[] = ["Prayer", "Friendly visit", "Encouragement", "Pastoral call"];
 const blockedTerms = ["diagnosis", "medication", "medicine", "treatment", "symptom", "insurance", "emergency", "doctor", "nurse", "pain", "clinical", "chart", "record"];
-
-const roleLabels: Record<RoleKey, string> = {
-  requester: "Requester",
-  facility: "Facility reviewer",
-  partner: "Care partner"
-};
 
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
@@ -72,14 +61,14 @@ async function signOut() {
   window.location.href = "/";
 }
 
-export function PilotWorkspace({ role }: PilotWorkspaceProps) {
+export function PilotWorkspace() {
   const [support, setSupport] = useState<SupportOption[]>([]);
   const [note, setNote] = useState("");
   const [requests, setRequests] = useState<StoredPilotRequest[]>([]);
   const [choices, setChoices] = useState<RequestChoice[]>([]);
   const [facilityId, setFacilityId] = useState("");
   const [partnerId, setPartnerId] = useState("");
-  const [isLoading, setIsLoading] = useState(role === "requester");
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("Pilot workspace ready.");
 
@@ -93,8 +82,6 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   const canSubmit = Boolean(facilityId && partnerId) && support.length > 0 && note.trim().length > 0 && blockedMatches.length === 0 && !isSaving;
 
   useEffect(() => {
-    if (role !== "requester") return;
-
     let isMounted = true;
 
     async function loadRequests() {
@@ -128,7 +115,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     return () => {
       isMounted = false;
     };
-  }, [role]);
+  }, []);
 
   function toggleSupport(option: SupportOption) {
     setSupport((current) => current.includes(option) ? current.filter((item) => item !== option) : [...current, option]);
@@ -183,7 +170,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
             </span>
           </a>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-[#e7f1eb] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#0f6b54]">{roleLabels[role]}</span>
+            <span className="rounded-full bg-[#e7f1eb] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#0f6b54]">Requester</span>
             <button type="button" onClick={signOut} className="rounded-full bg-[#d6a943] px-3 py-2 text-xs font-black uppercase tracking-[0.12em] text-[#082838]">Sign out</button>
           </div>
         </div>
@@ -197,14 +184,10 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
                 <div>
                   <Eyebrow>Pilot request path</Eyebrow>
                   <h1 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.05em] md:text-6xl">
-                    {role === "requester" ? "Submit and track a spiritual-care request." : role === "facility" ? "Review spiritual-care requests." : "Respond to approved assignments."}
+                    "Submit and track a spiritual-care request."
                   </h1>
                   <p className="mt-4 max-w-3xl text-sm font-semibold leading-7 text-[#d9e7df] md:text-base">
-                    {role === "requester"
-                      ? "Create a guided request and send it to facility review. Medical, emergency, insurance, chart, and treatment details stay out of this workflow."
-                      : role === "facility"
-                        ? "Facility reviewers approve what may be shared before any care partner receives context."
-                        : "Care partners receive only approved context and return a safe update."}
+                    "Create a guided request and send it to facility review. Medical, emergency, insurance, chart, and treatment details stay out of this workflow."
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/15 bg-white/10 p-4">
@@ -214,8 +197,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
               </div>
             </Card>
 
-            {role === "requester" ? (
-              <Card>
+            <Card>
                 <Eyebrow>Requester intake</Eyebrow>
                 <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">What kind of spiritual support would help?</h2>
                 <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-[#4f6259]">Use a guided request path. Keep the request spiritual-care only.</p>
@@ -278,25 +260,6 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
 
                 <button type="button" onClick={submitRequest} disabled={!canSubmit} className={cx("mt-6 rounded-xl px-5 py-4 text-sm font-black shadow-lg transition", canSubmit ? "bg-[#082838] text-white hover:bg-[#0f3f35]" : "bg-[#d9dfd7] text-[#6a746e]")}>{isSaving ? "Saving..." : "Submit for facility review"}</button>
               </Card>
-            ) : null}
-
-            {role === "facility" ? (
-              <Card>
-                <Eyebrow>Facility review</Eyebrow>
-                <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">Review queue</h2>
-                <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-[#4f6259]">The facility queue will connect to saved requester submissions after facility-access policies are enabled.</p>
-                <div className="mt-6 rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-6 text-sm font-bold text-[#4f6259]">No facility review items are assigned to this account yet.</div>
-              </Card>
-            ) : null}
-
-            {role === "partner" ? (
-              <Card>
-                <Eyebrow>Care partner assignment</Eyebrow>
-                <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">Approved assignments</h2>
-                <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-[#4f6259]">Care partners receive only facility-approved spiritual-care context.</p>
-                <div className="mt-6 rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-6 text-sm font-bold text-[#4f6259]">No approved assignments are assigned to this account yet.</div>
-              </Card>
-            ) : null}
           </section>
 
           <aside className="space-y-5">

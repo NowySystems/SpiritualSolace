@@ -16,8 +16,7 @@ const INTERNAL_PREFIXES = [
   "/pwa-check",
   "/pwa-reset",
   "/requester-portal",
-  "/facility-portal",
-  "/partner-portal"
+  "/facility-portal"
 ];
 
 function internalKey() {

@@ -10,6 +10,25 @@ async function expectNoHorizontalOverflow(page: Page) {
 }
 
 test.describe("ChurchWork public navigation and internal boundaries", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      (window as unknown as { turnstile: Record<string, unknown> }).turnstile = {
+        render: (_container: HTMLElement, options: Record<string, unknown>) => {
+          const callback = options.callback;
+          if (typeof callback === "function") {
+            queueMicrotask(() => (callback as (token: string) => void)("synthetic-turnstile-token"));
+          }
+          return "synthetic-widget";
+        },
+        reset: () => undefined,
+        remove: () => undefined,
+      };
+    });
+
+    await page.route("https://challenges.cloudflare.com/**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/javascript", body: "" });
+    });
+  });
   test("public landing routes users to the three role logins only", async ({ page }) => {
     await page.goto("/");
 
@@ -49,18 +68,19 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     }
   });
 
-  test("only requesters can create public accounts", async ({ page }) => {
-    await page.goto("/requester-login");
-    await expect(page.getByRole("button", { name: "New requester? Create an account" })).toBeVisible();
-    await page.getByRole("button", { name: "New requester? Create an account" }).click();
-    await expect(page.getByRole("heading", { name: "Create requester account" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Create requester account" })).toBeVisible();
+  test("all portal roles can create public accounts", async ({ page }) => {
+    const accounts = [
+      { route: "/requester-login", trigger: "New requester? Create an account", heading: "Create requester account" },
+      { route: "/facility-login", trigger: "New facility? Create an account", heading: "Create facility account" },
+      { route: "/partner-login", trigger: "New care partner? Create an account", heading: "Create care partner account" },
+    ];
 
-    for (const route of ["/facility-login", "/partner-login"]) {
-      await page.goto(route);
-      await expect(page.getByRole("button", { name: "New requester? Create an account" })).toHaveCount(0);
-      await expect(page.getByRole("heading", { name: "Create requester account" })).toHaveCount(0);
-      await expect(page.getByText(/Need access\? Contact the ChurchWork pilot admin/i)).toBeVisible();
+    for (const account of accounts) {
+      await page.goto(account.route);
+      await expect(page.getByRole("button", { name: account.trigger })).toBeVisible();
+      await page.getByRole("button", { name: account.trigger }).click();
+      await expect(page.getByRole("heading", { name: account.heading })).toBeVisible();
+      await expect(page.getByRole("button", { name: account.heading })).toBeVisible();
     }
   });
 

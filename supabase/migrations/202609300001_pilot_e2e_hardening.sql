@@ -1,7 +1,7 @@
 -- Pilot-release E2E hardening applied to production 2026-09-30.
 -- 1) Bind portal invite acceptance to the signed-in user and remove anonymous execution.
 -- 2) Allow a new requester with no facility membership to route only when exactly one active pilot facility/partner route exists.
--- The full function bodies are intentionally maintained by the corresponding production migrations in Supabase.
+-- Production function bodies are already applied in Supabase; this migration records the permission boundary and routing invariant for source control.
 revoke execute on function public.accept_churchwork_portal_invite(text,uuid) from public, anon;
 grant execute on function public.accept_churchwork_portal_invite(text,uuid) to authenticated;
 

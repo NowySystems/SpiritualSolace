@@ -17,6 +17,8 @@ type StoredPilotRequest = {
   updated_at: string;
 };
 
+type RequestChoice = { facility_id: string; facility_name: string; city?: string | null; state?: string | null; partners: Array<{ partner_id: string; partner_name: string }> };
+
 type PilotWorkspaceProps = {
   role: RoleKey;
 };
@@ -74,6 +76,9 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   const [support, setSupport] = useState<SupportOption[]>([]);
   const [note, setNote] = useState("");
   const [requests, setRequests] = useState<StoredPilotRequest[]>([]);
+  const [choices, setChoices] = useState<RequestChoice[]>([]);
+  const [facilityId, setFacilityId] = useState("");
+  const [partnerId, setPartnerId] = useState("");
   const [isLoading, setIsLoading] = useState(role === "requester");
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState("Pilot workspace ready.");
@@ -84,7 +89,8 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
   }, [note]);
 
   const latestRequest = requests[0] ?? null;
-  const canSubmit = support.length > 0 && note.trim().length > 0 && blockedMatches.length === 0 && !isSaving;
+  const selectedFacility = choices.find((item) => item.facility_id === facilityId);
+  const canSubmit = Boolean(facilityId && partnerId) && support.length > 0 && note.trim().length > 0 && blockedMatches.length === 0 && !isSaving;
 
   useEffect(() => {
     if (role !== "requester") return;
@@ -112,6 +118,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
       }
 
       setRequests(Array.isArray(body.requests) ? body.requests : []);
+      setChoices(Array.isArray(body.choices) ? body.choices : []);
       setMessage(body.requests?.length ? "Saved requests loaded." : "No saved requests yet.");
       setIsLoading(false);
     }
@@ -135,7 +142,7 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
     const response = await fetch("/api/pilot-requests", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ support, safeNote: note })
+      body: JSON.stringify({ support, safeNote: note, facilityId, partnerId })
     }).catch(() => null);
 
     if (!response) {
@@ -212,6 +219,23 @@ export function PilotWorkspace({ role }: PilotWorkspaceProps) {
                 <Eyebrow>Requester intake</Eyebrow>
                 <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.04em]">What kind of spiritual support would help?</h2>
                 <p className="mt-3 max-w-2xl text-sm font-semibold leading-7 text-[#4f6259]">Use a guided request path. Keep the request spiritual-care only.</p>
+
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
+                  <label className="block text-sm font-black text-[#173b2d]">
+                    Your facility
+                    <select value={facilityId} onChange={(event) => { setFacilityId(event.target.value); setPartnerId(""); }} className="mt-2 w-full rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-3">
+                      <option value="">Choose facility</option>
+                      {choices.map((choice) => <option key={choice.facility_id} value={choice.facility_id}>{choice.facility_name}{choice.city ? ` · ${choice.city}${choice.state ? `, ${choice.state}` : ""}` : ""}</option>)}
+                    </select>
+                  </label>
+                  <label className="block text-sm font-black text-[#173b2d]">
+                    Care partner
+                    <select value={partnerId} disabled={!selectedFacility} onChange={(event) => setPartnerId(event.target.value)} className="mt-2 w-full rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-3 disabled:opacity-60">
+                      <option value="">{selectedFacility ? "Choose available partner" : "Choose facility first"}</option>
+                      {(selectedFacility?.partners ?? []).map((partner) => <option key={partner.partner_id} value={partner.partner_id}>{partner.partner_name}</option>)}
+                    </select>
+                  </label>
+                </div>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-2">
                   {supportOptions.map((option) => {

@@ -50,7 +50,7 @@ export function LandingPageV1() {
               <span className="block font-serif text-3xl font-semibold leading-none tracking-[-0.04em] text-white">
                 Church<span className="text-[#3f806e]">Work</span>
               </span>
-              <span className="mt-1 block text-xs font-medium tracking-wide text-[#d4dedc]">Spiritual-care coordination</span>
+              <span className="mt-1 hidden text-xs font-medium tracking-wide text-[#d4dedc] sm:block">Spiritual-care coordination</span>
             </span>
           </Link>
           <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">

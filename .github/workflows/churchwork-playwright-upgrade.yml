@@ -1,0 +1,39 @@
+name: ChurchWork Playwright Upgrade
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/churchwork-playwright-upgrade.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: [self-hosted, Linux, X64, server, ci-standard, private-only]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Upgrade Playwright lockfile
+        run: npm install -D @playwright/test@1.63.0 --package-lock-only --ignore-scripts --no-audit --no-fund
+
+      - name: Commit dependency upgrade
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if git diff --cached --quiet; then
+            echo "No dependency changes needed."
+            exit 0
+          fi
+          git commit -m "Upgrade Playwright for Ubuntu 26.04"
+          git push origin HEAD:main

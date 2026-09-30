@@ -43,8 +43,8 @@ const roleCopy = {
     title: "Facility login",
     body: "Sign in with your approved facility account to review requests and control what may be released to approved care partners.",
     destination: "Facility review workspace",
-    accountHelp: "Facility accounts are invited or approved by ChurchWork pilot admins. Do not create a public account for facility access.",
-    canCreateAccount: false,
+    accountHelp: "Create a facility account to establish a new facility workspace, or sign in if your facility already has one.",
+    canCreateAccount: true,
     route: "/facility"
   },
   partner: {
@@ -52,8 +52,8 @@ const roleCopy = {
     title: "Partner login",
     body: "Sign in with your approved partner account to view assignments and submit safe, non-medical report-backs.",
     destination: "Partner assignment workspace",
-    accountHelp: "Partner accounts are invited or approved by ChurchWork pilot admins. Do not create a public account for partner access.",
-    canCreateAccount: false,
+    accountHelp: "Create a care partner account to establish your organization, then choose the facilities you are available to serve.",
+    canCreateAccount: true,
     route: "/partner-portal"
   }
 } satisfies Record<RoleKey, RoleCopy>;
@@ -81,7 +81,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
-  const isRequesterSignup = role === "requester" && mode === "sign-up";
+  const isSignup = mode === "sign-up";
   const isRecovery = mode === "forgot-password";
   const requiresCaptcha = mode === "sign-in" || mode === "sign-up" || mode === "forgot-password";
 
@@ -108,7 +108,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
       return;
     }
 
-    setStatus(isRequesterSignup ? "Creating requester account through server auth..." : "Signing in through server auth...");
+    setStatus(isSignup ? "Creating requester account through server auth..." : "Signing in through server auth...");
 
     try {
       const response = await fetch("/api/role-auth", {
@@ -135,7 +135,7 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
         return;
       }
 
-      if (isRequesterSignup && body.needsEmailConfirmation) {
+      if (isSignup && body.needsEmailConfirmation) {
         setStatus("Requester account created. Check your email to confirm the account before signing in.");
         setMode("sign-in");
         setPassword("");
@@ -163,9 +163,9 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
   }
 
   function submitLabel() {
-    if (isBusy) return isRecovery ? "Sending reset link..." : isRequesterSignup ? "Creating account..." : "Signing in...";
+    if (isBusy) return isRecovery ? "Sending reset link..." : isSignup ? "Creating account..." : "Signing in...";
     if (isRecovery) return "Send password reset link";
-    return isRequesterSignup ? "Create requester account" : "Sign in";
+    return isSignup ? "Create requester account" : "Sign in";
   }
 
   return (
@@ -212,9 +212,9 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Pilot account</p>
-                <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{isRecovery ? "Reset password" : isRequesterSignup ? "Create requester account" : "Sign in"}</h2>
+                <h2 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em]">{isRecovery ? "Reset password" : isSignup ? "Create requester account" : "Sign in"}</h2>
                 <p className="mt-3 text-sm font-semibold leading-6 text-[#4d5d55]">
-                  {isRecovery ? "Enter your account email and ChurchWork will send a secure reset link." : isRequesterSignup ? "Create a requester account for the ChurchWork pilot." : copy.accountHelp}
+                  {isRecovery ? "Enter your account email and ChurchWork will send a secure reset link." : isSignup ? "Create a requester account for the ChurchWork pilot." : copy.accountHelp}
                 </p>
               </div>
 
@@ -239,10 +239,10 @@ export function RolePilotLogin({ role }: RolePilotLoginProps) {
                     onChange={(event) => setPassword(event.target.value)}
                     required
                     minLength={8}
-                    autoComplete={isRequesterSignup ? "new-password" : "current-password"}
+                    autoComplete={isSignup ? "new-password" : "current-password"}
                     className="mt-2 w-full rounded-xl border border-[#d8d0c0] px-4 py-3 text-base outline-none focus:border-[#8aa363]"
                   />
-                  {isRequesterSignup ? (
+                  {isSignup ? (
                     <span className="mt-2 block text-xs font-semibold leading-5 text-[#4d5d55]">
                       Use at least 8 characters. A longer passphrase is better.
                     </span>

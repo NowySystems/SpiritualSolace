@@ -111,7 +111,8 @@ export async function GET() {
       updated_at: item.updated_at
     }));
 
-    return json(200, { ok: true, requests });
+    const { data: choices, error: choicesError } = await supabase.rpc("list_churchwork_request_choices");
+    return json(200, { ok: true, requests, choices: choicesError ? [] : (choices ?? []) });
   } catch (error) {
     return json(500, { ok: false, code: "pilot-request-list-failed", message: errorMessage(error) });
   }
@@ -122,7 +123,13 @@ export async function POST(request: NextRequest) {
     const payload = await request.json().catch(() => null);
     const support = cleanSupport(payload?.support);
     const safeNote = cleanNote(payload?.safeNote);
+    const facilityId = typeof payload?.facilityId === "string" ? payload.facilityId : "";
+    const partnerId = typeof payload?.partnerId === "string" ? payload.partnerId : "";
     const matches = blockedMatches(safeNote);
+
+    if (!facilityId || !partnerId) {
+      return json(400, { ok: false, code: "routing-required", message: "Choose your facility and an available care partner." });
+    }
 
     if (support.length === 0) {
       return json(400, { ok: false, code: "support-required", message: "Choose at least one spiritual-care support option." });
@@ -157,6 +164,8 @@ export async function POST(request: NextRequest) {
         support_options: support,
         safe_context_note: safeNote,
         status: "facility_review",
+        facility_id: facilityId,
+        partner_id: partnerId,
         activity_log: [{
           event: "request_submitted",
           at: new Date().toISOString(),

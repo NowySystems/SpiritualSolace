@@ -46,7 +46,7 @@ export function LandingPageV1() {
             <span className="inline-flex h-[4.6rem] w-[7.8rem] items-center justify-center rounded-2xl bg-white p-2 shadow-sm">
               <img src="/brand/churchwork-corner-logo.png" alt="ChurchWork CW logo" className="h-full w-full object-contain" />
             </span>
-            <span>
+            <span className="hidden sm:block">
               <span className="block font-serif text-3xl font-semibold leading-none tracking-[-0.04em] text-white">
                 Church<span className="text-[#3f806e]">Work</span>
               </span>

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
   if (!token) return NextResponse.json({ message: "Facility sign-in required." }, { status: 401 });
 
   const env = getSupabaseServerEnv();
-  if (!(await hasFacilityMembership(env, token))) return NextResponse.json({ message: "Approved facility access required." }, { status: 403 });
+  if (!(await hasFacilityMembership(env, token))) return NextResponse.json({ message: "Create your facility workspace to continue.", code: "onboarding-required" }, { status: 403 });
   const response = await fetch(
     `${env.url}/rest/v1/churchwork_pilot_requests?select=${encodeURIComponent(fields)}&order=created_at.desc`,
     { headers: headers(env.anonKey, token), cache: "no-store" }

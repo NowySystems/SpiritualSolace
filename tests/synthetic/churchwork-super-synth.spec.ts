@@ -96,6 +96,10 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     });
 
     await page.goto("/requester-login");
+    await page.context().addCookies([
+      { name: "churchwork_role_session", value: "synthetic-session", url: "http://127.0.0.1:3000" },
+      { name: "churchwork_role", value: "requester", url: "http://127.0.0.1:3000" },
+    ]);
     await page.getByLabel("Email").fill("requester@example.com");
     await page.getByLabel("Password").fill("testing-password");
     await page.getByRole("button", { name: "Sign in" }).click();

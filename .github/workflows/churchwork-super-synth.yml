@@ -23,7 +23,7 @@ permissions:
 jobs:
   super-synth:
     name: Super synth / ChurchWork guided demo
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, server, ci-standard, private-only]
     env:
       NEXT_PUBLIC_SUPABASE_URL: https://synthetic.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: synthetic-anon-key-for-ui-tests-only

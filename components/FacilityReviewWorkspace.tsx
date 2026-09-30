@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";\nimport { NetworkOnboarding } from "@/components/NetworkOnboarding";
 
 type PilotRequest = {
   id: string; requester_email: string | null; support_options: string[]; safe_context_note: string;
@@ -22,12 +22,12 @@ export function FacilityReviewWorkspace() {
   const [requests, setRequests] = useState<PilotRequest[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState("Loading your facility review queue...");
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(false);\n  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   const loadQueue = useCallback(async () => {
     const response = await fetch("/api/facility-requests", { cache: "no-store" });
     if (response.status === 401) { window.location.assign("/facility-login"); return; }
-    const body = await response.json().catch(() => null);
+    const body = await response.json().catch(() => null);\n    if (response.status === 403 && body?.code === "onboarding-required") { setNeedsOnboarding(true); setMessage(""); return; }
     if (!response.ok || !Array.isArray(body)) { setMessage(apiMessage(body, "Unable to load the facility queue.")); return; }
     const rows = body as PilotRequest[];
     setRequests(rows);
@@ -57,7 +57,7 @@ export function FacilityReviewWorkspace() {
     window.location.assign("/facility-login");
   }
 
-  return <main className="min-h-screen bg-[#edf4f0] px-5 py-6 text-[#0d2b3b] md:px-8">
+  if (needsOnboarding) return <main className="min-h-screen bg-[#edf4f0] p-6"><div className="mx-auto max-w-3xl"><NetworkOnboarding role="facility" /></div></main>;\n\n  return <main className="min-h-screen bg-[#edf4f0] px-5 py-6 text-[#0d2b3b] md:px-8">
     <div className="mx-auto max-w-[92rem]">
       <header className="mb-6 flex flex-col gap-4 rounded-[1.75rem] border border-[#d9dfd7] bg-white p-6 shadow-sm md:flex-row md:items-center md:justify-between">
         <div><p className="text-xs font-black uppercase tracking-[0.2em] text-[#19726c]">ChurchWork · Facility portal</p>

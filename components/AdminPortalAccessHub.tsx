@@ -1,5 +1,7 @@
 "use client";
 
+import { OwnerNetworkAdmin } from "@/components/OwnerNetworkAdmin";
+
 type AdminPortalAccessHubProps = {
   session?: { user?: { email?: string | null } } | null;
 };
@@ -117,6 +119,8 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
             ))}
           </div>
         </section>
+
+        <OwnerNetworkAdmin />
 
         <div className="mt-7 grid gap-6 lg:grid-cols-[1fr_24rem]">
           <section className="rounded-[1.5rem] border border-[#d9dfd7] bg-white p-6 shadow-sm shadow-[#0d2b3b]/5">

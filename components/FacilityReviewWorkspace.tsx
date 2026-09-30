@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { NetworkOnboarding } from "@/components/NetworkOnboarding";
 
 type PilotRequest = {
   id: string; requester_email: string | null; support_options: string[]; safe_context_note: string;
@@ -23,11 +24,13 @@ export function FacilityReviewWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [message, setMessage] = useState("Loading your facility review queue...");
   const [busy, setBusy] = useState(false);
+  const [needsOnboarding, setNeedsOnboarding] = useState(false);
 
   const loadQueue = useCallback(async () => {
     const response = await fetch("/api/facility-requests", { cache: "no-store" });
     if (response.status === 401) { window.location.assign("/facility-login"); return; }
     const body = await response.json().catch(() => null);
+    if (response.status === 403 && body?.code === "onboarding-required") { setNeedsOnboarding(true); setMessage(""); return; }
     if (!response.ok || !Array.isArray(body)) { setMessage(apiMessage(body, "Unable to load the facility queue.")); return; }
     const rows = body as PilotRequest[];
     setRequests(rows);
@@ -56,6 +59,8 @@ export function FacilityReviewWorkspace() {
     await fetch("/api/facility-requests", { method: "DELETE" });
     window.location.assign("/facility-login");
   }
+
+  if (needsOnboarding) return <main className="min-h-screen bg-[#edf4f0] p-6"><div className="mx-auto max-w-3xl"><NetworkOnboarding role="facility" /></div></main>;
 
   return <main className="min-h-screen bg-[#edf4f0] px-5 py-6 text-[#0d2b3b] md:px-8">
     <div className="mx-auto max-w-[92rem]">

@@ -104,8 +104,8 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await page.getByLabel("Password").fill("testing-password");
     await page.getByRole("button", { name: "Sign in" }).click();
 
-    await expect(page.getByRole("heading", { name: "Requester workspace" })).toBeVisible();
-    await expect(page.getByText("requester@example.com")).toBeVisible();
+    await expect(page).toHaveURL(/\/pilot-mvp$/);
+    await expect(page.getByRole("heading", { name: /Submit and track a spiritual-care request/i })).toBeVisible();
     expect(requests.length).toBe(1);
   });
 

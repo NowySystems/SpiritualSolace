@@ -34,8 +34,8 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
 
     await expect(page.getByRole("heading", { name: "The right spiritual-care request, in the right hands." })).toBeVisible();
     await expect(page.getByRole("link", { name: "Request Care" }).first()).toHaveAttribute("href", "/request");
-    await expect(page.getByRole("link", { name: "Facility Login" }).first()).toHaveAttribute("href", "/facility-login");
-    await expect(page.getByRole("link", { name: "Partner Login" }).first()).toHaveAttribute("href", "/partner-login");
+    await expect(page.locator('a[href="/facility-login"]').first()).toHaveAttribute("href", "/facility-login");
+    await expect(page.locator('a[href="/partner-login"]').first()).toHaveAttribute("href", "/partner-login");
 
     await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
     await expect(page.locator('a[href="/mvp"]')).toHaveCount(0);

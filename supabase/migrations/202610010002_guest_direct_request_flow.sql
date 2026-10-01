@@ -33,7 +33,10 @@ create table if not exists public.churchwork_request_locations (
  unique(facility_id,label)
 );
 alter table public.churchwork_request_locations enable row level security;
-create policy "Facility manages own request locations" on public.churchwork_request_locations for all to authenticated using (public.user_can_access_facility(facility_id,array['facility_admin','facility_staff']::text[])) with check (public.user_can_access_facility(facility_id,array['facility_admin','facility_staff']::text[]));
+create policy "Facility reads own request locations" on public.churchwork_request_locations for select to authenticated using (public.user_can_access_facility(facility_id,array['facility_admin','facility_staff']::text[]));
+create policy "Facility admins create request locations" on public.churchwork_request_locations for insert to authenticated with check (public.user_can_access_facility(facility_id,array['facility_admin']::text[]));
+create policy "Facility admins update request locations" on public.churchwork_request_locations for update to authenticated using (public.user_can_access_facility(facility_id,array['facility_admin']::text[])) with check (public.user_can_access_facility(facility_id,array['facility_admin']::text[]));
+create policy "Facility admins delete request locations" on public.churchwork_request_locations for delete to authenticated using (public.user_can_access_facility(facility_id,array['facility_admin']::text[]));
 alter table public.churchwork_pilot_requests add constraint churchwork_request_location_fk foreign key(location_id) references public.churchwork_request_locations(id);
 
 create index if not exists churchwork_pilot_requests_guest_session_idx
@@ -95,7 +98,7 @@ begin
  if p_location_id is not null then select l.label,l.facility_id into v_location,p_facility_id from public.churchwork_request_locations l where l.id=p_location_id and l.status='active'; if not found then raise exception 'Location unavailable'; end if; end if;
 
  if p_guest_session_hash is null or length(p_guest_session_hash)<32 then raise exception 'Guest session required'; end if;
- if v_location is null or length(v_location)>80 then raise exception 'Valid location required'; end if;
+ if v_location is null or length(v_location)>40 or v_location ~ E'[\\r\\n]' then raise exception 'Valid short room/location required'; end if;
  if coalesce(array_length(p_support_options,1),0)=0 or exists(select 1 from unnest(p_support_options) x where x not in ('Prayer','Friendly visit','Encouragement','Pastoral call')) then raise exception 'Unsupported request option'; end if;
  if not exists(select 1 from public.facilities f join public.organizations o on o.id=f.organization_id where f.id=p_facility_id and f.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Facility unavailable'; end if;
  if not exists(select 1 from private.churchwork_facility_partner_routes r join public.partner_organizations p on p.id=r.partner_id join public.organizations o on o.id=p.organization_id where r.facility_id=p_facility_id and r.partner_id=p_partner_id and r.status='active' and p.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Partner unavailable'; end if;

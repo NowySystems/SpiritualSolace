@@ -17,7 +17,9 @@ export async function GET(req:NextRequest){
 }
 export async function POST(req:NextRequest){
  const p=await req.json().catch(()=>({})) as {support?:unknown;facilityId?:string;partnerId?:string;locationLabel?:string;locationId?:string};
- const rawSupport=Array.isArray(p.support)?p.support:[];\n const support=rawSupport.filter((x):x is string=>typeof x==="string"&&allowed.has(x));\n if(support.length!==rawSupport.length)return response(400,{ok:false,message:"Unsupported request option."});
+ const rawSupport=Array.isArray(p.support)?p.support:[];
+ const support=rawSupport.filter((x):x is string=>typeof x==="string"&&allowed.has(x));
+ if(support.length!==rawSupport.length)return response(400,{ok:false,message:"Unsupported request option."});
  const location=typeof p.locationLabel==="string"?p.locationLabel.trim():"";
  if(location.length>8||!/[0-9]/.test(location)||!/^[A-Za-z0-9 -]+$/.test(location))return response(400,{ok:false,message:"Enter a room number or short location code."});
  if(!p.facilityId||!p.partnerId||!location||support.length===0)return response(400,{ok:false,message:"Choose a facility, care partner, location, and at least one request option."});

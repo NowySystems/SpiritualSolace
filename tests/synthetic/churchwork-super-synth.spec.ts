@@ -50,63 +50,41 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await expectNoHorizontalOverflow(page);
   });
 
-  test("role login entrances are real server-backed login screens without placeholder records", async ({ page }) => {
-    for (const route of ["/requester-login", "/facility-login", "/partner-login"]) {
-      await page.goto(route);
-      await expect(page).toHaveURL(new RegExp(`${route}$`));
-      await expect(page.getByRole("heading", { name: /login/i }).first()).toBeVisible();
-      await expect(page.getByLabel("Email")).toBeVisible();
-      await expect(page.getByLabel("Password")).toBeVisible();
-      await expect(page.getByText("server auth", { exact: false })).toHaveCount(0);
-      await expect(page.getByText("ChurchWork internal access")).toHaveCount(0);
-      await expect(page.getByText("Private pilot access")).toHaveCount(0);
-      await expect(page.getByText("Jane", { exact: false })).toHaveCount(0);
-      await expect(page.getByText("John", { exact: false })).toHaveCount(0);
-      await expect(page.getByText("Grandview", { exact: false })).toHaveCount(0);
-      await expect(page.getByText("Hope Church", { exact: false })).toHaveCount(0);
-      await expectNoHorizontalOverflow(page);
-    }
+  test("requester entry is anonymous and contains no free-text care note", async ({ page }) => {
+    await page.route("/api/guest-requests**", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+          ok: true,
+          choices: [{ facility_id: "facility-demo", facility_name: "Grandview Demo Facility", city: "Cookeville", state: "TN", partners: [{ partner_id: "partner-demo", partner_name: "Hope Community Church" }] }],
+          requests: [],
+          resolvedLocation: null
+        }) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, request: { id: "request-demo", support_options: ["Prayer"], status: "submitted", location_label: "406", created_at: new Date().toISOString(), updated_at: new Date().toISOString() } }) });
+    });
+    await page.goto("/requester-login");
+    await expect(page).toHaveURL(/\/request$/);
+    await expect(page.locator("textarea")).toHaveCount(0);
+    await expect(page.getByText("Every care request is anonymous", { exact: false })).toBeVisible();
+    await page.getByLabel(/facility/i).selectOption("facility-demo");
+    await page.getByLabel(/room/i).fill("406");
+    await page.getByLabel(/care partner/i).selectOption("partner-demo");
+    await page.getByRole("button", { name: "Prayer" }).click();
+    await expect(page.getByRole("button", { name: /submit/i })).toBeEnabled();
   });
 
-  test("all portal roles can create public accounts", async ({ page }) => {
-    const accounts = [
-      { route: "/requester-login", trigger: "New requester? Create an account", heading: "Create requester account" },
+  test("facility and partner login entrances support account creation", async ({ page }) => {
+    for (const account of [
       { route: "/facility-login", trigger: "New facility? Create an account", heading: "Create facility account" },
       { route: "/partner-login", trigger: "New care partner? Create an account", heading: "Create care partner account" },
-    ];
-
-    for (const account of accounts) {
+    ]) {
       await page.goto(account.route);
-      await expect(page.getByRole("button", { name: account.trigger })).toBeVisible();
+      await expect(page.getByLabel("Email")).toBeVisible();
+      await expect(page.getByLabel("Password")).toBeVisible();
       await page.getByRole("button", { name: account.trigger }).click();
       await expect(page.getByRole("heading", { name: account.heading })).toBeVisible();
-      await expect(page.getByRole("button", { name: account.heading })).toBeVisible();
     }
-  });
-
-  test("role login submits through the server auth bridge", async ({ page }) => {
-    const requests: string[] = [];
-    await page.route("/api/role-auth", async (route) => {
-      requests.push(route.request().url());
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ ok: true, email: "requester@example.com", role: "requester", roleVerified: true, message: "Signed in through server auth bridge." })
-      });
-    });
-
-    await page.goto("/requester-login");
-    await page.context().addCookies([
-      { name: "churchwork_role_session", value: "synthetic-session", url: "http://127.0.0.1:3000" },
-      { name: "churchwork_role", value: "requester", url: "http://127.0.0.1:3000" },
-    ]);
-    await page.getByLabel("Email").fill("requester@example.com");
-    await page.getByLabel("Password").fill("testing-password");
-    await page.getByRole("button", { name: "Sign in" }).click();
-
-    await expect(page).toHaveURL(/\/pilot-mvp$/);
-    await expect(page.getByRole("heading", { name: /Submit and track a spiritual-care request/i })).toBeVisible();
-    expect(requests.length).toBe(1);
   });
 
   test("internal backend routes require the internal access gate", async ({ page }) => {

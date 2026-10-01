@@ -33,7 +33,7 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { name: "The right spiritual-care request, in the right hands." })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Requester Login" }).first()).toHaveAttribute("href", "/requester-login");
+    await expect(page.getByRole("link", { name: "Request Care" }).first()).toHaveAttribute("href", "/request");
     await expect(page.getByRole("link", { name: "Facility Login" }).first()).toHaveAttribute("href", "/facility-login");
     await expect(page.getByRole("link", { name: "Partner Login" }).first()).toHaveAttribute("href", "/partner-login");
 
@@ -71,7 +71,7 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await page.getByLabel(/room/i).fill("406");
     await page.getByLabel(/care partner/i).selectOption("partner-demo");
     await page.getByRole("button", { name: "Prayer" }).click();
-    await expect(page.getByRole("button", { name: /submit/i })).toBeEnabled();
+    await expect(page.getByRole("button", { name: "Send request" })).toBeEnabled();
   });
 
   test("facility and partner login entrances support account creation", async ({ page }) => {

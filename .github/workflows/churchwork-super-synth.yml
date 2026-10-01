@@ -47,6 +47,14 @@ jobs:
       - name: Run ChurchWork super synth
         run: npm run synthetic:churchwork
 
+      - name: Deploy current main to Vercel production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_uLRvRNeEc9Gpr0vFapNGT8Su
+          VERCEL_PROJECT_ID: prj_EIYzl1Txsl7ffNi5hpLaWvZJlnEO
+        run: npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN"
+
       - name: Upload ChurchWork super synth report
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4

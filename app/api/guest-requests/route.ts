@@ -7,12 +7,13 @@ function headers(key:string){return {apikey:key,Authorization:`Bearer ${key}`,"C
 function digest(token:string){return createHash("sha256").update(token).digest("hex");}
 function response(status:number,body:unknown,guestToken?:string){const r=NextResponse.json(body,{status,headers:{"Cache-Control":"private, no-store","X-Robots-Tag":"noindex, nofollow, noarchive"}});if(guestToken)r.cookies.set("churchwork_guest_session",guestToken,{httpOnly:true,secure:true,sameSite:"lax",path:"/",maxAge:60*60*24*14});return r;}
 export async function GET(req:NextRequest){
- const env=getSupabaseServerEnv(); const token=req.cookies.get("churchwork_guest_session")?.value;
+ const env=getSupabaseServerEnv(); const token=req.cookies.get("churchwork_guest_session")?.value; const code=req.nextUrl.searchParams.get("location");
+ let resolved=null;if(code){const q=await fetch(`${env.url}/rest/v1/rpc/resolve_churchwork_request_location`,{method:"POST",headers:headers(env.anonKey),body:JSON.stringify({p_public_code:code}),cache:"no-store"});resolved=q.ok?await q.json().catch(()=>null):null;}
  const choices=await fetch(`${env.url}/rest/v1/rpc/list_churchwork_request_choices`,{method:"POST",headers:headers(env.anonKey),body:"{}",cache:"no-store"});
  const choiceBody=await choices.json().catch(()=>[]);
- if(!token)return response(200,{ok:true,requests:[],choices:choiceBody});
+ if(!token)return response(200,{ok:true,requests:[],choices:choiceBody,resolvedLocation:resolved});
  const list=await fetch(`${env.url}/rest/v1/rpc/list_churchwork_guest_requests`,{method:"POST",headers:headers(env.anonKey),body:JSON.stringify({p_guest_session_hash:digest(token)}),cache:"no-store"});
- return response(list.ok?200:list.status,{ok:list.ok,requests:await list.json().catch(()=>[]),choices:choiceBody});
+ return response(list.ok?200:list.status,{ok:list.ok,requests:await list.json().catch(()=>[]),choices:choiceBody,resolvedLocation:resolved});
 }
 export async function POST(req:NextRequest){
  const p=await req.json().catch(()=>({})) as {support?:unknown;facilityId?:string;partnerId?:string;locationLabel?:string};

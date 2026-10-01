@@ -16,6 +16,13 @@ check (partner_response is null or partner_response in ('accepted','declined','v
 
 alter table public.churchwork_pilot_requests alter column status set default 'submitted';
 alter table public.churchwork_pilot_requests alter column safe_context_note set default '';
+
+drop policy if exists "Pilot requests visible to authorized role" on public.churchwork_pilot_requests;
+create policy "Pilot requests visible to authorized role" on public.churchwork_pilot_requests for select to authenticated using (
+ requester_user_id = (select auth.uid())
+ or public.user_can_access_facility(facility_id,array['facility_admin','facility_staff']::text[])
+ or (status in ('submitted','accepted_by_partner','visit_planned','completed') and public.user_can_access_partner(partner_id,array['partner_admin','partner_user']::text[]))
+);
 create index if not exists churchwork_pilot_requests_guest_session_idx
 on public.churchwork_pilot_requests(guest_session_hash) where guest_session_hash is not null;
 

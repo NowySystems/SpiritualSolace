@@ -151,3 +151,18 @@ begin
 end $$;
 revoke all on function public.upsert_my_churchwork_request_location(uuid,text,uuid,text) from public;
 grant execute on function public.upsert_my_churchwork_request_location(uuid,text,uuid,text) to authenticated;
+
+create or replace function public.get_churchwork_request_notification_targets(p_request_id uuid)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_facility_org uuid; v_partner_org uuid; v_result jsonb;
+begin
+ select f.organization_id,p.organization_id into v_facility_org,v_partner_org
+ from public.churchwork_pilot_requests r join public.facilities f on f.id=r.facility_id join public.partner_organizations p on p.id=r.partner_id where r.id=p_request_id;
+ if not found then raise exception 'Request not found'; end if;
+ select jsonb_build_object(
+ 'facility',coalesce((select jsonb_agg(distinct pr.email) from public.role_memberships m join public.profiles pr on pr.id=m.user_id where m.organization_id=v_facility_org and m.status='active' and m.role in ('facility_admin','facility_staff') and pr.status='active' and pr.email is not null),'[]'::jsonb),
+ 'partner',coalesce((select jsonb_agg(distinct pr.email) from public.role_memberships m join public.profiles pr on pr.id=m.user_id where m.organization_id=v_partner_org and m.status='active' and m.role in ('partner_admin','partner_user') and pr.status='active' and pr.email is not null),'[]'::jsonb)
+ ) into v_result;
+ return v_result;
+end $$;
+revoke all on function public.get_churchwork_request_notification_targets(uuid) from public;

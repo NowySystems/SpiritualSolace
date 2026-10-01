@@ -98,7 +98,78 @@ begin
  if p_location_id is not null then select l.label,l.facility_id into v_location,p_facility_id from public.churchwork_request_locations l where l.id=p_location_id and l.status='active'; if not found then raise exception 'Location unavailable'; end if; end if;
 
  if p_guest_session_hash is null or length(p_guest_session_hash)<32 then raise exception 'Guest session required'; end if;
- if v_location is null or length(v_location)>40 or v_location ~ E'[\\r\\n]' then raise exception 'Valid short room/location required'; end if;
+ if v_location is null or length(v_location)>8 or v_location !~ '[0-9]' or v_location !~ '^[A-Za-z0-9 -]+
+ if coalesce(array_length(p_support_options,1),0)=0 or exists(select 1 from unnest(p_support_options) x where x not in ('Prayer','Friendly visit','Encouragement','Pastoral call')) then raise exception 'Unsupported request option'; end if;
+ if not exists(select 1 from public.facilities f join public.organizations o on o.id=f.organization_id where f.id=p_facility_id and f.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Facility unavailable'; end if;
+ if not exists(select 1 from private.churchwork_facility_partner_routes r join public.partner_organizations p on p.id=r.partner_id join public.organizations o on o.id=p.organization_id where r.facility_id=p_facility_id and r.partner_id=p_partner_id and r.status='active' and p.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Partner unavailable'; end if;
+ insert into public.churchwork_pilot_requests(requester_user_id,requester_email,guest_session_hash,location_label,location_id,support_options,safe_context_note,status,facility_id,partner_id,activity_log)
+ values(null,null,p_guest_session_hash,v_location,p_location_id,p_support_options,'','submitted',p_facility_id,p_partner_id,jsonb_build_array(jsonb_build_object('event','guest_request_submitted','actor','guest','at',v_now)))
+ returning id into v_id;
+ return jsonb_build_object('ok',true,'id',v_id,'status','submitted');
+end $$;
+revoke all on function public.create_churchwork_guest_request(text,uuid,uuid,text,text[],uuid) from public;
+grant execute on function public.create_churchwork_guest_request(text,uuid,uuid,text,text[],uuid) to anon,authenticated;
+
+create or replace function public.list_churchwork_guest_requests(p_guest_session_hash text)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_result jsonb;
+begin
+ if p_guest_session_hash is null or length(p_guest_session_hash)<32 then return '[]'::jsonb; end if;
+ select coalesce(jsonb_agg(jsonb_build_object('id',r.id,'support',r.support_options,'status',r.status,'location_label',r.location_label,'requester_update',r.requester_update,'created_at',r.created_at,'updated_at',r.updated_at) order by r.created_at desc),'[]'::jsonb) into v_result
+ from public.churchwork_pilot_requests r where r.guest_session_hash=p_guest_session_hash;
+ return v_result;
+end $$;
+revoke all on function public.list_churchwork_guest_requests(text) from public;
+grant execute on function public.list_churchwork_guest_requests(text) to anon,authenticated;
+
+create or replace function public.resolve_churchwork_request_location(p_public_code text)
+returns jsonb language sql security definer set search_path='' as $$
+ select coalesce((select jsonb_build_object('location_id',l.id,'location_label',l.label,'facility_id',l.facility_id,'facility_name',f.name,'partners',coalesce((select jsonb_agg(jsonb_build_object('partner_id',p.id,'partner_name',p.name) order by p.name) from private.churchwork_facility_partner_routes r join public.partner_organizations p on p.id=r.partner_id join public.organizations o on o.id=p.organization_id where r.facility_id=l.facility_id and r.status='active' and p.status in ('pilot','active') and o.status in ('pilot','active')),'[]'::jsonb)) from public.churchwork_request_locations l join public.facilities f on f.id=l.facility_id join public.organizations fo on fo.id=f.organization_id where l.public_code=p_public_code and l.status='active' and f.status in ('pilot','active') and fo.status in ('pilot','active')),'{}'::jsonb);
+$$;
+revoke all on function public.resolve_churchwork_request_location(text) from public;
+grant execute on function public.resolve_churchwork_request_location(text) to anon,authenticated;
+
+create or replace function public.get_my_churchwork_request_locations()
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_result jsonb;
+begin
+ if auth.uid() is null then raise exception 'Authentication required'; end if;
+ select coalesce(jsonb_agg(jsonb_build_object('id',l.id,'facility_id',l.facility_id,'label',l.label,'public_code',l.public_code,'status',l.status,'request_url','https://church-work.com/request?location='||l.public_code) order by l.label),'[]'::jsonb) into v_result
+ from public.churchwork_request_locations l where public.user_can_access_facility(l.facility_id,array['facility_admin','facility_staff']::text[]);
+ return v_result;
+end $$;
+revoke all on function public.get_my_churchwork_request_locations() from public;
+grant execute on function public.get_my_churchwork_request_locations() to authenticated;
+
+create or replace function public.upsert_my_churchwork_request_location(p_facility_id uuid,p_label text,p_location_id uuid default null,p_status text default 'active')
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_id uuid; v_code text; v_label text:=nullif(trim(p_label),'');
+begin
+ if auth.uid() is null or not public.user_can_access_facility(p_facility_id,array['facility_admin']::text[]) then raise exception 'Facility admin access required'; end if;
+ if v_label is null or length(v_label)>80 then raise exception 'Valid location label required'; end if;
+ if p_status not in ('active','paused','retired') then raise exception 'Invalid location status'; end if;
+ if p_location_id is null then insert into public.churchwork_request_locations(facility_id,label,status) values(p_facility_id,v_label,p_status) returning id,public_code into v_id,v_code;
+ else update public.churchwork_request_locations set label=v_label,status=p_status,updated_at=now() where id=p_location_id and facility_id=p_facility_id returning id,public_code into v_id,v_code; if not found then raise exception 'Location not found'; end if; end if;
+ return jsonb_build_object('ok',true,'id',v_id,'public_code',v_code,'request_url','https://church-work.com/request?location='||v_code);
+end $$;
+revoke all on function public.upsert_my_churchwork_request_location(uuid,text,uuid,text) from public;
+grant execute on function public.upsert_my_churchwork_request_location(uuid,text,uuid,text) to authenticated;
+
+create or replace function public.get_churchwork_request_notification_targets(p_request_id uuid)
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_facility_org uuid; v_partner_org uuid; v_result jsonb;
+begin
+ select f.organization_id,p.organization_id into v_facility_org,v_partner_org
+ from public.churchwork_pilot_requests r join public.facilities f on f.id=r.facility_id join public.partner_organizations p on p.id=r.partner_id where r.id=p_request_id;
+ if not found then raise exception 'Request not found'; end if;
+ select jsonb_build_object(
+ 'facility',coalesce((select jsonb_agg(distinct pr.email) from public.role_memberships m join public.profiles pr on pr.id=m.user_id where m.organization_id=v_facility_org and m.status='active' and m.role in ('facility_admin','facility_staff') and pr.status='active' and pr.email is not null),'[]'::jsonb),
+ 'partner',coalesce((select jsonb_agg(distinct pr.email) from public.role_memberships m join public.profiles pr on pr.id=m.user_id where m.organization_id=v_partner_org and m.status='active' and m.role in ('partner_admin','partner_user') and pr.status='active' and pr.email is not null),'[]'::jsonb)
+ ) into v_result;
+ return v_result;
+end $$;
+revoke all on function public.get_churchwork_request_notification_targets(uuid) from public;
+ then raise exception 'Valid room number or short location code required'; end if;
  if coalesce(array_length(p_support_options,1),0)=0 or exists(select 1 from unnest(p_support_options) x where x not in ('Prayer','Friendly visit','Encouragement','Pastoral call')) then raise exception 'Unsupported request option'; end if;
  if not exists(select 1 from public.facilities f join public.organizations o on o.id=f.organization_id where f.id=p_facility_id and f.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Facility unavailable'; end if;
  if not exists(select 1 from private.churchwork_facility_partner_routes r join public.partner_organizations p on p.id=r.partner_id join public.organizations o on o.id=p.organization_id where r.facility_id=p_facility_id and r.partner_id=p_partner_id and r.status='active' and p.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Partner unavailable'; end if;

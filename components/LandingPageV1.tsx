@@ -1,40 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const portalLinks = [
-  {
-    label: "Requester Login",
-    href: "/requester-login",
-    role: "Families and requesters",
-    detail: "Start or check a spiritual-care request through the requester portal."
-  },
-  {
-    label: "Facility Login",
-    href: "/facility-login",
-    role: "Facility reviewers",
-    detail: "Review requests, approve what may be shared, and manage facility-controlled release."
-  },
-  {
-    label: "Partner Login",
-    href: "/partner-login",
-    role: "Churches and care partners",
-    detail: "View approved assignments and report safe, non-medical outcomes."
-  }
-];
-
 const publicFlow = [
-  {
-    label: "Requester submits",
-    detail: "A requester asks for spiritual support through a structured path."
-  },
-  {
-    label: "Facility reviews",
-    detail: "The facility controls what can leave the care setting."
-  },
-  {
-    label: "Partner responds",
-    detail: "Approved partners receive only released context and provide safe updates."
-  }
+  { label: "Request", detail: "Scan the facility QR or open ChurchWork, choose your facility and room, then select the spiritual support you want. No requester account or personal story is required." },
+  { label: "Connect", detail: "ChurchWork alerts the facility and selected care partner at the same time. The facility stays informed without another approval step." },
+  { label: "Care", detail: "The care partner accepts, plans the visit, and completes the request. ChurchWork keeps the requester updated with simple, anonymous statuses." }
 ];
 
 export function LandingPageV1() {
@@ -53,13 +23,14 @@ export function LandingPageV1() {
               <span className="mt-1 hidden text-xs font-medium tracking-wide text-[#d4dedc] sm:block">Spiritual-care coordination</span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-8 text-sm font-semibold text-white lg:flex">
-            <a href="#portals" className="hover:text-[#d7e7b7]">Login portals</a>
+          <nav className="hidden items-center gap-5 text-sm font-semibold text-white md:flex">
             <a href="#how-it-works" className="hover:text-[#d7e7b7]">How it works</a>
+            <Link href="/facility-login" className="hover:text-[#d7e7b7]">Facility Login</Link>
+            <Link href="/partner-login" className="hover:text-[#d7e7b7]">Partner Login</Link>
           </nav>
-          <a href="#portals" className="rounded-md bg-[#86a45f] px-7 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752]">
-            Login
-          </a>
+          <Link href="/request" className="rounded-md bg-[#86a45f] px-6 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752] md:hidden">
+            Request Care
+          </Link>
         </div>
       </header>
 
@@ -84,36 +55,13 @@ export function LandingPageV1() {
                 The right spiritual-care request, in the right hands.
               </h1>
               <p className="mt-7 max-w-2xl text-lg leading-8 text-[#e8efef]">
-                ChurchWork gives requesters, facilities, and approved care partners separate portals for a controlled, human-reviewed spiritual-care workflow.
+                ChurchWork connects people in care settings with trusted spiritual support through a simple, private request process.
               </p>
               <div className="mt-9 flex flex-wrap gap-4">
-                <Link href="/requester-login" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
-                  Requester Login
-                </Link>
-                <Link href="/facility-login" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
-                  Facility Login
-                </Link>
-                <Link href="/partner-login" className="rounded-lg border border-white/55 bg-white/5 px-8 py-4 text-base font-bold text-white backdrop-blur hover:bg-white/12">
-                  Partner Login
+                <Link href="/request" className="rounded-lg bg-white px-8 py-4 text-base font-bold text-[#173b2d] shadow-xl hover:bg-[#f0f5e8]">
+                  Request Care
                 </Link>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section id="portals" className="px-6 py-16">
-          <div className="mx-auto max-w-7xl">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">Login portals</p>
-            <h2 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.03em]">Choose your ChurchWork portal.</h2>
-            <div className="mt-8 grid gap-4 md:grid-cols-3">
-              {portalLinks.map((portal) => (
-                <Link key={portal.href} href={portal.href} className="rounded-3xl border border-[#ded6c8] bg-white/80 p-6 shadow-sm transition hover:-translate-y-0.5 hover:bg-white hover:shadow-lg">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-[#789052]">{portal.role}</p>
-                  <h3 className="mt-3 font-serif text-3xl font-semibold tracking-[-0.04em] text-[#102b3a]">{portal.label}</h3>
-                  <p className="mt-3 text-sm leading-6 text-[#4d5d55]">{portal.detail}</p>
-                  <span className="mt-5 inline-flex text-sm font-black text-[#173b2d]">Open portal →</span>
-                </Link>
-              ))}
             </div>
           </div>
         </section>
@@ -121,7 +69,7 @@ export function LandingPageV1() {
         <section id="how-it-works" className="px-6 pb-20">
           <div className="mx-auto max-w-7xl">
             <p className="text-xs font-black uppercase tracking-[0.2em] text-[#789052]">How it works</p>
-            <h2 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.03em]">One request path. Clear roles. Facility-controlled release.</h2>
+            <h2 className="mt-3 max-w-4xl font-serif text-4xl font-semibold tracking-[-0.03em]">A simple path from request to spiritual care.</h2>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               {publicFlow.map((step, index) => (
                 <article key={step.label} className="rounded-3xl border border-[#ded6c8] bg-white/75 p-6 shadow-sm">
@@ -130,6 +78,26 @@ export function LandingPageV1() {
                   <p className="mt-3 text-sm leading-6 text-[#4d5d55]">{step.detail}</p>
                 </article>
               ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="border-y border-[#d9e1df] bg-[#e9f0ef] px-6 py-12">
+          <div className="mx-auto max-w-5xl">
+            <p className="font-serif text-3xl font-semibold tracking-[-0.03em] text-[#102b3a]">Spiritual care without creating another patient record.</p>
+            <p className="mt-3 max-w-4xl text-base leading-7 text-[#4d5d55]">ChurchWork coordinates the request—not the conversation. No medical details, open messaging, pastoral notes, or patient contact information are shared through the platform.</p>
+          </div>
+        </section>
+
+        <section className="px-6 py-16 text-center">
+          <div className="mx-auto max-w-3xl">
+            <h2 className="font-serif text-4xl font-semibold tracking-[-0.03em]">Need spiritual care?</h2>
+            <p className="mt-3 text-[#4d5d55]">Request support from a trusted care partner at your facility.</p>
+            <Link href="/request" className="mt-7 inline-flex rounded-lg bg-[#173b2d] px-8 py-4 font-bold text-white shadow-lg hover:bg-[#214d3d]">Request Care →</Link>
+            <div className="mt-6 flex justify-center gap-5 text-sm font-bold text-[#173b2d]">
+              <Link href="/facility-login" className="underline underline-offset-4">Facility Sign In</Link>
+              <span aria-hidden="true">·</span>
+              <Link href="/partner-login" className="underline underline-offset-4">Care Partner Sign In</Link>
             </div>
           </div>
         </section>

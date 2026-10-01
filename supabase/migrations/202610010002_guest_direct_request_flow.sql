@@ -88,22 +88,24 @@ end $$;
 drop function if exists public.facility_advance_churchwork_pilot_request(uuid,text);
 
 create or replace function public.create_churchwork_guest_request(
- p_guest_session_hash text, p_facility_id uuid, p_partner_id uuid, p_location_label text, p_support_options text[]
+ p_guest_session_hash text, p_facility_id uuid, p_partner_id uuid, p_location_label text, p_support_options text[], p_location_id uuid default null
 ) returns jsonb language plpgsql security definer set search_path='' as $$
 declare v_id uuid; v_now timestamptz:=now(); v_location text:=nullif(trim(p_location_label),'');
 begin
+ if p_location_id is not null then select l.label,l.facility_id into v_location,p_facility_id from public.churchwork_request_locations l where l.id=p_location_id and l.status='active'; if not found then raise exception 'Location unavailable'; end if; end if;
+
  if p_guest_session_hash is null or length(p_guest_session_hash)<32 then raise exception 'Guest session required'; end if;
  if v_location is null or length(v_location)>80 then raise exception 'Valid location required'; end if;
  if coalesce(array_length(p_support_options,1),0)=0 or exists(select 1 from unnest(p_support_options) x where x not in ('Prayer','Friendly visit','Encouragement','Pastoral call')) then raise exception 'Unsupported request option'; end if;
  if not exists(select 1 from public.facilities f join public.organizations o on o.id=f.organization_id where f.id=p_facility_id and f.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Facility unavailable'; end if;
  if not exists(select 1 from private.churchwork_facility_partner_routes r join public.partner_organizations p on p.id=r.partner_id join public.organizations o on o.id=p.organization_id where r.facility_id=p_facility_id and r.partner_id=p_partner_id and r.status='active' and p.status in ('pilot','active') and o.status in ('pilot','active')) then raise exception 'Partner unavailable'; end if;
- insert into public.churchwork_pilot_requests(requester_user_id,requester_email,guest_session_hash,location_label,support_options,safe_context_note,status,facility_id,partner_id,activity_log)
- values(null,null,p_guest_session_hash,v_location,p_support_options,'','submitted',p_facility_id,p_partner_id,jsonb_build_array(jsonb_build_object('event','guest_request_submitted','actor','guest','at',v_now)))
+ insert into public.churchwork_pilot_requests(requester_user_id,requester_email,guest_session_hash,location_label,location_id,support_options,safe_context_note,status,facility_id,partner_id,activity_log)
+ values(null,null,p_guest_session_hash,v_location,p_location_id,p_support_options,'','submitted',p_facility_id,p_partner_id,jsonb_build_array(jsonb_build_object('event','guest_request_submitted','actor','guest','at',v_now)))
  returning id into v_id;
  return jsonb_build_object('ok',true,'id',v_id,'status','submitted');
 end $$;
-revoke all on function public.create_churchwork_guest_request(text,uuid,uuid,text,text[]) from public;
-grant execute on function public.create_churchwork_guest_request(text,uuid,uuid,text,text[]) to anon,authenticated;
+revoke all on function public.create_churchwork_guest_request(text,uuid,uuid,text,text[],uuid) from public;
+grant execute on function public.create_churchwork_guest_request(text,uuid,uuid,text,text[],uuid) to anon,authenticated;
 
 create or replace function public.list_churchwork_guest_requests(p_guest_session_hash text)
 returns jsonb language plpgsql security definer set search_path='' as $$
@@ -123,3 +125,29 @@ returns jsonb language sql security definer set search_path='' as $$
 $$;
 revoke all on function public.resolve_churchwork_request_location(text) from public;
 grant execute on function public.resolve_churchwork_request_location(text) to anon,authenticated;
+
+create or replace function public.get_my_churchwork_request_locations()
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_result jsonb;
+begin
+ if auth.uid() is null then raise exception 'Authentication required'; end if;
+ select coalesce(jsonb_agg(jsonb_build_object('id',l.id,'facility_id',l.facility_id,'label',l.label,'public_code',l.public_code,'status',l.status,'request_url','https://church-work.com/request?location='||l.public_code) order by l.label),'[]'::jsonb) into v_result
+ from public.churchwork_request_locations l where public.user_can_access_facility(l.facility_id,array['facility_admin','facility_staff']::text[]);
+ return v_result;
+end $$;
+revoke all on function public.get_my_churchwork_request_locations() from public;
+grant execute on function public.get_my_churchwork_request_locations() to authenticated;
+
+create or replace function public.upsert_my_churchwork_request_location(p_facility_id uuid,p_label text,p_location_id uuid default null,p_status text default 'active')
+returns jsonb language plpgsql security definer set search_path='' as $$
+declare v_id uuid; v_code text; v_label text:=nullif(trim(p_label),'');
+begin
+ if auth.uid() is null or not public.user_can_access_facility(p_facility_id,array['facility_admin']::text[]) then raise exception 'Facility admin access required'; end if;
+ if v_label is null or length(v_label)>80 then raise exception 'Valid location label required'; end if;
+ if p_status not in ('active','paused','retired') then raise exception 'Invalid location status'; end if;
+ if p_location_id is null then insert into public.churchwork_request_locations(facility_id,label,status) values(p_facility_id,v_label,p_status) returning id,public_code into v_id,v_code;
+ else update public.churchwork_request_locations set label=v_label,status=p_status,updated_at=now() where id=p_location_id and facility_id=p_facility_id returning id,public_code into v_id,v_code; if not found then raise exception 'Location not found'; end if; end if;
+ return jsonb_build_object('ok',true,'id',v_id,'public_code',v_code,'request_url','https://church-work.com/request?location='||v_code);
+end $$;
+revoke all on function public.upsert_my_churchwork_request_location(uuid,text,uuid,text) from public;
+grant execute on function public.upsert_my_churchwork_request_location(uuid,text,uuid,text) to authenticated;

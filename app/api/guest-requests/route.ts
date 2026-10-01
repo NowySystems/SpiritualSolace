@@ -16,7 +16,7 @@ export async function GET(req:NextRequest){
 }
 export async function POST(req:NextRequest){
  const p=await req.json().catch(()=>({})) as {support?:unknown;facilityId?:string;partnerId?:string;locationLabel?:string};
- const support=Array.isArray(p.support)?p.support.filter((x):x is string=>typeof x==="string"&&allowed.has(x)):[];
+ const rawSupport=Array.isArray(p.support)?p.support:[];\n const support=rawSupport.filter((x):x is string=>typeof x==="string"&&allowed.has(x));\n if(support.length!==rawSupport.length)return response(400,{ok:false,message:"Unsupported request option."});
  const location=typeof p.locationLabel==="string"?p.locationLabel.trim().slice(0,80):"";
  if(!p.facilityId||!p.partnerId||!location||support.length===0)return response(400,{ok:false,message:"Choose a facility, care partner, location, and at least one request option."});
  let token=req.cookies.get("churchwork_guest_session")?.value; if(!token)token=randomBytes(32).toString("base64url");

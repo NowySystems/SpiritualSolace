@@ -39,12 +39,15 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        shell: cmd
         run: npm ci --no-audit --no-fund
 
       - name: Install Chromium
+        shell: cmd
         run: npx playwright install chromium
 
       - name: Run ChurchWork super synth
+        shell: cmd
         run: npm run synthetic:churchwork
 
       - name: Upload ChurchWork super synth report

@@ -19,7 +19,7 @@ export async function POST(req:NextRequest){
  const p=await req.json().catch(()=>({})) as {support?:unknown;facilityId?:string;partnerId?:string;locationLabel?:string;locationId?:string};
  const rawSupport=Array.isArray(p.support)?p.support:[];\n const support=rawSupport.filter((x):x is string=>typeof x==="string"&&allowed.has(x));\n if(support.length!==rawSupport.length)return response(400,{ok:false,message:"Unsupported request option."});
  const location=typeof p.locationLabel==="string"?p.locationLabel.trim():"";
- if(location.length>40||/[\r\n]/.test(location))return response(400,{ok:false,message:"Enter a short room or location only."});
+ if(location.length>8||!/[0-9]/.test(location)||!/^[A-Za-z0-9 -]+$/.test(location))return response(400,{ok:false,message:"Enter a room number or short location code."});
  if(!p.facilityId||!p.partnerId||!location||support.length===0)return response(400,{ok:false,message:"Choose a facility, care partner, location, and at least one request option."});
  let token=req.cookies.get("churchwork_guest_session")?.value; if(!token)token=randomBytes(32).toString("base64url");
  const env=getSupabaseServerEnv(); const x=await fetch(`${env.url}/rest/v1/rpc/create_churchwork_guest_request`,{method:"POST",headers:headers(env.anonKey),body:JSON.stringify({p_guest_session_hash:digest(token),p_facility_id:p.facilityId,p_partner_id:p.partnerId,p_location_label:location,p_support_options:support,p_location_id:p.locationId??null}),cache:"no-store"});

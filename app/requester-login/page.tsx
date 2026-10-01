@@ -1,5 +1,5 @@
-import { RolePilotLogin } from "@/components/RolePilotLogin";
+import { redirect } from "next/navigation";
 
 export default function RequesterLoginPage() {
-  return <RolePilotLogin role="requester" />;
+  redirect("/request");
 }

@@ -2,6 +2,7 @@ alter table public.churchwork_pilot_requests alter column requester_user_id drop
 alter table public.churchwork_pilot_requests alter column requester_email drop not null;
 alter table public.churchwork_pilot_requests add column if not exists guest_session_hash text;
 alter table public.churchwork_pilot_requests add column if not exists location_label text;
+alter table public.churchwork_pilot_requests add column if not exists location_id uuid;
 alter table public.churchwork_pilot_requests add column if not exists partner_response text;
 alter table public.churchwork_pilot_requests add column if not exists partner_responded_at timestamptz;
 
@@ -23,6 +24,18 @@ create policy "Pilot requests visible to authorized role" on public.churchwork_p
  or public.user_can_access_facility(facility_id,array['facility_admin','facility_staff']::text[])
  or (status in ('submitted','accepted_by_partner','visit_planned','completed') and public.user_can_access_partner(partner_id,array['partner_admin','partner_user']::text[]))
 );
+create table if not exists public.churchwork_request_locations (
+ id uuid primary key default gen_random_uuid(), facility_id uuid not null references public.facilities(id) on delete cascade,
+ label text not null check(length(trim(label)) between 1 and 80),
+ public_code text not null unique default encode(gen_random_bytes(18),'hex'),
+ status text not null default 'active' check(status in ('active','paused','retired')),
+ created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
+ unique(facility_id,label)
+);
+alter table public.churchwork_request_locations enable row level security;
+create policy "Facility manages own request locations" on public.churchwork_request_locations for all to authenticated using (public.user_can_access_facility(facility_id,array['facility_admin','facility_staff']::text[])) with check (public.user_can_access_facility(facility_id,array['facility_admin','facility_staff']::text[]));
+alter table public.churchwork_pilot_requests add constraint churchwork_request_location_fk foreign key(location_id) references public.churchwork_request_locations(id);
+
 create index if not exists churchwork_pilot_requests_guest_session_idx
 on public.churchwork_pilot_requests(guest_session_hash) where guest_session_hash is not null;
 
@@ -103,3 +116,10 @@ begin
 end $$;
 revoke all on function public.list_churchwork_guest_requests(text) from public;
 grant execute on function public.list_churchwork_guest_requests(text) to anon,authenticated;
+
+create or replace function public.resolve_churchwork_request_location(p_public_code text)
+returns jsonb language sql security definer set search_path='' as $$
+ select coalesce((select jsonb_build_object('location_id',l.id,'location_label',l.label,'facility_id',l.facility_id,'facility_name',f.name,'partners',coalesce((select jsonb_agg(jsonb_build_object('partner_id',p.id,'partner_name',p.name) order by p.name) from private.churchwork_facility_partner_routes r join public.partner_organizations p on p.id=r.partner_id join public.organizations o on o.id=p.organization_id where r.facility_id=l.facility_id and r.status='active' and p.status in ('pilot','active') and o.status in ('pilot','active')),'[]'::jsonb)) from public.churchwork_request_locations l join public.facilities f on f.id=l.facility_id join public.organizations fo on fo.id=f.organization_id where l.public_code=p_public_code and l.status='active' and f.status in ('pilot','active') and fo.status in ('pilot','active')),'{}'::jsonb);
+$$;
+revoke all on function public.resolve_churchwork_request_location(text) from public;
+grant execute on function public.resolve_churchwork_request_location(text) to anon,authenticated;

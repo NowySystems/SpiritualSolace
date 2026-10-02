@@ -39,27 +39,52 @@ export function AdminAuthGate({ children }: Props) {
   useEffect(() => {
     if (synthetic) return;
     let mounted = true;
-    supabase.auth.getSession().then(async ({ data }) => {
+    const fallback = window.setTimeout(() => {
       if (!mounted) return;
+      setChecked(true);
+      setStatus("Sign in with your ChurchWork admin account.");
+    }, 2500);
+
+    void supabase.auth.getSession().then(async ({ data, error }) => {
+      if (!mounted) return;
+      window.clearTimeout(fallback);
+      if (error) {
+        setStatus(error.message);
+        setChecked(true);
+        return;
+      }
       const current = data.session ?? null;
       setSession(current);
-      if (current) await verifyAdmin(current);
-      setChecked(true);
-    }).catch(() => {
-      if (mounted) {
-        setStatus("Could not verify the current admin session.");
+      if (!current) {
+        setAuthorized(false);
+        setStatus("Sign in with your ChurchWork admin account.");
         setChecked(true);
+        return;
       }
+      setChecked(true);
+      window.setTimeout(() => { void verifyAdmin(current); }, 0);
+    }).catch(() => {
+      if (!mounted) return;
+      window.clearTimeout(fallback);
+      setStatus("Sign in with your ChurchWork admin account.");
+      setChecked(true);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, next) => {
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
       if (!mounted) return;
       setSession(next);
-      if (next) await verifyAdmin(next);
-      else setAuthorized(false);
+      if (!next) {
+        setAuthorized(false);
+        setChecked(true);
+        return;
+      }
       setChecked(true);
+      window.setTimeout(() => { void verifyAdmin(next); }, 0);
     });
+
     return () => {
       mounted = false;
+      window.clearTimeout(fallback);
       listener.subscription.unsubscribe();
     };
   }, [supabase, synthetic]);

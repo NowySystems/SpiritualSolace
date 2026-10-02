@@ -1,8 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const COOKIE_NAME = "churchwork_internal_access";
-const DEFAULT_INTERNAL_KEY = "churchwork-internal-preview";
-
 const INTERNAL_PREFIXES = [
   "/mvp",
   "/demo",
@@ -18,10 +15,6 @@ const INTERNAL_PREFIXES = [
   "/facility-portal"
 ];
 
-function internalKey() {
-  return process.env.CHURCHWORK_INTERNAL_ACCESS_KEY || DEFAULT_INTERNAL_KEY;
-}
-
 function isInternalPath(pathname: string) {
   if (pathname === "/pilot/reset-password") return false;
   return INTERNAL_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -35,42 +28,8 @@ function addPrivateHeaders(response: NextResponse) {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  if (!isInternalPath(pathname)) {
-    return NextResponse.next();
-  }
-
-  const key = internalKey();
-  const cookieValue = request.cookies.get(COOKIE_NAME)?.value;
-
-  if (cookieValue === key) {
-    return addPrivateHeaders(NextResponse.next());
-  }
-
-  const suppliedKey = request.nextUrl.searchParams.get("access") || request.nextUrl.searchParams.get("key");
-
-  if (suppliedKey && suppliedKey === key) {
-    const cleanUrl = request.nextUrl.clone();
-    cleanUrl.searchParams.delete("access");
-    cleanUrl.searchParams.delete("key");
-
-    const response = addPrivateHeaders(NextResponse.redirect(cleanUrl));
-    response.cookies.set(COOKIE_NAME, key, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 12
-    });
-    return response;
-  }
-
-  const gateUrl = request.nextUrl.clone();
-  gateUrl.pathname = "/internal-access";
-  gateUrl.search = "";
-  gateUrl.searchParams.set("from", pathname);
-
-  return addPrivateHeaders(NextResponse.redirect(gateUrl));
+  if (!isInternalPath(pathname)) return NextResponse.next();
+  return addPrivateHeaders(NextResponse.next());
 }
 
 export const config = {

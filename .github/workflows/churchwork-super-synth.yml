@@ -13,6 +13,8 @@ on:
       - "docs/**"
   workflow_dispatch:
 
+# narration mobile hotfix deploy trigger
+
 concurrency:
   group: churchwork-synth-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true

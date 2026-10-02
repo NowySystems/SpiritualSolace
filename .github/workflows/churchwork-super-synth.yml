@@ -46,6 +46,10 @@ jobs:
         shell: cmd
         run: npx playwright install chromium
 
+      - name: Verify production build
+        shell: cmd
+        run: npm run build
+
       - name: Run ChurchWork super synth
         shell: cmd
         run: npm run synthetic:churchwork

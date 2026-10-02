@@ -347,9 +347,13 @@ export default function SyntheticDemoPage() {
       body: JSON.stringify({ scriptId: DEMO_SCRIPT_ID, stepId: target.stepId, voice: DEMO_VOICE })
     });
 
-    if (!response.ok || response.headers.get("content-type")?.includes("application/json")) {
-      throw new Error("Marin narration unavailable");
+    if (response.headers.get("content-type")?.includes("application/json")) {
+      const fallback = await response.json() as { narration?: string };
+      if (fallback.narration) return `speech:${fallback.narration}`;
+      throw new Error("Narration unavailable");
     }
+
+    if (!response.ok) throw new Error("Marin narration unavailable");
 
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
@@ -383,28 +387,48 @@ export default function SyntheticDemoPage() {
 
   async function playNarratedStep(actionIndex: number) {
     const url = await loadNarration(actionIndex);
-    const audio = new Audio(url);
-    audioElementRef.current?.pause();
-    audioElementRef.current = audio;
 
-    audio.onended = () => {
+    const advance = () => {
       if (actionIndex >= actions.length - 1) {
         setPlaying(false);
         return;
       }
       const nextIndex = actionIndex + 1;
       setIndex(nextIndex);
-      window.setTimeout(() => {
-        void playNarratedStep(nextIndex);
-      }, 120);
+      window.setTimeout(() => { void playNarratedStep(nextIndex); }, 120);
     };
 
+    if (url.startsWith("speech:")) {
+      if (!("speechSynthesis" in window)) throw new Error("Narration unavailable");
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(url.slice(7));
+      utterance.rate = 0.96;
+      utterance.pitch = 1;
+      const voices = window.speechSynthesis.getVoices();
+      const preferred = voices.find((voice) => /samantha|ava|aria|jenny|female/i.test(voice.name)) ?? voices.find((voice) => voice.lang.startsWith("en"));
+      if (preferred) utterance.voice = preferred;
+      utterance.onend = advance;
+      utterance.onerror = () => {
+        setPlaying(false);
+        setNarrationStatus("Narration playback failed — tap Play demo again");
+      };
+      window.speechSynthesis.speak(utterance);
+      setNarrationStatus("Narration playing");
+      return;
+    }
+
+    const audio = new Audio(url);
+    audioElementRef.current?.pause();
+    audioElementRef.current = audio;
+    audio.onended = advance;
     await audio.play();
+    setNarrationStatus("Marin narration playing");
   }
 
   async function startOrPause() {
     if (playing) {
       audioElementRef.current?.pause();
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       setPlaying(false);
       return;
     }
@@ -415,6 +439,7 @@ export default function SyntheticDemoPage() {
 
   function setActionIndex(nextIndex: number) {
     audioElementRef.current?.pause();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     setPlaying(false);
     const safeIndex = Math.max(0, Math.min(nextIndex, actions.length - 1));
     setIndex(safeIndex);

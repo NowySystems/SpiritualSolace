@@ -429,7 +429,7 @@ export default function SyntheticDemoPage() {
       const speakStep = (actionIndex: number) => {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(actions[actionIndex].detail);
-        utterance.rate = 0.86;
+        utterance.rate = 0.76;
         utterance.pitch = 1;
         const voices = window.speechSynthesis.getVoices();
         const preferred =
@@ -446,7 +446,7 @@ export default function SyntheticDemoPage() {
           }
           const nextIndex = actionIndex + 1;
           setIndex(nextIndex);
-          window.setTimeout(() => speakStep(nextIndex), 450);
+          window.setTimeout(() => speakStep(nextIndex), 850);
         };
 
         utterance.onerror = () => {

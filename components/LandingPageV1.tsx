@@ -27,6 +27,7 @@ export function LandingPageV1() {
             <a href="#how-it-works" className="hover:text-[#d7e7b7]">How it works</a>
             <Link href="/facility-login" className="hover:text-[#d7e7b7]">Facility Login</Link>
             <Link href="/partner-login" className="hover:text-[#d7e7b7]">Partner Login</Link>
+            <Link href="/admin" className="rounded-full border border-white/20 bg-white/10 px-4 py-2 hover:bg-white/15 hover:text-[#d7e7b7]">Admin Login</Link>
           </nav>
           <Link href="/request" className="rounded-md bg-[#86a45f] px-6 py-3 text-sm font-bold text-white shadow-lg hover:bg-[#789752] md:hidden">
             Request Care

@@ -69,7 +69,6 @@ jobs:
   deploy:
     name: Deploy ChurchWork production
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: super-synth
     runs-on: [self-hosted, Linux, X64, server, ci-standard, private-only]
     steps:
       - name: Checkout

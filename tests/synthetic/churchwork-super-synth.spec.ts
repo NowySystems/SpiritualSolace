@@ -89,11 +89,11 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
   test("admin shell is accessible while diagnostics remain internally gated", async ({ page }) => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByText("Pilot Command Center", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ChurchWork Admin" })).toBeVisible();
 
     await page.goto("/internal-access");
     await expect(page).toHaveURL(/\/admin$/);
-    await expect(page.getByText("Pilot Command Center", { exact: false }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: "ChurchWork Admin" })).toBeVisible();
 
     for (const route of ["/mvp", "/synthetic-smoke", "/ai-map"]) {
       await page.goto(route);

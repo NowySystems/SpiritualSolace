@@ -5,8 +5,8 @@ import { OwnerNetworkAdmin } from "@/components/OwnerNetworkAdmin";
 const cards = [
   { label: "Demo", href: "/demo/synthetic", description: "Play or step through the complete ChurchWork story." },
   { label: "Requester", href: "/request", description: "Open the anonymous requester flow." },
-  { label: "Facility", href: "/facility-login", description: "Open the facility workspace." },
-  { label: "Care Partner", href: "/partner-login", description: "Open the care-partner workspace." }
+  { label: "Facility", href: "/facility-portal?adminPreview=1", description: "Open the facility workspace directly as ChurchWork admin." },
+  { label: "Care Partner", href: "/partner-portal?adminPreview=1", description: "Open the care-partner workspace directly as ChurchWork admin." }
 ];
 
 type AdminPortalAccessHubProps = { session?: { user?: { email?: string | null } } | null };

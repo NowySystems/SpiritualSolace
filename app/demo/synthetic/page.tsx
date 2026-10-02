@@ -329,8 +329,8 @@ function DemoScreen({ index, action }: { index: number; action: Action }) {
 export default function SyntheticDemoPage() {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [narrationReady, setNarrationReady] = useState(false);
-  const [narrationStatus, setNarrationStatus] = useState("Loading Marin narration...");
+  const [narrationReady, setNarrationReady] = useState(true);
+  const [narrationStatus, setNarrationStatus] = useState("Ready — tap Play demo");
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const audioUrlsRef = useRef<Map<number, string>>(new Map());
   const action = actions[index];
@@ -361,25 +361,10 @@ export default function SyntheticDemoPage() {
     return url;
   }
 
-  async function preloadAllNarration() {
-    setNarrationReady(false);
-    setNarrationStatus("Loading Marin narration...");
-    try {
-      for (let i = 0; i < actions.length; i += 1) {
-        await loadNarration(i);
-      }
-      setNarrationReady(true);
-      setNarrationStatus("Marin narration ready");
-    } catch {
-      setNarrationReady(false);
-      setNarrationStatus("Marin narration could not be loaded");
-    }
-  }
-
   useEffect(() => {
-    void preloadAllNarration();
     return () => {
       audioElementRef.current?.pause();
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       for (const url of audioUrlsRef.current.values()) URL.revokeObjectURL(url);
       audioUrlsRef.current.clear();
     };
@@ -430,11 +415,58 @@ export default function SyntheticDemoPage() {
       audioElementRef.current?.pause();
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       setPlaying(false);
+      setNarrationStatus("Paused — tap Play demo to continue");
       return;
     }
-    if (!narrationReady) return;
+
+    // Mobile browsers require speech to begin synchronously from the user's tap.
+    // Do not wait for a network preload before starting the presentation.
+    if ("speechSynthesis" in window) {
+      setPlaying(true);
+      setNarrationReady(true);
+      setNarrationStatus("Narration playing");
+
+      const speakStep = (actionIndex: number) => {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(actions[actionIndex].detail);
+        utterance.rate = 0.94;
+        utterance.pitch = 1;
+        const voices = window.speechSynthesis.getVoices();
+        const preferred =
+          voices.find((voice) => /samantha|ava|aria|jenny|female/i.test(voice.name)) ??
+          voices.find((voice) => voice.lang.toLowerCase().startsWith("en"));
+        if (preferred) utterance.voice = preferred;
+
+        utterance.onend = () => {
+          if (actionIndex >= actions.length - 1) {
+            setPlaying(false);
+            setNarrationStatus("Demo complete");
+            return;
+          }
+          const nextIndex = actionIndex + 1;
+          setIndex(nextIndex);
+          window.setTimeout(() => speakStep(nextIndex), 150);
+        };
+
+        utterance.onerror = () => {
+          setPlaying(false);
+          setNarrationStatus("Narration failed — tap Play demo to retry");
+        };
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      speakStep(index);
+      return;
+    }
+
     setPlaying(true);
-    await playNarratedStep(index);
+    try {
+      await playNarratedStep(index);
+    } catch {
+      setPlaying(false);
+      setNarrationStatus("Narration unavailable on this browser");
+    }
   }
 
   function setActionIndex(nextIndex: number) {
@@ -499,7 +531,7 @@ export default function SyntheticDemoPage() {
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <button type="button" onClick={back} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Back</button>
                 <button type="button" onClick={next} className="rounded-xl bg-white px-4 py-3 text-sm font-black text-[#082838] shadow-lg">Next action</button>
-                <button type="button" onClick={() => { void startOrPause(); }} disabled={!narrationReady} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50">{playing ? "Pause" : "Play demo"}</button>
+                <button type="button" onClick={() => { void startOrPause(); }} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50">{playing ? "Pause" : "Play demo"}</button>
                 <button type="button" onClick={reset} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Reset</button>
                 <div className="col-span-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center text-sm font-black text-white">
                   {narrationStatus}
@@ -512,7 +544,7 @@ export default function SyntheticDemoPage() {
             </section>
 
             <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-5 text-sm font-semibold leading-6 text-[#5f4b1f] shadow-sm shadow-[#0d2b3b]/5">
-              The automatic demo uses preloaded Marin narration and advances only after each narration clip finishes, keeping the voice and visuals synchronized.
+              The automatic demo narrates each step and advances only after the spoken step finishes, keeping the voice and visuals synchronized.
             </section>
           </aside>
         </div>

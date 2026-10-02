@@ -100,6 +100,11 @@ export function LandingPageV1() {
               <span aria-hidden="true">·</span>
               <Link href="/partner-login" className="underline underline-offset-4">Care Partner Sign In</Link>
             </div>
+            <div className="mt-5 text-center">
+              <Link href="/admin" className="text-xs font-semibold text-[#66736d] underline decoration-[#aab3ae] underline-offset-4 hover:text-[#173b2d]">
+                Account / Admin Sign In
+              </Link>
+            </div>
           </div>
         </section>
       </main>

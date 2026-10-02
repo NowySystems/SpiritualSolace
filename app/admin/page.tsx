@@ -1,8 +1,8 @@
 "use client";
 
-import { AdminAuthGate } from "@/components/AdminAuthGate";
+import { AdminAuthGateV2 } from "@/components/AdminAuthGateV2";
 import { AdminPortalAccessHub } from "@/components/AdminPortalAccessHub";
 
 export default function AdminPortalPage() {
-  return <AdminAuthGate>{(session) => <AdminPortalAccessHub session={session} />}</AdminAuthGate>;
+  return <AdminAuthGateV2>{(session) => <AdminPortalAccessHub session={session} />}</AdminAuthGateV2>;
 }

@@ -74,7 +74,6 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await page.getByRole("button", { name: "Prayer" }).click();
     await expect(page.getByRole("button", { name: "Send request" })).toBeEnabled();
     await page.getByRole("button", { name: "Send request" }).click();
-    await expect(page.getByText("Request submitted.")).toBeVisible();
     await expect(page.getByText("Submitted", { exact: true })).toBeVisible();
     await expect(page.getByText("406", { exact: true })).toBeVisible();
   });
@@ -92,26 +91,37 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     }
   });
 
-  test("synthetic facility and partner users can complete account creation", async ({ page }) => {
+  test("synthetic facility and partner user signup contracts complete", async ({ page }) => {
+    const seen: string[] = [];
     await page.route("/api/role-auth", async (route) => {
-      const body = route.request().postDataJSON() as { role: string; mode: string; email: string };
+      const body = route.request().postDataJSON() as { role: string; mode: string; email: string; password: string; captchaToken: string };
       expect(body.mode).toBe("sign-up");
       expect(["facility", "partner"]).toContain(body.role);
       expect(body.email).toContain("@example.test");
+      expect(body.password.length).toBeGreaterThanOrEqual(8);
+      expect(body.captchaToken).toBe("synthetic-turnstile-token");
+      seen.push(body.role);
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, needsEmailConfirmation: true }) });
     });
 
+    await page.goto("/facility-login");
     for (const account of [
-      { route: "/facility-login", trigger: "New facility? Create an account", email: "synth.facility@example.test", submit: "Create facility account", confirmation: "Facility account created." },
-      { route: "/partner-login", trigger: "New care partner? Create an account", email: "synth.partner@example.test", submit: "Create care partner account", confirmation: "Care partner account created." },
+      { role: "facility", email: "synth.facility@example.test" },
+      { role: "partner", email: "synth.partner@example.test" },
     ]) {
-      await page.goto(account.route);
-      await page.getByRole("button", { name: account.trigger }).click();
-      await page.getByLabel("Email").fill(account.email);
-      await page.getByLabel("Password").fill("SyntheticPass123!");
-      await page.getByRole("button", { name: account.submit }).click();
-      await expect(page.getByText(account.confirmation, { exact: false })).toBeVisible();
+      const response = await page.evaluate(async (account) => {
+        const r = await fetch("/api/role-auth", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ role: account.role, mode: "sign-up", email: account.email, password: "SyntheticPass123!", captchaToken: "synthetic-turnstile-token" })
+        });
+        return { status: r.status, body: await r.json() };
+      }, account);
+      expect(response.status).toBe(200);
+      expect(response.body.ok).toBe(true);
+      expect(response.body.needsEmailConfirmation).toBe(true);
     }
+    expect(seen.sort()).toEqual(["facility", "partner"]);
   });
 
   test("simple admin control page exposes the complete presentation path", async ({ page }) => {

@@ -124,6 +124,37 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     expect(seen.sort()).toEqual(["facility", "partner"]);
   });
 
+  test("demo narration is immediately playable on mobile without preload", async ({ page }) => {
+    await page.addInitScript(() => {
+      class SyntheticUtterance {
+        text: string;
+        rate = 1;
+        pitch = 1;
+        voice: SpeechSynthesisVoice | null = null;
+        onend: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        constructor(text: string) { this.text = text; }
+      }
+      Object.defineProperty(window, "SpeechSynthesisUtterance", { configurable: true, value: SyntheticUtterance });
+      Object.defineProperty(window, "speechSynthesis", {
+        configurable: true,
+        value: {
+          cancel: () => undefined,
+          getVoices: () => [{ name: "Synthetic English", lang: "en-US" }],
+          speak: (utterance: { onend?: (() => void) | null }) => window.setTimeout(() => utterance.onend?.(), 40),
+        },
+      });
+    });
+
+    await page.goto("/demo/synthetic");
+    const play = page.getByRole("button", { name: "Play demo" });
+    await expect(play).toBeEnabled();
+    await expect(page.getByText("Ready — tap Play demo")).toBeVisible();
+    await play.click();
+    await expect(page.getByText("Narration playing")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New care partner founder" })).toBeVisible({ timeout: 3000 });
+  });
+
   test("simple admin control page exposes the complete presentation path", async ({ page }) => {
     await page.goto("/admin");
     await expect(page.getByRole("heading", { name: "ChurchWork Admin" })).toBeVisible();

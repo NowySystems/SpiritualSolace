@@ -198,7 +198,7 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await expect(page.getByText("Spiritual-care visit completed.", { exact: true })).toBeVisible();
   });
 
-  test("admin shell is accessible while diagnostics remain internally gated", async ({ page }) => {
+  test("admin and pilot diagnostics are accessible without legacy access key", async ({ page }) => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByRole("heading", { name: "ChurchWork Admin" })).toBeVisible();
@@ -209,9 +209,7 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
 
     for (const route of ["/mvp", "/synthetic-smoke", "/ai-map"]) {
       await page.goto(route);
-      await expect(page).toHaveURL(/\/internal-access/);
-      await expect(page.getByRole("heading", { name: "ChurchWork internal access" })).toBeVisible();
-      await expect(page.getByLabel("Access key")).toBeVisible();
+      await expect(page).not.toHaveURL(/\/internal-access/);
     }
   });
 

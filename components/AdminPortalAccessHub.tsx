@@ -8,31 +8,31 @@ type AdminPortalAccessHubProps = {
 
 const primaryCards = [
   {
-    label: "Pilot MVP Workflow",
-    href: "/mvp",
-    eyebrow: "Working pilot surface",
-    description: "Run the active ChurchWork pilot workflow: requester intake, facility review, partner assignment, outcome, and requester status.",
-    status: "Primary"
+    label: "Demo Control Room",
+    href: "/demo/synthetic",
+    eyebrow: "Play or step through",
+    description: "Run the whole ChurchWork story from requester to facility to care partner to requester update. Watch it automatically or advance each action yourself.",
+    status: "Demo"
   },
   {
-    label: "Requester Login",
-    href: "/requester-login",
-    eyebrow: "Role login",
-    description: "Open the requester-facing login entrance exactly as a family or requester would see it.",
-    status: "Portal"
+    label: "Live Requester Flow",
+    href: "/request",
+    eyebrow: "Anonymous requester",
+    description: "Open the no-login requester experience exactly as a resident, family member, or visitor would use it.",
+    status: "Live"
   },
   {
     label: "Facility Login",
     href: "/facility-login",
     eyebrow: "Role login",
-    description: "Open the facility reviewer login entrance for Grandview-style review and release control.",
+    description: "Open the facility workspace for incoming spiritual-care requests and facility oversight.",
     status: "Portal"
   },
   {
     label: "Partner Login",
     href: "/partner-login",
     eyebrow: "Role login",
-    description: "Open the approved partner login entrance for assignment and safe report-back review.",
+    description: "Open the approved care-partner workspace for assignments and structured outcomes.",
     status: "Portal"
   }
 ];
@@ -49,12 +49,12 @@ const backendCards = [
 ];
 
 const pilotPath = [
-  "Requester enters the correct role login.",
-  "Facility reviews the request before anything leaves the facility side.",
-  "Partner sees only approved context.",
-  "Partner logs a structured spiritual-care outcome.",
-  "Requester sees approved status only.",
-  "BI/synthetic checks confirm route boundaries and guardrails."
+  "Requester submits anonymously from the public request flow.",
+  "The request appears in the facility workspace.",
+  "The selected care partner receives the routed request.",
+  "The partner logs a structured spiritual-care outcome.",
+  "Requester sees the approved status update in the same guest session.",
+  "Admin can replay the whole story automatically or step through it manually."
 ];
 
 function StatusPill({ children }: { children: string }) {
@@ -135,7 +135,7 @@ export function AdminPortalAccessHub({ session = null }: AdminPortalAccessHubPro
               ))}
             </ol>
             <div className="mt-5 flex flex-wrap gap-3">
-              <a href="/mvp" className="rounded-xl bg-[#082838] px-5 py-3 text-sm font-black text-white hover:bg-[#0f3f35]">Open pilot MVP</a>
+              <a href="/demo/synthetic" className="rounded-xl bg-[#082838] px-5 py-3 text-sm font-black text-white hover:bg-[#0f3f35]">Play / step through demo</a>
               <a href="/" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Open public site</a>
               <a href="/synthetic-smoke" className="rounded-xl border border-[#0f3f35] bg-white px-5 py-3 text-sm font-black text-[#0f3f35] hover:bg-[#e7f1eb]">Run smoke contract</a>
             </div>

@@ -429,11 +429,12 @@ export default function SyntheticDemoPage() {
       const speakStep = (actionIndex: number) => {
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(actions[actionIndex].detail);
-        utterance.rate = 0.94;
+        utterance.rate = 0.86;
         utterance.pitch = 1;
         const voices = window.speechSynthesis.getVoices();
         const preferred =
-          voices.find((voice) => /samantha|ava|aria|jenny|female/i.test(voice.name)) ??
+          voices.find((voice) => /samantha|ava|aria|jenny|natural|premium|enhanced|google.*english/i.test(voice.name)) ??
+          voices.find((voice) => voice.lang.toLowerCase() === "en-us") ??
           voices.find((voice) => voice.lang.toLowerCase().startsWith("en"));
         if (preferred) utterance.voice = preferred;
 
@@ -445,7 +446,7 @@ export default function SyntheticDemoPage() {
           }
           const nextIndex = actionIndex + 1;
           setIndex(nextIndex);
-          window.setTimeout(() => speakStep(nextIndex), 150);
+          window.setTimeout(() => speakStep(nextIndex), 450);
         };
 
         utterance.onerror = () => {

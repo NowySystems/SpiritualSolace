@@ -50,9 +50,9 @@ jobs:
         shell: cmd
         run: npm run build
 
-      - name: Run ChurchWork super synth
+      - name: Run ChurchWork super synth 10 times
         shell: cmd
-        run: npm run synthetic:churchwork
+        run: for /L %%i in (1,1,10) do @echo === E2E RUN %%i OF 10 === && npm run synthetic:churchwork || exit /b 1
 
       - name: Upload ChurchWork super synth report
         if: github.event_name == 'workflow_dispatch'

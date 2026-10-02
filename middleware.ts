@@ -4,7 +4,6 @@ const COOKIE_NAME = "churchwork_internal_access";
 const DEFAULT_INTERNAL_KEY = "churchwork-internal-preview";
 
 const INTERNAL_PREFIXES = [
-  "/admin",
   "/mvp",
   "/demo",
   "/preview",

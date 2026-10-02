@@ -29,7 +29,7 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
       await route.fulfill({ status: 200, contentType: "application/javascript", body: "" });
     });
   });
-  test("public landing routes users to the three role logins only", async ({ page }) => {
+  test("public landing exposes requester, facility, partner, and admin access", async ({ page }) => {
     await page.goto("/");
 
     await expect(page.getByRole("heading", { name: "The right spiritual-care request, in the right hands." })).toBeVisible();
@@ -37,7 +37,7 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await expect(page.locator('a[href="/facility-login"]').first()).toHaveAttribute("href", "/facility-login");
     await expect(page.locator('a[href="/partner-login"]').first()).toHaveAttribute("href", "/partner-login");
 
-    await expect(page.locator('a[href="/admin"]')).toHaveCount(0);
+    await expect(page.locator('a[href="/admin"]').first()).toHaveAttribute("href", "/admin");
     await expect(page.locator('a[href="/mvp"]')).toHaveCount(0);
     await expect(page.locator('a[href="/demo/synthetic"]')).toHaveCount(0);
     await expect(page.locator('a[href="/preview"]')).toHaveCount(0);
@@ -86,8 +86,12 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     }
   });
 
-  test("internal backend routes require the internal access gate", async ({ page }) => {
-    for (const route of ["/admin", "/mvp", "/synthetic-smoke", "/ai-map"]) {
+  test("admin shell is accessible while diagnostics remain internally gated", async ({ page }) => {
+    await page.goto("/admin");
+    await expect(page).toHaveURL(/\/admin$/);
+    await expect(page.getByText("Pilot Command Center", { exact: false }).first()).toBeVisible();
+
+    for (const route of ["/mvp", "/synthetic-smoke", "/ai-map"]) {
       await page.goto(route);
       await expect(page).toHaveURL(/\/internal-access/);
       await expect(page.getByRole("heading", { name: "ChurchWork internal access" })).toBeVisible();

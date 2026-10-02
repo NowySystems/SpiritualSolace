@@ -168,6 +168,10 @@ export const CHURCHWORK_END_TO_END_DEMO_STEPS: ChurchWorkDemoStep[] = [
 
 
 export const CHURCHWORK_SYNTHETIC_DEMO_STEPS: ChurchWorkDemoStep[] = [
+  { id: "synthetic-facility-setup-name", portal: "facility", title: "Name facility", narration: "A new facility starts by entering its facility name. In this demo, we create Cole's Nursing Home.", relatedEventType: "guided_step" },
+  { id: "synthetic-facility-setup-admin", portal: "facility", title: "Create facility admin", narration: "The founding user creates sign-in credentials and becomes the facility administrator for that workspace.", relatedEventType: "guided_step" },
+  { id: "synthetic-partner-setup-name", portal: "partner", title: "Name care partner", narration: "A new care partner starts by entering its church or organization name. In this demo, we create Cole's Church.", relatedEventType: "guided_step" },
+  { id: "synthetic-partner-setup-admin", portal: "partner", title: "Create partner admin", narration: "The founding user creates sign-in credentials and becomes the care partner administrator for that workspace.", relatedEventType: "guided_step" },
   { id: "synthetic-requester-open", portal: "requester", title: "Open requester intake", narration: "ChurchWork starts with a simple anonymous spiritual-care request. The requester chooses only the support they want.", relatedEventType: "guided_step" },
   { id: "synthetic-requester-prayer", portal: "requester", title: "Choose prayer", narration: "The requester selects Prayer from the approved support options.", relatedEventType: "guided_step" },
   { id: "synthetic-requester-visit", portal: "requester", title: "Choose friendly visit", narration: "The requester also selects a friendly visit. No medical information is requested.", relatedEventType: "guided_step" },

@@ -432,31 +432,6 @@ export default function SyntheticDemoPage() {
     setActionIndex(0);
   }
 
-  return () => window.clearInterval(timer);
-  }, [playing, soundEnabled]);
-
-  function next() {
-    setPlaying(false);
-    setActionIndex(index + 1);
-  }
-
-  function back() {
-    setPlaying(false);
-    setActionIndex(index - 1);
-  }
-
-  function reset() {
-    setPlaying(false);
-    setActionIndex(0);
-  }
-
-  function toggleSound() {
-    const nextState = !soundEnabled;
-    setSoundEnabled(nextState);
-    if (nextState) {
-      setTimeout(() => playTone("on"), 0);
-    }
-  }
 
   return (
     <main className="min-h-screen bg-[#edf4f0] text-[#0d2b3b]">

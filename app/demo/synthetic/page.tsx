@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 type Scene = "requester" | "facility" | "partner" | "status" | "bi";
 
 type Action = {
+  stepId: string;
   scene: Scene;
   actor: string;
   verb: string;
@@ -16,22 +17,23 @@ type Action = {
   click?: boolean;
 };
 
-const ACTION_MS = 2100;
+const DEMO_SCRIPT_ID = "churchwork-synthetic-v1";
+const DEMO_VOICE = "marin";
 
 const actions: Action[] = [
-  { scene: "requester", actor: "Synthetic requester", verb: "opens requester intake", detail: "The test user lands on a guided spiritual-care request instead of an open chat box.", focus: "open", x: 22, y: 19 },
-  { scene: "requester", actor: "Synthetic requester", verb: "taps Prayer", detail: "The request stays in safe support categories.", focus: "prayer", x: 26, y: 38, click: true },
-  { scene: "requester", actor: "Synthetic requester", verb: "taps Friendly visit", detail: "The second choice adds a visit request without adding medical details.", focus: "visit", x: 72, y: 38, click: true },
-  { scene: "requester", actor: "Synthetic requester", verb: "types safe context", detail: "Only a limited spiritual-care note is prepared for Grandview review.", focus: "note", x: 36, y: 62, click: true },
-  { scene: "requester", actor: "Synthetic requester", verb: "presses Submit to Grandview", detail: "The request moves to facility review. It does not route directly to Hope Church.", focus: "submit", x: 72, y: 83, click: true },
-  { scene: "facility", actor: "Synthetic facility reviewer", verb: "opens incoming request", detail: "Grandview sees the request snapshot, share boundary, and activity trail.", focus: "incoming", x: 28, y: 29, click: true },
-  { scene: "facility", actor: "Synthetic facility reviewer", verb: "checks what is hidden", detail: "Internal notes and unclear details stay inside the facility workspace.", focus: "hidden", x: 72, y: 49, click: true },
-  { scene: "facility", actor: "Synthetic facility reviewer", verb: "approves partner-safe release", detail: "Only approved spiritual-care context is released to Hope Church.", focus: "approve", x: 64, y: 74, click: true },
-  { scene: "partner", actor: "Synthetic partner", verb: "opens approved assignment", detail: "Hope Church receives only the scoped request and coordination guidance.", focus: "assignment", x: 38, y: 31, click: true },
-  { scene: "partner", actor: "Synthetic partner", verb: "reviews hidden-data guardrail", detail: "The partner can prepare for care, but cannot see facility-only information.", focus: "guardrail", x: 73, y: 53, click: true },
-  { scene: "partner", actor: "Synthetic partner", verb: "marks Visited", detail: "The outcome is structured and safe instead of becoming a private journal or chart.", focus: "visited", x: 34, y: 77, click: true },
-  { scene: "status", actor: "Synthetic requester", verb: "sees approved update", detail: "The requester sees progress, not internal review notes.", focus: "update", x: 72, y: 66, click: true },
-  { scene: "bi", actor: "BI synthetic inspector", verb: "lights up the checks", detail: "The path passes the safe-preview contract and leaves real writes behind /pilot.", focus: "checks", x: 50, y: 52 }
+  { stepId: "synthetic-requester-open", scene: "requester", actor: "Synthetic requester", verb: "opens requester intake", detail: "The test user lands on the anonymous spiritual-care request.", focus: "open", x: 22, y: 19 },
+  { stepId: "synthetic-requester-prayer", scene: "requester", actor: "Synthetic requester", verb: "taps Prayer", detail: "The request stays in safe support categories.", focus: "prayer", x: 26, y: 38, click: true },
+  { stepId: "synthetic-requester-visit", scene: "requester", actor: "Synthetic requester", verb: "taps Friendly visit", detail: "The second choice adds a visit request without adding medical details.", focus: "visit", x: 72, y: 38, click: true },
+  { stepId: "synthetic-requester-location", scene: "requester", actor: "Synthetic requester", verb: "enters room location", detail: "Only a short room or location code is added.", focus: "note", x: 36, y: 62, click: true },
+  { stepId: "synthetic-requester-submit", scene: "requester", actor: "Synthetic requester", verb: "sends the request", detail: "The request is submitted for coordinated spiritual care.", focus: "submit", x: 72, y: 83, click: true },
+  { stepId: "synthetic-facility-open", scene: "facility", actor: "Synthetic facility reviewer", verb: "opens incoming request", detail: "The facility sees the incoming request and status.", focus: "incoming", x: 28, y: 29, click: true },
+  { stepId: "synthetic-facility-boundary", scene: "facility", actor: "Synthetic facility reviewer", verb: "checks the privacy boundary", detail: "Medical details and private notes are not part of the request.", focus: "hidden", x: 72, y: 49, click: true },
+  { stepId: "synthetic-facility-aware", scene: "facility", actor: "Synthetic facility reviewer", verb: "stays informed", detail: "The facility can follow the request while the selected care partner moves it forward.", focus: "approve", x: 64, y: 74, click: true },
+  { stepId: "synthetic-partner-open", scene: "partner", actor: "Synthetic partner", verb: "opens the routed request", detail: "The selected care partner receives only the scoped request.", focus: "assignment", x: 38, y: 31, click: true },
+  { stepId: "synthetic-partner-review", scene: "partner", actor: "Synthetic partner", verb: "reviews the care request", detail: "The partner sees the requested support and room location, not medical records.", focus: "guardrail", x: 73, y: 53, click: true },
+  { stepId: "synthetic-partner-complete", scene: "partner", actor: "Synthetic partner", verb: "marks care complete", detail: "The outcome is recorded as a simple structured status.", focus: "visited", x: 34, y: 77, click: true },
+  { stepId: "synthetic-requester-update", scene: "status", actor: "Synthetic requester", verb: "sees the update", detail: "The requester sees the status in the same anonymous guest session.", focus: "update", x: 72, y: 66, click: true },
+  { stepId: "synthetic-complete", scene: "bi", actor: "ChurchWork demo", verb: "completes the loop", detail: "Request, coordinated care, and a simple update without another medical record or open messaging system.", focus: "checks", x: 50, y: 52 }
 ];
 
 const checks = [
@@ -282,74 +284,110 @@ function DemoScreen({ index, action }: { index: number; action: Action }) {
 export default function SyntheticDemoPage() {
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(false);
-  const audioRef = useRef<AudioContext | null>(null);
+  const [narrationReady, setNarrationReady] = useState(false);
+  const [narrationStatus, setNarrationStatus] = useState("Loading Marin narration...");
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const audioUrlsRef = useRef<Map<number, string>>(new Map());
   const action = actions[index];
   const progress = useMemo(() => Math.round(((index + 1) / actions.length) * 100), [index]);
 
-  function getAudioContext() {
-    if (typeof window === "undefined") return null;
-    if (!audioRef.current) {
-      const AudioCtor = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AudioCtor) return null;
-      audioRef.current = new AudioCtor();
+  async function loadNarration(actionIndex: number) {
+    const cached = audioUrlsRef.current.get(actionIndex);
+    if (cached) return cached;
+
+    const target = actions[actionIndex];
+    const response = await fetch("/api/churchwork-demo-audio", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scriptId: DEMO_SCRIPT_ID, stepId: target.stepId, voice: DEMO_VOICE })
+    });
+
+    if (!response.ok || response.headers.get("content-type")?.includes("application/json")) {
+      throw new Error("Marin narration unavailable");
     }
-    return audioRef.current;
+
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    audioUrlsRef.current.set(actionIndex, url);
+    return url;
   }
 
-  function playTone(kind: "tap" | "move" | "pass" | "on") {
-    if (!soundEnabled && kind !== "on") return;
-    const context = getAudioContext();
-    if (!context) return;
-
-    void context.resume();
-    const now = context.currentTime;
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    const start = kind === "pass" ? 620 : kind === "move" ? 360 : kind === "on" ? 520 : 460;
-    const end = kind === "pass" ? 920 : kind === "move" ? 520 : kind === "on" ? 740 : 390;
-    const duration = kind === "pass" ? 0.22 : kind === "move" || kind === "on" ? 0.16 : 0.08;
-
-    oscillator.type = kind === "pass" ? "sine" : "triangle";
-    oscillator.frequency.setValueAtTime(start, now);
-    oscillator.frequency.exponentialRampToValueAtTime(end, now + duration);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-    oscillator.connect(gain);
-    gain.connect(context.destination);
-    oscillator.start(now);
-    oscillator.stop(now + duration + 0.03);
-  }
-
-  function soundFor(nextIndex: number) {
-    const nextAction = actions[nextIndex];
-    if (nextAction.scene === "bi") return "pass";
-    if (nextIndex > 0 && actions[nextIndex - 1]?.scene !== nextAction.scene) return "move";
-    return nextAction.click ? "tap" : "move";
-  }
-
-  function setActionIndex(nextIndex: number) {
-    const safeIndex = Math.max(0, Math.min(nextIndex, actions.length - 1));
-    setIndex(safeIndex);
-    playTone(soundFor(safeIndex));
+  async function preloadAllNarration() {
+    setNarrationReady(false);
+    setNarrationStatus("Loading Marin narration...");
+    try {
+      for (let i = 0; i < actions.length; i += 1) {
+        await loadNarration(i);
+      }
+      setNarrationReady(true);
+      setNarrationStatus("Marin narration ready");
+    } catch {
+      setNarrationReady(false);
+      setNarrationStatus("Marin narration could not be loaded");
+    }
   }
 
   useEffect(() => {
-    if (!playing) return;
-    const timer = window.setInterval(() => {
-      setIndex((current) => {
-        if (current >= actions.length - 1) {
-          setPlaying(false);
-          return current;
-        }
-        const nextIndex = current + 1;
-        playTone(soundFor(nextIndex));
-        return nextIndex;
-      });
-    }, ACTION_MS);
+    void preloadAllNarration();
+    return () => {
+      audioElementRef.current?.pause();
+      for (const url of audioUrlsRef.current.values()) URL.revokeObjectURL(url);
+      audioUrlsRef.current.clear();
+    };
+  }, []);
 
-    return () => window.clearInterval(timer);
+  async function playNarratedStep(actionIndex: number) {
+    const url = await loadNarration(actionIndex);
+    const audio = new Audio(url);
+    audioElementRef.current?.pause();
+    audioElementRef.current = audio;
+
+    audio.onended = () => {
+      if (actionIndex >= actions.length - 1) {
+        setPlaying(false);
+        return;
+      }
+      const nextIndex = actionIndex + 1;
+      setIndex(nextIndex);
+      window.setTimeout(() => {
+        void playNarratedStep(nextIndex);
+      }, 120);
+    };
+
+    await audio.play();
+  }
+
+  async function startOrPause() {
+    if (playing) {
+      audioElementRef.current?.pause();
+      setPlaying(false);
+      return;
+    }
+    if (!narrationReady) return;
+    setPlaying(true);
+    await playNarratedStep(index);
+  }
+
+  function setActionIndex(nextIndex: number) {
+    audioElementRef.current?.pause();
+    setPlaying(false);
+    const safeIndex = Math.max(0, Math.min(nextIndex, actions.length - 1));
+    setIndex(safeIndex);
+  }
+
+  function next() {
+    setActionIndex(index + 1);
+  }
+
+  function back() {
+    setActionIndex(index - 1);
+  }
+
+  function reset() {
+    setActionIndex(0);
+  }
+
+  return () => window.clearInterval(timer);
   }, [playing, soundEnabled]);
 
   function next() {
@@ -416,11 +454,11 @@ export default function SyntheticDemoPage() {
               <div className="mt-5 grid grid-cols-2 gap-3">
                 <button type="button" onClick={back} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Back</button>
                 <button type="button" onClick={next} className="rounded-xl bg-white px-4 py-3 text-sm font-black text-[#082838] shadow-lg">Next action</button>
-                <button type="button" onClick={() => { setPlaying((value) => !value); playTone("move"); }} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">{playing ? "Pause" : "Watch run"}</button>
+                <button type="button" onClick={() => { void startOrPause(); }} disabled={!narrationReady} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50">{playing ? "Pause" : "Play demo"}</button>
                 <button type="button" onClick={reset} className="rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-black text-white">Reset</button>
-                <button type="button" onClick={toggleSound} className={cx("col-span-2 rounded-xl px-4 py-3 text-sm font-black shadow-lg", soundEnabled ? "bg-[#d6a943] text-[#082838]" : "border border-white/20 bg-white/10 text-white")}>
-                  {soundEnabled ? "Sound On" : "Sound Off · Tap to enable"}
-                </button>
+                <div className="col-span-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center text-sm font-black text-white">
+                  {narrationStatus}
+                </div>
               </div>
 
               <div className="mt-5">
@@ -429,7 +467,7 @@ export default function SyntheticDemoPage() {
             </section>
 
             <section className="rounded-[1.5rem] border border-[#ddb66c]/60 bg-[#fff8e7] p-5 text-sm font-semibold leading-6 text-[#5f4b1f] shadow-sm shadow-[#0d2b3b]/5">
-              Audio is optional because phones block autoplay sound. Tap Sound Off to unlock soft demo cues. No audio files, tracking, auth, Supabase, writes, or medical workflow.
+              The automatic demo uses preloaded Marin narration and advances only after each narration clip finishes, keeping the voice and visuals synchronized.
             </section>
           </aside>
         </div>

@@ -1,10 +1,10 @@
 import { ChurchWorkAccessGate } from "@/components/ChurchWorkAccessGate";
-import { FacilityPortalFinal } from "@/components/pilot-final/FacilityPortalFinal";
+import { FacilityReviewWorkspace } from "@/components/FacilityReviewWorkspace";
 
 export default function FacilityPortalPage() {
   return (
     <ChurchWorkAccessGate>
-      <FacilityPortalFinal />
+      <FacilityReviewWorkspace />
     </ChurchWorkAccessGate>
   );
 }

@@ -138,6 +138,66 @@ test.describe("ChurchWork public navigation and internal boundaries", () => {
     await expectNoHorizontalOverflow(page);
   });
 
+  test("synthetic full care lifecycle crosses facility, partner, and requester status", async ({ page }) => {
+    let status = "submitted";
+    const row = () => ({
+      id: "lifecycle-request",
+      support_options: ["Prayer", "Friendly visit"],
+      support: ["Prayer", "Friendly visit"],
+      status,
+      location_label: "406",
+      partner_response: status === "submitted" ? null : status,
+      requester_update: status === "completed" ? "Spiritual-care visit completed." : null,
+      created_at: new Date().toISOString(),
+    });
+
+    await page.route("/api/facility-requests**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([row()]) });
+    });
+    await page.route("/api/facility-locations**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([]) });
+    });
+
+    await page.goto("/facility");
+    await expect(page.getByRole("heading", { name: "Spiritual-care activity" })).toBeVisible();
+    await expect(page.getByText("Submitted", { exact: true })).toBeVisible();
+    await expect(page.getByText("Awaiting response", { exact: true })).toBeVisible();
+
+    await page.route("/api/partner-requests**", async (route) => {
+      if (route.request().method() === "POST") {
+        const body = route.request().postDataJSON() as { outcome: string };
+        status = body.outcome === "accepted" ? "accepted_by_partner" : body.outcome;
+        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, status }) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify([row()]) });
+    });
+    await page.route("/api/partner-coverage**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, facilities: [] }) });
+    });
+
+    await page.goto("/partner-portal");
+    await expect(page.getByRole("heading", { name: "Spiritual-care requests" })).toBeVisible();
+    await page.getByRole("button", { name: "Accept request" }).click();
+    await expect(page.getByRole("button", { name: "Plan visit" })).toBeVisible();
+    await page.getByRole("button", { name: "Plan visit" }).click();
+    await expect(page.getByRole("button", { name: "Mark completed" })).toBeVisible();
+    await page.getByRole("button", { name: "Mark completed" }).click();
+    await expect(page.getByText("Status: Completed", { exact: true })).toBeVisible();
+
+    await page.route("/api/guest-requests**", async (route) => {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
+        ok: true,
+        choices: [{ facility_id: "facility-demo", facility_name: "Grandview Demo Facility", partners: [{ partner_id: "partner-demo", partner_name: "Hope Community Church" }] }],
+        requests: [row()],
+        resolvedLocation: null
+      }) });
+    });
+    await page.goto("/request");
+    await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+    await expect(page.getByText("Spiritual-care visit completed.", { exact: true })).toBeVisible();
+  });
+
   test("admin shell is accessible while diagnostics remain internally gated", async ({ page }) => {
     await page.goto("/admin");
     await expect(page).toHaveURL(/\/admin$/);

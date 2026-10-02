@@ -184,7 +184,7 @@ export const CHURCHWORK_SYNTHETIC_DEMO_STEPS: ChurchWorkDemoStep[] = [
   { id: "synthetic-partner-review", portal: "partner", title: "Partner reviews scope", narration: "The partner sees the requested care and the room location, but not medical records or unrestricted private details.", relatedEventType: "guided_step" },
   { id: "synthetic-partner-complete", portal: "partner", title: "Partner completes request", narration: "After providing care, the partner records a simple structured outcome.", relatedEventType: "care_outcome_logged" },
   { id: "synthetic-requester-update", portal: "requester", title: "Requester sees update", narration: "The requester sees a clear status update in the same anonymous guest session.", relatedEventType: "care_outcome_logged" },
-  { id: "synthetic-complete", portal: "pilot", title: "Demo complete", narration: "That is the ChurchWork loop: request, coordinated care, and a simple update, without creating another medical record or open messaging system.", relatedEventType: "guided_step" }
+  { id: "synthetic-complete", portal: "requester", title: "Demo complete", narration: "That is the ChurchWork loop: request, coordinated care, and a simple update, without creating another medical record or open messaging system.", relatedEventType: "guided_step" }
 ];
 
 export const CHURCHWORK_DEMO_SCRIPTS: Record<ChurchWorkDemoScriptId, ChurchWorkDemoScript> = {

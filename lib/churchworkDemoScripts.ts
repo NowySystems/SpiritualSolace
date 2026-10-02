@@ -4,7 +4,8 @@ export type ChurchWorkDemoScriptId =
   | "churchwork-end-to-end-v1"
   | "churchwork-requester-v1"
   | "churchwork-facility-v1"
-  | "churchwork-partner-v1";
+  | "churchwork-partner-v1"
+  | "churchwork-synthetic-v1";
 
 export type ChurchWorkDemoStep = {
   id: string;
@@ -165,6 +166,23 @@ export const CHURCHWORK_END_TO_END_DEMO_STEPS: ChurchWorkDemoStep[] = [
   }
 ];
 
+
+export const CHURCHWORK_SYNTHETIC_DEMO_STEPS: ChurchWorkDemoStep[] = [
+  { id: "synthetic-requester-open", portal: "requester", title: "Open requester intake", narration: "ChurchWork starts with a simple anonymous spiritual-care request. The requester chooses only the support they want.", relatedEventType: "guided_step" },
+  { id: "synthetic-requester-prayer", portal: "requester", title: "Choose prayer", narration: "The requester selects Prayer from the approved support options.", relatedEventType: "guided_step" },
+  { id: "synthetic-requester-visit", portal: "requester", title: "Choose friendly visit", narration: "The requester also selects a friendly visit. No medical information is requested.", relatedEventType: "guided_step" },
+  { id: "synthetic-requester-location", portal: "requester", title: "Add room location", narration: "A short room or location code tells the care team where support is needed without collecting a personal story.", relatedEventType: "guided_step" },
+  { id: "synthetic-requester-submit", portal: "requester", title: "Submit request", narration: "The request is submitted and appears for the facility and selected care partner.", relatedEventType: "care_request_submitted" },
+  { id: "synthetic-facility-open", portal: "facility", title: "Facility sees request", narration: "The facility sees the incoming spiritual-care request and can follow its status.", relatedEventType: "guided_step" },
+  { id: "synthetic-facility-boundary", portal: "facility", title: "Facility sees boundaries", narration: "ChurchWork keeps the request limited to spiritual care. Medical details and private notes are not part of the request.", relatedEventType: "guided_step" },
+  { id: "synthetic-facility-aware", portal: "facility", title: "Facility stays informed", narration: "The facility stays informed while the selected care partner moves the request forward.", relatedEventType: "guided_step" },
+  { id: "synthetic-partner-open", portal: "partner", title: "Partner receives request", narration: "The selected care partner receives the request with only the information needed to provide spiritual support.", relatedEventType: "partner_assignment_created" },
+  { id: "synthetic-partner-review", portal: "partner", title: "Partner reviews scope", narration: "The partner sees the requested care and the room location, but not medical records or unrestricted private details.", relatedEventType: "guided_step" },
+  { id: "synthetic-partner-complete", portal: "partner", title: "Partner completes request", narration: "After providing care, the partner records a simple structured outcome.", relatedEventType: "care_outcome_logged" },
+  { id: "synthetic-requester-update", portal: "requester", title: "Requester sees update", narration: "The requester sees a clear status update in the same anonymous guest session.", relatedEventType: "care_outcome_logged" },
+  { id: "synthetic-complete", portal: "pilot", title: "Demo complete", narration: "That is the ChurchWork loop: request, coordinated care, and a simple update, without creating another medical record or open messaging system.", relatedEventType: "guided_step" }
+];
+
 export const CHURCHWORK_DEMO_SCRIPTS: Record<ChurchWorkDemoScriptId, ChurchWorkDemoScript> = {
   "churchwork-end-to-end-v1": {
     id: "churchwork-end-to-end-v1",
@@ -193,6 +211,13 @@ export const CHURCHWORK_DEMO_SCRIPTS: Record<ChurchWorkDemoScriptId, ChurchWorkD
     title: "Partner Portal Guided Demo",
     description: "Partner assignment, prayer focus, and care outcome flow.",
     steps: CHURCHWORK_END_TO_END_DEMO_STEPS.filter((step) => step.portal === "partner")
+  },
+  "churchwork-synthetic-v1": {
+    id: "churchwork-synthetic-v1",
+    version: "v1",
+    title: "ChurchWork Turnaround Demo",
+    description: "Automatic requester-to-facility-to-partner story for live presentations.",
+    steps: CHURCHWORK_SYNTHETIC_DEMO_STEPS
   }
 };
 

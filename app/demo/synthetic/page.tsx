@@ -419,52 +419,39 @@ export default function SyntheticDemoPage() {
       return;
     }
 
-    // Mobile browsers require speech to begin synchronously from the user's tap.
-    // Do not wait for a network preload before starting the presentation.
-    if ("speechSynthesis" in window) {
-      setPlaying(true);
-      setNarrationReady(true);
-      setNarrationStatus("Narration playing");
-
-      const speakStep = (actionIndex: number) => {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(actions[actionIndex].detail);
-        utterance.rate = 0.76;
-        utterance.pitch = 1;
-        const voices = window.speechSynthesis.getVoices();
-        const preferred =
-          voices.find((voice) => /samantha|ava|aria|jenny|natural|premium|enhanced|google.*english/i.test(voice.name)) ??
-          voices.find((voice) => voice.lang.toLowerCase() === "en-us") ??
-          voices.find((voice) => voice.lang.toLowerCase().startsWith("en"));
-        if (preferred) utterance.voice = preferred;
-
-        utterance.onend = () => {
-          if (actionIndex >= actions.length - 1) {
-            setPlaying(false);
-            setNarrationStatus("Demo complete");
-            return;
-          }
-          const nextIndex = actionIndex + 1;
-          setIndex(nextIndex);
-          window.setTimeout(() => speakStep(nextIndex), 850);
-        };
-
-        utterance.onerror = () => {
-          setPlaying(false);
-          setNarrationStatus("Narration failed — tap Play demo to retry");
-        };
-
-        window.speechSynthesis.speak(utterance);
-      };
-
-      speakStep(index);
-      return;
-    }
-
+    // Start OpenAI narration directly from the user gesture. No preload gate.
     setPlaying(true);
+    setNarrationStatus("Loading premium narration…");
     try {
       await playNarratedStep(index);
     } catch {
+      // Keep the proven browser voice as the presentation-safe fallback.
+      if ("speechSynthesis" in window) {
+        const speakFallback = (actionIndex: number) => {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(actions[actionIndex].detail);
+          utterance.rate = 0.76;
+          utterance.pitch = 1;
+          utterance.onend = () => {
+            if (actionIndex >= actions.length - 1) {
+              setPlaying(false);
+              setNarrationStatus("Demo complete");
+              return;
+            }
+            const nextIndex = actionIndex + 1;
+            setIndex(nextIndex);
+            window.setTimeout(() => speakFallback(nextIndex), 850);
+          };
+          utterance.onerror = () => {
+            setPlaying(false);
+            setNarrationStatus("Narration failed — tap Play demo to retry");
+          };
+          window.speechSynthesis.speak(utterance);
+        };
+        setNarrationStatus("Fallback narration playing");
+        speakFallback(index);
+        return;
+      }
       setPlaying(false);
       setNarrationStatus("Narration unavailable on this browser");
     }

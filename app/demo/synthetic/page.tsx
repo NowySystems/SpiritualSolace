@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
-type Scene = "requester" | "facility" | "partner" | "status" | "bi";
+type Scene = "facility_setup" | "partner_setup" | "requester" | "facility" | "partner" | "status" | "bi";
 
 type Action = {
   stepId: string;
@@ -21,6 +21,10 @@ const DEMO_SCRIPT_ID = "churchwork-synthetic-v1";
 const DEMO_VOICE = "marin";
 
 const actions: Action[] = [
+  { stepId: "synthetic-facility-setup-name", scene: "facility_setup", actor: "New facility founder", verb: "names the facility", detail: "Cole's Nursing Home becomes the new facility workspace.", focus: "name", x: 48, y: 37, click: true },
+  { stepId: "synthetic-facility-setup-admin", scene: "facility_setup", actor: "New facility founder", verb: "creates admin credentials", detail: "The founding user becomes the facility administrator and enters the workspace.", focus: "credentials", x: 52, y: 68, click: true },
+  { stepId: "synthetic-partner-setup-name", scene: "partner_setup", actor: "New care partner founder", verb: "names the care partner", detail: "Cole's Church becomes the new care-partner workspace.", focus: "name", x: 48, y: 37, click: true },
+  { stepId: "synthetic-partner-setup-admin", scene: "partner_setup", actor: "New care partner founder", verb: "creates admin credentials", detail: "The founding user becomes the partner administrator and enters the workspace.", focus: "credentials", x: 52, y: 68, click: true },
   { stepId: "synthetic-requester-open", scene: "requester", actor: "Synthetic requester", verb: "opens requester intake", detail: "The test user lands on the anonymous spiritual-care request.", focus: "open", x: 22, y: 19 },
   { stepId: "synthetic-requester-prayer", scene: "requester", actor: "Synthetic requester", verb: "taps Prayer", detail: "The request stays in safe support categories.", focus: "prayer", x: 26, y: 38, click: true },
   { stepId: "synthetic-requester-visit", scene: "requester", actor: "Synthetic requester", verb: "taps Friendly visit", detail: "The second choice adds a visit request without adding medical details.", focus: "visit", x: 72, y: 38, click: true },
@@ -40,9 +44,9 @@ const checks = [
   "No auth",
   "No Supabase writes",
   "No medical workflow",
-  "Facility approval boundary",
-  "Partner sees approved context only",
-  "Requester sees approved update only"
+  "Facility awareness view",
+  "Partner sees scoped request only",
+  "Requester sees simple status update"
 ];
 
 function cx(...values: Array<string | false | null | undefined>) {
@@ -81,7 +85,7 @@ function Cursor({ action }: { action: Action }) {
 }
 
 function Shell({ action, children }: { action: Action; children: ReactNode }) {
-  const label = action.scene === "requester" ? "Requester" : action.scene === "facility" ? "Grandview" : action.scene === "partner" ? "Hope Church" : action.scene === "status" ? "Requester status" : "BI inspector";
+  const label = action.scene === "facility_setup" ? "Facility setup" : action.scene === "partner_setup" ? "Care partner setup" : action.scene === "requester" ? "Requester" : action.scene === "facility" ? "Facility workspace" : action.scene === "partner" ? "Care partner workspace" : action.scene === "status" ? "Requester status" : "Demo complete";
   return (
     <div className="relative mx-auto w-full max-w-[27rem] overflow-hidden rounded-[2.25rem] border-[10px] border-[#102b3a] bg-[#edf4f0] shadow-2xl shadow-black/25 md:max-w-[34rem]">
       <div className="flex items-center justify-between bg-[#082838] px-4 py-3 text-white">
@@ -99,6 +103,46 @@ function Shell({ action, children }: { action: Action; children: ReactNode }) {
   );
 }
 
+function SetupScreen({ action }: { action: Action }) {
+  const isFacility = action.scene === "facility_setup";
+  const orgName = isFacility ? "Cole's Nursing Home" : "Cole's Church";
+  const prompt = isFacility ? "Enter facility name" : "Enter church or care partner name";
+
+  return (
+    <Shell action={action}>
+      <div className="space-y-4">
+        <section className="rounded-3xl border border-[#d9dfd7] bg-white p-5 shadow-sm">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">First-time setup</p>
+          <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">
+            {isFacility ? "Create a facility workspace." : "Create a care partner workspace."}
+          </h2>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#4f6259]">
+            The founding user creates the organization and becomes its first administrator.
+          </p>
+        </section>
+
+        <section className={cx("rounded-3xl border bg-white p-5 transition", action.focus === "name" ? "border-[#d6a943] shadow-lg" : "border-[#d9dfd7]")}>
+          <p className="text-sm font-black text-[#0d2b3b]">{prompt}</p>
+          <div className="mt-3 rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-4 font-bold text-[#0d2b3b]">
+            {orgName}
+          </div>
+        </section>
+
+        <section className={cx("rounded-3xl border bg-white p-5 transition", action.focus === "credentials" ? "border-[#d6a943] shadow-lg" : "border-[#d9dfd7]")}>
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">Founding admin credentials</p>
+          <div className="mt-3 space-y-3">
+            <div className="rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-3 text-sm font-bold text-[#0d2b3b]">admin@example.com</div>
+            <div className="rounded-xl border border-[#d9dfd7] bg-[#f8fbf8] px-4 py-3 text-sm font-bold tracking-[0.2em] text-[#0d2b3b]">••••••••••••</div>
+          </div>
+          <div className="mt-4 rounded-xl bg-[#e7f1eb] p-4 text-sm font-black text-[#0f6b54]">
+            {action.focus === "credentials" ? "Workspace created · Admin access granted" : "Next: create admin access"}
+          </div>
+        </section>
+      </div>
+    </Shell>
+  );
+}
+
 function Choice({ title, sub, active, focus }: { title: string; sub: string; active: boolean; focus: boolean }) {
   return (
     <div className={cx("rounded-2xl border p-4 transition", active ? "border-[#0f6b54] bg-[#e7f1eb]" : focus ? "border-[#d6a943] bg-[#fff8e7] shadow-lg" : "border-[#d9dfd7] bg-white")}>
@@ -110,10 +154,10 @@ function Choice({ title, sub, active, focus }: { title: string; sub: string; act
 }
 
 function RequesterScreen({ index, action }: { index: number; action: Action }) {
-  const prayer = index >= 1;
-  const visit = index >= 2;
-  const note = index >= 3;
-  const submitted = index >= 4;
+  const prayer = index >= 5;
+  const visit = index >= 6;
+  const note = index >= 7;
+  const submitted = index >= 8;
 
   return (
     <Shell action={action}>
@@ -121,7 +165,7 @@ function RequesterScreen({ index, action }: { index: number; action: Action }) {
         <section className="rounded-3xl border border-[#d9dfd7] bg-white p-5 shadow-sm">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Guided intake</p>
           <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">What kind of support would help?</h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-[#4f6259]">Choose safe spiritual-care support. Grandview reviews before anything is shared.</p>
+          <p className="mt-2 text-sm font-semibold leading-6 text-[#4f6259]">Choose the spiritual support you want. The facility stays informed while the selected care partner receives the request.</p>
         </section>
 
         <div className="grid grid-cols-2 gap-3">
@@ -134,13 +178,13 @@ function RequesterScreen({ index, action }: { index: number; action: Action }) {
         <section className={cx("rounded-3xl border bg-white p-4 transition", action.focus === "note" ? "border-[#d6a943] shadow-lg" : "border-[#d9dfd7]")}>
           <p className="text-xs font-black uppercase tracking-[0.14em] text-[#506a49]">Safe context note</p>
           <div className="mt-3 min-h-[7rem] rounded-2xl border border-[#d9dfd7] bg-[#f8fbf8] p-4 text-sm font-semibold leading-6 text-[#0d2b3b]">
-            {note ? "They would appreciate prayer and a calm visit this week." : <span className="text-[#8b9991]">Synthetic user will type safe context here…</span>}
+            {note ? "Room 406" : <span className="text-[#8b9991]">Room or location code appears here…</span>}
             {action.focus === "note" ? <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-[#0d2b3b] align-middle" /> : null}
           </div>
         </section>
 
         <button className={cx("w-full rounded-2xl px-5 py-4 text-sm font-black shadow-lg transition", submitted || action.focus === "submit" ? "bg-[#d6a943] text-[#082838]" : "bg-[#082838] text-white")}>
-          {submitted ? "Submitted to Grandview" : "Submit for facility review"}
+          {submitted ? "Request sent" : "Send request"}
         </button>
       </div>
     </Shell>
@@ -157,8 +201,8 @@ function FacilityRow({ label, value, active, focus }: { label: string; value: st
 }
 
 function FacilityScreen({ index, action }: { index: number; action: Action }) {
-  const reviewed = index >= 6;
-  const approved = index >= 7;
+  const reviewed = index >= 10;
+  const approved = index >= 11;
 
   return (
     <Shell action={action}>
@@ -195,13 +239,13 @@ function FacilityScreen({ index, action }: { index: number; action: Action }) {
 }
 
 function PartnerScreen({ index, action }: { index: number; action: Action }) {
-  const visited = index >= 10;
+  const visited = index >= 14;
   return (
     <Shell action={action}>
       <div className="space-y-4">
         <section className={cx("rounded-3xl border bg-white p-5 shadow-sm", action.focus === "assignment" ? "border-[#d6a943]" : "border-[#d9dfd7]")}>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Approved assignment</p>
-          <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Prepare for a calm visit</h2>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#506a49]">Routed request</p>
+          <h2 className="mt-2 font-serif text-3xl font-semibold tracking-[-0.05em] text-[#0d2b3b]">Prayer + friendly visit</h2>
           <div className="mt-4 grid gap-2 text-sm font-semibold text-[#4f6259]">
             <p className="rounded-2xl bg-[#f8fbf8] p-3">Prayer requested</p>
             <p className="rounded-2xl bg-[#f8fbf8] p-3">Friendly visit requested</p>
@@ -274,6 +318,7 @@ function BiScreen({ action }: { action: Action }) {
 }
 
 function DemoScreen({ index, action }: { index: number; action: Action }) {
+  if (action.scene === "facility_setup" || action.scene === "partner_setup") return <SetupScreen action={action} />;
   if (action.scene === "requester") return <RequesterScreen index={index} action={action} />;
   if (action.scene === "facility") return <FacilityScreen index={index} action={action} />;
   if (action.scene === "partner") return <PartnerScreen index={index} action={action} />;

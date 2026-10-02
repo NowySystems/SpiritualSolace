@@ -9,7 +9,9 @@ const cards = [
   { label: "Care Partner", href: "/partner-login", description: "Open the care-partner workspace." }
 ];
 
-export function AdminPortalAccessHub() {
+type AdminPortalAccessHubProps = { session?: { user?: { email?: string | null } } | null };
+
+export function AdminPortalAccessHub({ session: _session = null }: AdminPortalAccessHubProps = {}) {
   return <main className="min-h-screen bg-[#edf4f0] text-[#0d2b3b]">
     <header className="border-b border-[#d9dfd7] bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">

@@ -64,3 +64,11 @@ Agents may not submit grants, contact donors, update donor records, update Quick
 - Firestore writes.
 - Automated emails.
 - Automated grant submissions.
+
+## Shared NowySystems infrastructure registry
+
+The single authoritative network and port inventory lives in the **private** `NowySystems/NOVA` repository:
+`docs/infrastructure/PORT_REGISTRY.md`
+https://github.com/NowySystems/NOVA/blob/main/docs/infrastructure/PORT_REGISTRY.md
+
+Before proposing or making changes to service ports, bind addresses, firewall rules, host/IP mappings, remote-access endpoints, or NAS mounts, consult the current master registry **when authorized access is available**. Respect this repository's existing approval and safety rules. Treat historical scan observations separately from verified current listeners; validate live state before applying changes. Update the master registry in the same change workflow after an authorized configuration change, recording verification date/status. Do not maintain independent copies of the port inventory, assume the private file is universally accessible, or copy private network details into public repositories. Without access, request an authorized maintainer to check the registry; do not invent settings. Never commit credentials, keys, or secrets.
